@@ -535,17 +535,6 @@ static os_log_t RCClipboardServiceLog(void) {
         return NO;
     }
 
-    NSError *archiveError = nil;
-    NSData *archivedData = [NSKeyedArchiver archivedDataWithRootObject:clipData
-                                                  requiringSecureCoding:YES
-                                                                  error:&archiveError];
-    if (archivedData == nil) {
-        os_log_error(RCClipboardServiceLog(),
-                     "Failed to archive clip data before size check (%{private}@)",
-                     archiveError.localizedDescription);
-        return NO;
-    }
-
     // CFBooleanRef チェック付きの安全な読み取り
     id rawValue = [[NSUserDefaults standardUserDefaults] objectForKey:kRCPrefMaxClipSizeBytesKey];
     NSInteger maxClipSizeBytes = kRCDefaultMaxClipSizeBytes;
@@ -558,17 +547,9 @@ static os_log_t RCClipboardServiceLog(void) {
     if (maxClipSizeBytes < 1048576) {
         maxClipSizeBytes = kRCDefaultMaxClipSizeBytes;
     }
-    if (archivedData.length > (NSUInteger)maxClipSizeBytes) {
-        os_log_debug(RCClipboardServiceLog(),
-                     "Skipping clip save because archived data size (%lu bytes) exceeds limit (%ld bytes)",
-                     (unsigned long)archivedData.length,
-                     (long)maxClipSizeBytes);
-        return NO;
-    }
-
     __block BOOL saved = NO;
     dispatch_sync(self.fileOperationQueue, ^{
-        saved = [clipData saveToPath:path];
+        saved = [clipData saveToPath:path maximumArchiveSize:(NSUInteger)maxClipSizeBytes];
     });
     return saved;
 }

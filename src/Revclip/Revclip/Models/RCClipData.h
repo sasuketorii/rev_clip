@@ -40,6 +40,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 // ファイル保存・読み込み
 - (BOOL)saveToPath:(NSString *)path;
+// Reject archives larger than the limit before writing; serialize only once.
+- (BOOL)saveToPath:(NSString *)path maximumArchiveSize:(NSUInteger)maximumArchiveSize;
 + (nullable instancetype)clipDataFromPath:(NSString *)path;
 
 @end

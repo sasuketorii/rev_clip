@@ -142,20 +142,20 @@ static os_log_t RCClipDataLog(void) {
     CC_SHA256_Init(&context);
 
     BOOL didUpdate = NO;
-    didUpdate = didUpdate || [[self class] updateHashContext:&context withString:self.stringValue];
-    didUpdate = didUpdate || [[self class] updateHashContext:&context withData:self.RTFData];
-    didUpdate = didUpdate || [[self class] updateHashContext:&context withData:self.RTFDData];
-    didUpdate = didUpdate || [[self class] updateHashContext:&context withData:self.PDFData];
-    didUpdate = didUpdate || [[self class] updateHashContext:&context withData:self.TIFFData];
+    didUpdate = [[self class] updateHashContext:&context withString:self.stringValue] || didUpdate;
+    didUpdate = [[self class] updateHashContext:&context withData:self.RTFData] || didUpdate;
+    didUpdate = [[self class] updateHashContext:&context withData:self.RTFDData] || didUpdate;
+    didUpdate = [[self class] updateHashContext:&context withData:self.PDFData] || didUpdate;
+    didUpdate = [[self class] updateHashContext:&context withData:self.TIFFData] || didUpdate;
     for (NSString *fileName in self.fileNames) {
-        didUpdate = didUpdate || [[self class] updateHashContext:&context withString:fileName];
+        didUpdate = [[self class] updateHashContext:&context withString:fileName] || didUpdate;
     }
     for (NSURL *fileURL in self.fileURLs) {
-        didUpdate = didUpdate || [[self class] updateHashContext:&context withString:fileURL.absoluteString];
+        didUpdate = [[self class] updateHashContext:&context withString:fileURL.absoluteString] || didUpdate;
     }
-    didUpdate = didUpdate || [[self class] updateHashContext:&context withString:self.URLString];
+    didUpdate = [[self class] updateHashContext:&context withString:self.URLString] || didUpdate;
     // Include primaryType in hash to differentiate items with identical data but different primary types
-    didUpdate = didUpdate || [[self class] updateHashContext:&context withString:self.primaryType];
+    didUpdate = [[self class] updateHashContext:&context withString:self.primaryType] || didUpdate;
 
     if (!didUpdate) {
         return @"";
@@ -322,6 +322,10 @@ static os_log_t RCClipDataLog(void) {
 #pragma mark - File
 
 - (BOOL)saveToPath:(NSString *)path {
+    return [self saveToPath:path maximumArchiveSize:NSUIntegerMax];
+}
+
+- (BOOL)saveToPath:(NSString *)path maximumArchiveSize:(NSUInteger)maximumArchiveSize {
     if (path.length == 0) {
         return NO;
     }
@@ -352,6 +356,10 @@ static os_log_t RCClipDataLog(void) {
                                                                  error:&archiveError];
     if (archiveData == nil) {
         NSLog(@"[RCClipData] Failed to archive clip data: %@", archiveError.localizedDescription);
+        return NO;
+    }
+
+    if (archiveData.length > maximumArchiveSize) {
         return NO;
     }
 
