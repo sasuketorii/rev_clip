@@ -14,7 +14,9 @@
 
 ## アイコンを変更する
 
-`scripts/icon-source/revclip_icon.png` を用意し、ルートから以下を実行します。Pillowはアイコン生成時だけ使用します。
+READMEの画像は `revclip_icon_rounded.png`（ラウンド版）です。アプリアイコンとは別に差し替えられます。
+
+アプリアイコン用の `revclip_icon_square.png` を用意し、ルートから以下を実行します。Pillowはアイコン生成時だけ使用します。
 
 ```sh
 python3 -m venv .venv

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="revclip.png" width="128" height="128" alt="Revclip icon" />
+  <img src="revclip_icon_rounded.png" width="128" height="128" alt="Revclip icon" />
   <h1>Revclip</h1>
   <p><strong>コピーしたものを、もう一度。自分に馴染むクリップボードを。</strong></p>
   <p>A native macOS clipboard manager. Local history. Reusable snippets. Yours to customize.</p>
