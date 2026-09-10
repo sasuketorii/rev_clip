@@ -11,6 +11,7 @@ permissions:
 jobs:
   release:
     runs-on: macos-26
+    timeout-minutes: 40
     env:
       PROJECT_DIR: src/Revclip
       SCHEME: Revclip
@@ -44,16 +45,18 @@ jobs:
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
           APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
-          if [[ -z "${SPARKLE_PRIVATE_KEY}" ]]; then
-            echo "SPARKLE_PRIVATE_KEY is not configured."
-            exit 1
-          fi
-          if [[ -z "${APPLE_CERTIFICATE_P12}" ]]; then
-            echo "APPLE_CERTIFICATE_P12 is not configured."
-            exit 1
-          fi
+          for name in SPARKLE_PRIVATE_KEY APPLE_CERTIFICATE_P12 APPLE_CERTIFICATE_PASSWORD APPLE_ID APPLE_APP_PASSWORD APPLE_TEAM_ID; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Required release secret is not configured: ${name}"
+              exit 1
+            fi
+          done
 
       - name: Import Apple certificate
         env:
