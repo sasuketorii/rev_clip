@@ -20,3 +20,6 @@ xcuserdata/
 __pycache__/
 .idea/
 .vscode/
+
+# Private maintainer notes and local signing configuration
+.local/

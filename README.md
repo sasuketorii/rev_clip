@@ -4,6 +4,7 @@
   <p><strong>コピーしたものを、もう一度。自分に馴染むクリップボードを。</strong></p>
   <p>A native macOS clipboard manager. Local history. Reusable snippets. Yours to customize.</p>
 
+  <a href="https://github.com/sasuketorii/rev_clip/releases/latest"><img src="https://img.shields.io/github/v/release/sasuketorii/rev_clip?color=007aff" alt="Latest release" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-34c759" alt="MIT License" /></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-111827?logo=apple&amp;logoColor=white" alt="macOS 14 or later" />
   <img src="https://img.shields.io/badge/UI-AppKit%20%2B%20SwiftUI-007aff" alt="AppKit and SwiftUI" />
@@ -55,7 +56,9 @@
 
 ## はじめる
 
-この公開リポジトリはソースからビルドして利用できます。署名・公証済みバイナリの公開は、リリース用の設定後に行います。
+**[最新版のDMGをダウンロード](https://github.com/sasuketorii/rev_clip/releases/latest)** — Developer ID署名・Apple公証済み。Apple SiliconとIntelに対応したUniversalアプリです。DMGを開き、RevclipをApplicationsへ入れて起動してください。以降の更新はアプリ内から確認できます。
+
+ソースからビルドしてカスタマイズする場合は、以下の手順を使ってください。
 
 必要なものは、**Xcode 26.6**と**XcodeGen**。アプリの動作対象は**macOS 14以降**で、Apple Silicon・Intelに対応します。Debugビルドに有料のApple Developer契約は必要ありません。
 

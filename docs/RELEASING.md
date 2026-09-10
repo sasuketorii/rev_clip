@@ -9,7 +9,7 @@
 - Feed: `https://github.com/sasuketorii/rev_clip/releases/latest/download/appcast.xml`
 - DMG: 各リリースに添付
 
-別のリポジトリや外部gistは不要です。最初のバイナリリリースを公開するまではFeedは利用できません。ソースの初回公開とバイナリ配布は別の工程です。
+新しいアプリの配信に別のリポジトリや外部gistは不要です。v0.0.25から、この公開リポジトリで署名・公証済みDMGとFeedを提供しています。
 
 ## 事前設定
 
@@ -35,3 +35,24 @@
 5. ログインしていない状態でDMGとFeedを取得でき、Feedの版・URL・署名が配布物と一致することを確認します。実際の更新と新規インストールも検証してください。
 
 証明書や署名鍵が未設定の状態でタグを作成しないでください。通常のmain/PR向けCIには配布用のSecretsは不要です。
+
+## このリポジトリで次の版を出す
+
+公式リポジトリには上記6種類のSecretsを設定済みです。ローカルに公証用パスワードを保存する必要はありません。リポジトリのルートから、版を更新してテストした後に実行します（`N` は実際の版に置き換えてください）。
+
+```sh
+git add src/Revclip/project.yml src/Revclip/Revclip/Info.plist
+git commit -m "Prepare release 0.0.N"
+git push origin main
+git tag v0.0.N
+git push origin v0.0.N
+gh run list --workflow release.yml
+# 表示されたReleaseのIDを指定
+gh run watch RUN_ID --exit-status
+```
+
+成功後、GitHub ReleasesのDMGをダウンロードし、アプリの更新確認まで検証します。証明書・Appleの認証情報を失効または更新した場合は対応するSecretsも更新してください。Sparkle鍵の変更は既存ユーザーの更新検証に影響するため、通常のリリースで作り直さないでください。
+
+## 旧版からの移行
+
+旧版が参照する公開gistには、v0.0.25の署名付きappcastを残しています。旧版はこのDMGで新しい更新先へ移り、以後はこのリポジトリのFeedを使用します。この互換用gistとv0.0.25のリリース資産は削除しないでください。今後の通常リリースで旧リポジトリを更新する必要はありません。
