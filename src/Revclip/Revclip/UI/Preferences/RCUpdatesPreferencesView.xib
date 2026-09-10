@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2024-2026 Revclip. Licensed under the MIT License. -->
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24116" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24116"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="RCUpdatesPreferencesViewController">
+            <connections>
+                <outlet property="automaticCheckButton" destination="h2L-C6-CtQ" id="9M5-7j-7Dm"/>
+                <outlet property="checkIntervalPopUpButton" destination="4Nx-9w-HRR" id="qQW-F3-qSp"/>
+                <outlet property="checkNowButton" destination="Qgg-fD-IJT" id="wWz-TJ-FkF"/>
+                <outlet property="checkProgressIndicator" destination="aWe-iw-EuD" id="W8g-b1-Xf0"/>
+                <outlet property="versionInfoLabel" destination="4qK-4z-vwY" id="N9M-53-vgR"/>
+                <outlet property="view" destination="PAf-qP-Ikr" id="BaA-KQ-2Yz"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customView id="PAf-qP-Ikr">
+            <rect key="frame" x="0.0" y="0.0" width="700" height="200"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <subviews>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="h2L-C6-CtQ">
+                    <rect key="frame" x="20" y="162" width="217" height="18"/>
+                    <buttonCell key="cell" type="check" title="自動的にアップデートを確認" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="eTQ-ae-LlQ">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="automaticCheckToggled:" target="-2" id="Qjb-RB-Owq"/>
+                    </connections>
+                </button>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="H8Y-WN-YRt" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                    <rect key="frame" x="20" y="130" width="82" height="17"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="確認間隔:" id="n0h-kP-D2h">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="4Nx-9w-HRR">
+                    <rect key="frame" x="114" y="124" width="120" height="26"/>
+                    <popUpButtonCell key="cell" type="push" title="毎日" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="F0z-FY-hWw" id="Qbq-9x-u7d">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" id="CUJ-Zn-eJ8">
+                            <items>
+                                <menuItem title="毎日" state="on" tag="86400" id="F0z-FY-hWw"/>
+                                <menuItem title="毎週" tag="604800" id="dV1-6K-i2N"/>
+                                <menuItem title="毎月" tag="2592000" id="yyd-84-J9K"/>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="checkIntervalChanged:" target="-2" id="4ZX-Df-aEA"/>
+                    </connections>
+                </popUpButton>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Qgg-fD-IJT">
+                    <rect key="frame" x="20" y="20" width="97" height="32"/>
+                    <buttonCell key="cell" type="push" title="今すぐ確認" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="4h6-KP-YBH">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="checkNowClicked:" target="-2" id="aiY-4e-zwN"/>
+                    </connections>
+                </button>
+                <progressIndicator hidden="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" displayedWhenStopped="NO" controlSize="small" indeterminate="YES" style="spinning" id="aWe-iw-EuD">
+                    <rect key="frame" x="125" y="28" width="16" height="16"/>
+                    <progressIndicatorCell key="cell" controlSize="small" indeterminate="YES" style="spinning"/>
+                </progressIndicator>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="4qK-4z-vwY" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                    <rect key="frame" x="358" y="27" width="102" height="17"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="バージョン -" id="Z8L-zv-szg">
+                        <font key="font" metaFont="smallSystem"/>
+                        <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+            </subviews>
+            <constraints>
+                <constraint firstAttribute="width" constant="700" id="x3F-cS-svT"/>
+                <constraint firstAttribute="height" constant="200" id="d8w-z1-xMe"/>
+                <constraint firstItem="h2L-C6-CtQ" firstAttribute="leading" secondItem="PAf-qP-Ikr" secondAttribute="leading" constant="20" id="bnf-oz-s7p"/>
+                <constraint firstItem="h2L-C6-CtQ" firstAttribute="top" secondItem="PAf-qP-Ikr" secondAttribute="top" constant="20" id="Mz0-dG-FwW"/>
+                <constraint firstItem="H8Y-WN-YRt" firstAttribute="leading" secondItem="h2L-C6-CtQ" secondAttribute="leading" id="WF8-Og-X0r"/>
+                <constraint firstItem="H8Y-WN-YRt" firstAttribute="top" secondItem="h2L-C6-CtQ" secondAttribute="bottom" constant="14" id="4fo-v2-tWR"/>
+                <constraint firstItem="4Nx-9w-HRR" firstAttribute="leading" secondItem="H8Y-WN-YRt" secondAttribute="trailing" constant="12" id="j4Q-dE-xs4"/>
+                <constraint firstItem="4Nx-9w-HRR" firstAttribute="centerY" secondItem="H8Y-WN-YRt" secondAttribute="centerY" id="fLZ-eH-nhG"/>
+                <constraint firstItem="4Nx-9w-HRR" firstAttribute="width" constant="120" id="utx-j3-djX"/>
+                <constraint firstItem="Qgg-fD-IJT" firstAttribute="leading" secondItem="h2L-C6-CtQ" secondAttribute="leading" id="cYr-iV-cGd"/>
+                <constraint firstAttribute="bottom" secondItem="Qgg-fD-IJT" secondAttribute="bottom" constant="20" id="A6h-ZA-ZfT"/>
+                <constraint firstItem="aWe-iw-EuD" firstAttribute="leading" secondItem="Qgg-fD-IJT" secondAttribute="trailing" constant="8" id="4Mm-Q7-qRE"/>
+                <constraint firstItem="aWe-iw-EuD" firstAttribute="centerY" secondItem="Qgg-fD-IJT" secondAttribute="centerY" id="x4o-wb-6pJ"/>
+                <constraint firstItem="aWe-iw-EuD" firstAttribute="width" constant="16" id="16C-FN-llh"/>
+                <constraint firstItem="aWe-iw-EuD" firstAttribute="height" constant="16" id="ZJ6-b8-RhS"/>
+                <constraint firstAttribute="trailing" secondItem="4qK-4z-vwY" secondAttribute="trailing" constant="20" id="Vpi-Cv-zdc"/>
+                <constraint firstItem="4qK-4z-vwY" firstAttribute="centerY" secondItem="Qgg-fD-IJT" secondAttribute="centerY" id="eQ5-pE-w8d"/>
+                <constraint firstItem="4qK-4z-vwY" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="Qgg-fD-IJT" secondAttribute="trailing" constant="12" id="7KR-BU-PeC"/>
+            </constraints>
+            <point key="canvasLocation" x="118" y="178"/>
+        </customView>
+    </objects>
+</document>

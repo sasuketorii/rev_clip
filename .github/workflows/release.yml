@@ -1,0 +1,342 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-26
+    env:
+      PROJECT_DIR: src/Revclip
+      SCHEME: Revclip
+      RELEASE_DIR: ${{ github.workspace }}/build/release
+      ARCHIVE_PATH: ${{ github.workspace }}/build/release/Revclip.xcarchive
+      SPARKLE_VERSION: 2.9.6
+      SPARKLE_TARBALL_SHA256: 52bf9e88cdd972fc0c81501377a880e90d47031bd8ca5462488f843e2609e192
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Select Xcode 26.6
+        run: |
+          set -euo pipefail
+          # Pin the latest stable Xcode 26.x on macos-26 (arm64). Do not use Xcode 27 beta.
+          # Path from https://github.com/actions/runner-images/blob/main/images/macos/macos-26-arm64-Readme.md
+          XCODE_PATH="/Applications/Xcode_26.6.app"
+          if [[ ! -d "${XCODE_PATH}" ]]; then
+            echo "Xcode 26.6 not found at ${XCODE_PATH}"
+            ls -d /Applications/Xcode_*.app 2>/dev/null || true
+            exit 1
+          fi
+          sudo xcode-select -s "${XCODE_PATH}"
+          xcodebuild -version
+
+      # Required secret:
+      # - Repository Settings -> Secrets and variables -> Actions -> New repository secret
+      # - Name: SPARKLE_PRIVATE_KEY
+      # - Value: Sparkle private EdDSA key (from generate_keys)
+      - name: Validate required secrets
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+          APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${SPARKLE_PRIVATE_KEY}" ]]; then
+            echo "SPARKLE_PRIVATE_KEY is not configured."
+            exit 1
+          fi
+          if [[ -z "${APPLE_CERTIFICATE_P12}" ]]; then
+            echo "APPLE_CERTIFICATE_P12 is not configured."
+            exit 1
+          fi
+
+      - name: Import Apple certificate
+        env:
+          APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN_PATH="${RUNNER_TEMP}/app-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
+          CERTIFICATE_PATH="${RUNNER_TEMP}/apple-certificate.p12"
+
+          if ! printf '%s' "${APPLE_CERTIFICATE_P12}" | base64 --decode > "${CERTIFICATE_PATH}" 2>/dev/null; then
+            printf '%s' "${APPLE_CERTIFICATE_P12}" | base64 -D > "${CERTIFICATE_PATH}"
+          fi
+
+          security create-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
+          security set-keychain-settings -lut 21600 "${KEYCHAIN_PATH}"
+          security unlock-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
+          security import "${CERTIFICATE_PATH}" \
+            -k "${KEYCHAIN_PATH}" \
+            -P "${APPLE_CERTIFICATE_PASSWORD}" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/security \
+            -T /usr/bin/productbuild \
+            -T /usr/bin/xcodebuild
+          security list-keychains -d user -s "${KEYCHAIN_PATH}" "${HOME}/Library/Keychains/login.keychain-db"
+          security default-keychain -d user -s "${KEYCHAIN_PATH}"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
+
+          echo "KEYCHAIN_PATH=${KEYCHAIN_PATH}" >> "${GITHUB_ENV}"
+          rm -f "${CERTIFICATE_PATH}"
+
+      - name: Install XcodeGen
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            brew install xcodegen
+          fi
+
+      - name: Generate Xcode project
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          set -euo pipefail
+          xcodegen generate
+
+      - name: Validate version matches tag
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          TAG_PATCH=$(echo "$TAG_VERSION" | cut -d. -f3)
+          YML_SHORT=$(sed -nE 's/^[[:space:]]*CFBundleShortVersionString:[[:space:]]*"([^"]+)".*/\1/p' project.yml | head -n1)
+          YML_BUILD=$(sed -nE 's/^[[:space:]]*CFBundleVersion:[[:space:]]*"([^"]+)".*/\1/p' project.yml | head -n1)
+
+          if [[ -z "$YML_SHORT" ]]; then
+            echo "::error::Failed to read CFBundleShortVersionString from project.yml"
+            exit 1
+          fi
+          if [[ -z "$YML_BUILD" ]]; then
+            echo "::error::Failed to read CFBundleVersion from project.yml"
+            exit 1
+          fi
+
+          ERRORS=0
+          if [[ "$YML_SHORT" != "$TAG_VERSION" ]]; then
+            echo "::error::project.yml CFBundleShortVersionString ($YML_SHORT) != tag ($TAG_VERSION)"
+            ERRORS=1
+          fi
+          if [[ "$YML_BUILD" != "$TAG_PATCH" ]]; then
+            echo "::error::project.yml CFBundleVersion ($YML_BUILD) != expected ($TAG_PATCH)"
+            ERRORS=1
+          fi
+          if [[ "$ERRORS" -ne 0 ]]; then
+            echo ""
+            echo "Fix: Update CFBundleShortVersionString and CFBundleVersion in project.yml before tagging."
+            exit 1
+          fi
+          echo "Version validation passed: $TAG_VERSION (build $TAG_PATCH)"
+
+      - name: Download Sparkle tools
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/sparkle-tools
+          SPARKLE_ARCHIVE="/tmp/sparkle-tools/sparkle.tar.xz"
+          curl -fsSL \
+            "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz" \
+            -o "${SPARKLE_ARCHIVE}"
+
+          echo "${SPARKLE_TARBALL_SHA256}  ${SPARKLE_ARCHIVE}" | shasum -a 256 -c -
+
+          tar -xJf "${SPARKLE_ARCHIVE}" -C /tmp/sparkle-tools
+          GENERATE_APPCAST_PATH="$(find /tmp/sparkle-tools -type f -path '*/bin/generate_appcast' -print -quit || true)"
+          if [[ -z "${GENERATE_APPCAST_PATH}" ]]; then
+            echo "Failed to locate generate_appcast in downloaded Sparkle tools."
+            exit 1
+          fi
+          SPARKLE_BIN="$(dirname "${GENERATE_APPCAST_PATH}")"
+          echo "SPARKLE_BIN=${SPARKLE_BIN}" >> "${GITHUB_ENV}"
+
+      - name: Build archive (with signing + hardened runtime)
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          mkdir -p "${RELEASE_DIR}"
+          rm -rf "${ARCHIVE_PATH}"
+          xcodebuild archive \
+            -project "${PROJECT_DIR}/Revclip.xcodeproj" \
+            -scheme "${SCHEME}" \
+            -configuration Release \
+            -archivePath "${ARCHIVE_PATH}" \
+            -destination "generic/platform=macOS" \
+            SKIP_INSTALL=NO \
+            CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGN_IDENTITY="Developer ID Application" \
+            DEVELOPMENT_TEAM="${APPLE_TEAM_ID}" \
+            CODE_SIGN_STYLE=Manual \
+            ENABLE_HARDENED_RUNTIME=YES \
+            ONLY_ACTIVE_ARCH=NO
+
+      - name: Extract .app from archive
+        run: |
+          set -euo pipefail
+          ARCHIVED_APP_PATH="${ARCHIVE_PATH}/Products/Applications/Revclip.app"
+          if [[ ! -d "${ARCHIVED_APP_PATH}" ]]; then
+            echo "Archived app not found: ${ARCHIVED_APP_PATH}"
+            exit 1
+          fi
+
+          EXPORTED_APP_PATH="${RELEASE_DIR}/Revclip.app"
+          rm -rf "${EXPORTED_APP_PATH}"
+          ditto "${ARCHIVED_APP_PATH}" "${EXPORTED_APP_PATH}"
+          echo "APP_PATH=${EXPORTED_APP_PATH}" >> "${GITHUB_ENV}"
+
+      - name: Re-sign Sparkle framework for notarization
+        run: |
+          set -euo pipefail
+          SPARKLE_FW="${APP_PATH}/Contents/Frameworks/Sparkle.framework"
+          if [[ ! -d "${SPARKLE_FW}" ]]; then
+            echo "Sparkle.framework not found: ${SPARKLE_FW}"
+            exit 1
+          fi
+
+          SIGN_IDENTITY="Developer ID Application"
+
+          # Sign from inside out: XPC services first, then apps, then framework
+          # XPC Services
+          for xpc in "${SPARKLE_FW}/Versions/B/XPCServices/"*.xpc; do
+            if [[ -d "${xpc}" ]]; then
+              codesign --force --options runtime --timestamp --sign "${SIGN_IDENTITY}" "${xpc}"
+            fi
+          done
+
+          # Updater.app
+          if [[ -d "${SPARKLE_FW}/Versions/B/Updater.app" ]]; then
+            codesign --force --options runtime --timestamp --sign "${SIGN_IDENTITY}" "${SPARKLE_FW}/Versions/B/Updater.app"
+          fi
+
+          # Autoupdate binary
+          if [[ -f "${SPARKLE_FW}/Versions/B/Autoupdate" ]]; then
+            codesign --force --options runtime --timestamp --sign "${SIGN_IDENTITY}" "${SPARKLE_FW}/Versions/B/Autoupdate"
+          fi
+
+          # Sparkle framework itself
+          codesign --force --options runtime --timestamp --sign "${SIGN_IDENTITY}" "${SPARKLE_FW}"
+
+          # Re-sign the main app (since framework signature changed)
+          codesign --force --options runtime --timestamp --sign "${SIGN_IDENTITY}" "${APP_PATH}"
+
+          # Verify
+          codesign --verify --deep --strict "${APP_PATH}"
+
+      - name: Package DMG
+        run: |
+          set -euo pipefail
+          if [[ ! -d "${APP_PATH}" ]]; then
+            echo "App bundle not found: ${APP_PATH}"
+            exit 1
+          fi
+
+          DMG_PATH="${RELEASE_DIR}/Revclip-${GITHUB_REF_NAME}.dmg"
+          STAGING_DIR="${RUNNER_TEMP}/dmg-staging"
+          rm -rf "${STAGING_DIR}"
+          mkdir -p "${STAGING_DIR}"
+          ditto "${APP_PATH}" "${STAGING_DIR}/Revclip.app"
+          ln -s /Applications "${STAGING_DIR}/Applications"
+
+          hdiutil create \
+            -volname "Revclip" \
+            -srcfolder "${STAGING_DIR}" \
+            -format UDZO \
+            -ov \
+            "${DMG_PATH}"
+
+          echo "DMG_PATH=${DMG_PATH}" >> "${GITHUB_ENV}"
+
+      - name: Notarize DMG
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          if [[ ! -f "${DMG_PATH}" ]]; then
+            echo "DMG not found: ${DMG_PATH}"
+            exit 1
+          fi
+
+          xcrun notarytool submit "${DMG_PATH}" \
+            --apple-id "${APPLE_ID}" \
+            --password "${APPLE_APP_PASSWORD}" \
+            --team-id "${APPLE_TEAM_ID}" \
+            --wait
+
+          xcrun stapler staple "${DMG_PATH}"
+
+      - name: Sign DMG with Sparkle EdDSA
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          SIGN_UPDATE="${SPARKLE_BIN}/sign_update"
+          if [[ ! -x "${SIGN_UPDATE}" ]]; then
+            echo "sign_update not found: ${SIGN_UPDATE}"
+            exit 1
+          fi
+
+          # Validate key + produce signature. Signature is not logged.
+          printf '%s' "${SPARKLE_PRIVATE_KEY}" | "${SIGN_UPDATE}" --ed-key-file - -p "${DMG_PATH}" > /dev/null
+
+      - name: Generate appcast.xml
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          APPCAST_PATH="${RELEASE_DIR}/appcast.xml"
+          GENERATE_APPCAST="${SPARKLE_BIN}/generate_appcast"
+          if [[ ! -x "${GENERATE_APPCAST}" ]]; then
+            echo "generate_appcast not found: ${GENERATE_APPCAST}"
+            exit 1
+          fi
+
+          DOWNLOAD_PREFIX="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/"
+          printf '%s' "${SPARKLE_PRIVATE_KEY}" | \
+            "${GENERATE_APPCAST}" \
+              --ed-key-file - \
+              --download-url-prefix "${DOWNLOAD_PREFIX}" \
+              --link "https://github.com/${GITHUB_REPOSITORY}/releases" \
+              -o "${APPCAST_PATH}" \
+              "${RELEASE_DIR}"
+
+          echo "APPCAST_PATH=${APPCAST_PATH}" >> "${GITHUB_ENV}"
+
+      - name: Validate appcast.xml contains EdDSA signature
+        run: |
+          set -euo pipefail
+          if [[ ! -f "${APPCAST_PATH}" ]]; then
+            echo "appcast.xml not found: ${APPCAST_PATH}"
+            exit 1
+          fi
+
+          if ! grep -Eq 'sparkle:edSignature="[^"]+"' "${APPCAST_PATH}"; then
+            echo "ERROR: appcast.xml does not contain a non-empty sparkle:edSignature."
+            echo "This means the Sparkle EdDSA signing failed silently."
+            echo "Check that SPARKLE_PRIVATE_KEY matches the SUPublicEDKey in the app."
+            cat "${APPCAST_PATH}"
+            exit 1
+          fi
+
+          echo "appcast.xml validation passed: EdDSA signature found."
+
+      - name: Publish GitHub Release with assets
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            ${{ env.DMG_PATH }}
+            ${{ env.APPCAST_PATH }}
+          generate_release_notes: true
+
+      - name: Cleanup temporary keychain
+        if: always()
+        run: |
+          set -euo pipefail
+          if [[ -n "${KEYCHAIN_PATH:-}" ]]; then
+            security delete-keychain "${KEYCHAIN_PATH}" || true
+          fi

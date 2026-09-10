@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2024-2026 Revclip. Licensed under the MIT License. -->
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24116" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24116"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
+            <connections>
+                <outlet property="delegate" destination="RCd-YX-z1K" id="dTg-Qn-b34"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <customObject id="RCd-YX-z1K" userLabel="AppDelegate" customClass="RCAppDelegate"/>
+        <menu title="MainMenu" systemMenu="main" id="M9f-Bh-3ry">
+            <items>
+                <menuItem title="Revclip" id="t4q-Ln-F0x">
+                    <menu key="submenu" title="Revclip" systemMenu="apple" id="m2M-7M-q1P">
+                        <items>
+                            <menuItem title="About Revclip" id="A9y-Ap-qzN">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="orderFrontStandardAboutPanel:" target="-1" id="c8c-T2-tQ5"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="rQm-JX-4Pb">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
+                            <menuItem title="Quit Revclip" keyEquivalent="q" id="KcD-Zd-z5u">
+                                <connections>
+                                    <action selector="terminate:" target="-1" id="ajg-pW-Cg8"/>
+                                </connections>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
+                <menuItem title="Edit" id="edt-M0-menu">
+                    <menu key="submenu" title="Edit" id="edt-M1-subm">
+                        <items>
+                            <menuItem title="Undo" keyEquivalent="z" id="edt-U0-undo">
+                                <connections>
+                                    <action selector="undo:" target="-1" id="edt-U1-act"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Redo" keyEquivalent="Z" id="edt-R0-redo">
+                                <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+                                <connections>
+                                    <action selector="redo:" target="-1" id="edt-R1-act"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="edt-S0-sep1">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
+                            <menuItem title="Cut" keyEquivalent="x" id="edt-C0-cut">
+                                <connections>
+                                    <action selector="cut:" target="-1" id="edt-C1-act"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Copy" keyEquivalent="c" id="edt-C2-copy">
+                                <connections>
+                                    <action selector="copy:" target="-1" id="edt-C3-act"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Paste" keyEquivalent="v" id="edt-P0-pste">
+                                <connections>
+                                    <action selector="paste:" target="-1" id="edt-P1-act"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Delete" id="edt-D0-dele">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="delete:" target="-1" id="edt-D1-act"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Select All" keyEquivalent="a" id="edt-A0-sela">
+                                <connections>
+                                    <action selector="selectAll:" target="-1" id="edt-A1-act"/>
+                                </connections>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
+                <menuItem title="File" id="xJ0-zN-3xU">
+                    <menu key="submenu" title="File" systemMenu="file" id="V6Q-BM-uQn">
+                        <items>
+                            <menuItem title="Import Snippets..." id="HVK-3U-jg9">
+                                <connections>
+                                    <action selector="importSnippets:" target="RCd-YX-z1K" id="wFh-vQ-2v8"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Export Snippets..." id="zM9-aW-Jhj">
+                                <connections>
+                                    <action selector="exportSnippets:" target="RCd-YX-z1K" id="W3V-jV-zHM"/>
+                                </connections>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
+            </items>
+        </menu>
+    </objects>
+</document>

@@ -1,0 +1,177 @@
+"History" = "历史记录";
+"Snippets" = "片段";
+"Edit Templates..." = "编辑模板...";
+"Preferences..." = "偏好设置...";
+"Quit Revclip" = "退出 Revclip";
+"Clear All" = "全部清除";
+"Clear All History" = "清除所有历史记录";
+"Are you sure you want to clear all clipboard history?" = "确定要清除所有剪贴板历史记录吗？";
+"Cancel" = "取消";
+"Delete" = "删除";
+"Delete this folder and all its snippets?" = "删除此文件夹及其所有片段吗？";
+"Target folder: %@" = "目标文件夹: %@";
+"Delete this snippet?" = "删除此片段吗？";
+"Target snippet: %@" = "目标片段: %@";
+
+"General" = "通用";
+"Menu" = "菜单";
+"Type" = "类型";
+"Excluded Apps" = "排除的应用";
+"Shortcuts" = "快捷键";
+"Updates" = "更新";
+"Beta" = "测试版";
+
+"Launch Revclip on login" = "登录时启动 Revclip";
+"Max clipboard history size" = "剪贴板历史记录最大数量";
+"Max menu items to display" = "菜单中显示的最大项目数";
+
+"Main" = "主菜单";
+"Click to record shortcut" = "点击以录制快捷键";
+
+"Template Editor" = "模板编辑器";
+"Add Folder" = "添加文件夹";
+"Add Snippet" = "添加片段";
+"Title:" = "标题:";
+"Content:" = "内容:";
+"Shortcut:" = "快捷键:";
+"Save" = "保存";
+"Save with ⌘S" = "按 ⌘S 保存";
+"Untitled Folder" = "未命名文件夹";
+"Untitled Snippet" = "未命名片段";
+
+"Import Snippets..." = "导入片段...";
+"Export Snippets..." = "导出片段...";
+"Merge" = "合并";
+"Replace" = "替换";
+
+"Excluded Applications" = "排除的应用程序";
+"Add Current App" = "添加当前应用";
+"Cannot add current application" = "无法添加当前应用程序";
+
+"Check for Updates" = "检查更新";
+"Automatically check for updates" = "自动检查更新";
+"Version" = "版本";
+
+// Menu
+"No History" = "No History";
+"No Snippets" = "No Snippets";
+"(Empty)" = "(Empty)";
+"Clear History" = "Clear History";
+"Items %lu-%lu" = "Items %lu-%lu";
+"Clear clipboard history?" = "Clear clipboard history?";
+"All saved clips will be removed." = "All saved clips will be removed.";
+"Clear" = "Clear";
+"Search Snippets" = "搜索片段";
+"Snippet" = "片段";
+"Folder" = "文件夹";
+"Saved!" = "已保存！";
+"Paste" = "Paste";
+
+// Fallback titles
+"Image" = "Image";
+"URL" = "URL";
+"PDF" = "PDF";
+"Rich Text" = "Rich Text";
+"Files" = "Files";
+"Clip" = "Clip";
+
+// Import/Export
+"Failed to Import Snippets" = "Failed to Import Snippets";
+"Failed to Export Snippets" = "Failed to Export Snippets";
+"An unknown error occurred." = "An unknown error occurred.";
+"OK" = "OK";
+"How do you want to import snippets?" = "How do you want to import snippets?";
+"Choose whether to merge with existing snippets or replace them all." = "Choose whether to merge with existing snippets or replace them all.";
+"Merge with existing snippets" = "Merge with existing snippets";
+"Replace all snippets" = "Replace all snippets";
+
+// Shortcuts Prefs
+"Reset all shortcuts to defaults?" = "Reset all shortcuts to defaults?";
+"Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed." = "Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed.";
+"Reset" = "Reset";
+
+// Exclude Prefs
+"Application" = "Application";
+"Add" = "Add";
+"The frontmost application is Revclip itself. Please switch to the application you want to exclude, then click this button." = "The frontmost application is Revclip itself. Please switch to the application you want to exclude, then click this button.";
+
+// Menu Prefs
+"Menu Settings" = "Menu Settings";
+"Number of items inline" = "Number of items inline";
+"Number of items in folder" = "Number of items in folder";
+"Max title length" = "Max title length";
+"Mark with numbers" = "Mark with numbers";
+"Start numbering from 0" = "Start numbering from 0";
+"Add numeric key equivalents" = "Add numeric key equivalents";
+"Add clear history item" = "Add clear history item";
+"Show alert before clear" = "Show alert before clear";
+"Show tooltip" = "Show tooltip";
+"Max tooltip length" = "Max tooltip length";
+"Show image preview" = "Show image preview";
+"Thumbnail width" = "Thumbnail width";
+"Thumbnail height" = "Thumbnail height";
+"Show color preview" = "Show color preview";
+"Show icon" = "Show icon";
+"Icon size" = "Icon size";
+
+// General Prefs
+"Hide" = "Hide";
+"Show" = "Show";
+
+// HotKey Recorder
+"Type shortcut" = "Type shortcut";
+"Click to record" = "Click to record";
+"This shortcut may not work" = "This shortcut may not work";
+"On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control.";
+
+// Template Editor
+"New Folder" = "New Folder";
+"New Snippet" = "New Snippet";
+
+// Updates Prefs
+"Not Available Yet" = "Not Available Yet";
+"Update checking will be available in a future release." = "Update checking will be available in a future release.";
+
+// Accessibility
+"Revclip requires Accessibility permission" = "Revclip requires Accessibility permission";
+"Revclip needs Accessibility permission to paste clipboard items. Please enable it in System Settings > Privacy & Security > Accessibility." = "Revclip needs Accessibility permission to paste clipboard items. Please enable it in System Settings > Privacy & Security > Accessibility.";
+"Open System Settings" = "Open System Settings";
+"Later" = "Later";
+
+// Clipboard privacy (macOS 15.4+)
+"Revclip needs clipboard access" = "Revclip needs clipboard access";
+"macOS requires explicit permission for clipboard access. Please allow Revclip to access the clipboard in System Settings." = "macOS requires explicit permission for clipboard access. Please allow Revclip to access the clipboard in System Settings.";
+
+// Preferences Window
+"Preferences" = "偏好设置";
+
+// Version Info
+"Version %@ (%@)" = "版本 %@ (%@)";
+"Version %@" = "版本 %@";
+"Build %@" = "构建版本 %@";
+"Version -" = "版本 -";
+
+// Move to Applications
+"Move to Applications folder?" = "移动到应用程序文件夹？";
+"Revclip needs to be in the Applications folder to work properly. Would you like to move it there?" = "Revclip 需要位于应用程序文件夹中才能正常工作。是否要将其移动到那里？";
+"Move to Applications" = "移动到应用程序";
+"Do Not Move" = "不移动";
+"Could not move Revclip to Applications folder" = "无法将 Revclip 移动到应用程序文件夹";
+"An unknown error occurred while moving Revclip." = "移动 Revclip 时发生未知错误。";
+"Failed to relaunch the app from Applications." = "无法从应用程序文件夹重新启动应用。";
+
+"Failed to save snippets. Your changes have not been saved." = "无法保存片段。您的更改尚未保存。";
+"Enabled" = "启用";
+
+"Import" = "导入";
+
+"Export" = "导出";
+
+"Failed to read snippets. Please try again." = "无法读取片段。请重试。";
+
+/* Application appearance */
+"Appearance" = "外观";
+"Theme System" = "跟随系统";
+"Theme Light" = "浅色";
+"Theme Dark" = "深色";
+"Theme Description" = "选择菜单、设置和模板编辑器的外观。";

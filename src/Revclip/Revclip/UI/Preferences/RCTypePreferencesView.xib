@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2024-2026 Revclip. Licensed under the MIT License. -->
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24116" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24116"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="RCTypePreferencesViewController">
+            <connections>
+                <outlet property="view" destination="gM5-Ve-oPY" id="Rp8-W8-jwF"/>
+                <outlet property="plainTextCheckbox" destination="Q3L-yN-8fU" id="B2m-Lc-Rtr"/>
+                <outlet property="richTextCheckbox" destination="w6h-gv-wFb" id="e9Q-8M-zxi"/>
+                <outlet property="richTextWithAttachmentsCheckbox" destination="fQk-z2-llx" id="JdE-Dq-8h3"/>
+                <outlet property="pdfCheckbox" destination="gAq-6E-Z6f" id="a6j-8E-VXK"/>
+                <outlet property="filenamesCheckbox" destination="p7B-J5-AyW" id="V5Y-Jd-fWg"/>
+                <outlet property="urlCheckbox" destination="ZxV-hR-YSk" id="8wA-4g-vV1"/>
+                <outlet property="imagesTiffCheckbox" destination="v1S-Qe-zWu" id="x6G-Wi-V0m"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customView id="gM5-Ve-oPY">
+            <rect key="frame" x="0.0" y="0.0" width="700" height="280"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <subviews>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="sJ4-a6-YEq" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                    <rect key="frame" x="20" y="241" width="72" height="20"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="保存タイプ" id="7yw-t6-KP3">
+                        <font key="font" metaFont="message"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="g2N-9m-WPN" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                    <rect key="frame" x="20" y="221" width="369" height="17"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="クリップボード履歴に保存するペーストボードタイプを選択してください。" id="4dM-4m-v0d">
+                        <font key="font" metaFont="smallSystem"/>
+                        <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Q3L-yN-8fU">
+                    <rect key="frame" x="20" y="192" width="231" height="18"/>
+                    <buttonCell key="cell" type="check" title="プレーンテキスト (NSPasteboardTypeString)" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="D3w-gA-8QJ">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="storeTypeCheckboxDidChange:" target="-2" id="qQ1-N2-zvA"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="w6h-gv-wFb">
+                    <rect key="frame" x="20" y="166" width="230" height="18"/>
+                    <buttonCell key="cell" type="check" title="リッチテキスト (RTF) (NSPasteboardTypeRTF)" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="rL9-bK-Wx9">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="storeTypeCheckboxDidChange:" target="-2" id="Qk8-oU-x5Y"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="fQk-z2-llx">
+                    <rect key="frame" x="20" y="140" width="351" height="18"/>
+                    <buttonCell key="cell" type="check" title="添付付きリッチテキスト (RTFD) (NSPasteboardTypeRTFD)" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="w8y-aV-MhG">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="storeTypeCheckboxDidChange:" target="-2" id="c8X-3Q-HtS"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gAq-6E-Z6f">
+                    <rect key="frame" x="20" y="114" width="171" height="18"/>
+                    <buttonCell key="cell" type="check" title="PDF (NSPasteboardTypePDF)" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Xq9-19-kLj">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="storeTypeCheckboxDidChange:" target="-2" id="UXv-AE-6rX"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="p7B-J5-AyW">
+                    <rect key="frame" x="20" y="88" width="204" height="18"/>
+                    <buttonCell key="cell" type="check" title="ファイル名 (NSFilenamesPboardType)" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="k8p-Pw-N0g">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="storeTypeCheckboxDidChange:" target="-2" id="9hH-a5-Mh5"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ZxV-hR-YSk">
+                    <rect key="frame" x="20" y="62" width="171" height="18"/>
+                    <buttonCell key="cell" type="check" title="URL (NSPasteboardTypeURL)" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="z3J-YL-9kD">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="storeTypeCheckboxDidChange:" target="-2" id="7Ea-Hm-zN1"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="v1S-Qe-zWu">
+                    <rect key="frame" x="20" y="36" width="205" height="18"/>
+                    <buttonCell key="cell" type="check" title="画像 (TIFF) (NSPasteboardTypeTIFF)" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="fY2-kC-G4L">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="storeTypeCheckboxDidChange:" target="-2" id="pM8-L2-BxQ"/>
+                    </connections>
+                </button>
+            </subviews>
+            <constraints>
+                <constraint firstAttribute="width" constant="700" id="xKu-Ng-xmy"/>
+                <constraint firstAttribute="height" constant="280" id="SK8-QQ-GbM"/>
+                <constraint firstItem="sJ4-a6-YEq" firstAttribute="top" secondItem="gM5-Ve-oPY" secondAttribute="top" constant="20" id="4b3-Vf-SnK"/>
+                <constraint firstItem="sJ4-a6-YEq" firstAttribute="leading" secondItem="gM5-Ve-oPY" secondAttribute="leading" constant="20" id="Pq9-zf-g5Q"/>
+                <constraint firstItem="g2N-9m-WPN" firstAttribute="top" secondItem="sJ4-a6-YEq" secondAttribute="bottom" constant="8" id="t9H-v6-TkB"/>
+                <constraint firstItem="g2N-9m-WPN" firstAttribute="leading" secondItem="gM5-Ve-oPY" secondAttribute="leading" constant="20" id="dQ0-fN-m2h"/>
+                <constraint firstItem="gM5-Ve-oPY" firstAttribute="trailing" secondItem="g2N-9m-WPN" secondAttribute="trailing" constant="20" id="N8m-Xv-Ps8"/>
+                <constraint firstItem="Q3L-yN-8fU" firstAttribute="top" secondItem="g2N-9m-WPN" secondAttribute="bottom" constant="16" id="em7-u8-G0f"/>
+                <constraint firstItem="Q3L-yN-8fU" firstAttribute="leading" secondItem="gM5-Ve-oPY" secondAttribute="leading" constant="20" id="v3E-Bx-f6k"/>
+                <constraint firstItem="w6h-gv-wFb" firstAttribute="top" secondItem="Q3L-yN-8fU" secondAttribute="bottom" constant="8" id="cM6-Du-3F8"/>
+                <constraint firstItem="w6h-gv-wFb" firstAttribute="leading" secondItem="gM5-Ve-oPY" secondAttribute="leading" constant="20" id="bX0-b2-p6Q"/>
+                <constraint firstItem="fQk-z2-llx" firstAttribute="top" secondItem="w6h-gv-wFb" secondAttribute="bottom" constant="8" id="w2f-8Y-UoM"/>
+                <constraint firstItem="fQk-z2-llx" firstAttribute="leading" secondItem="gM5-Ve-oPY" secondAttribute="leading" constant="20" id="Dh4-X5-zW5"/>
+                <constraint firstItem="gAq-6E-Z6f" firstAttribute="top" secondItem="fQk-z2-llx" secondAttribute="bottom" constant="8" id="s4X-Pu-L0W"/>
+                <constraint firstItem="gAq-6E-Z6f" firstAttribute="leading" secondItem="gM5-Ve-oPY" secondAttribute="leading" constant="20" id="wF7-y1-rFh"/>
+                <constraint firstItem="p7B-J5-AyW" firstAttribute="top" secondItem="gAq-6E-Z6f" secondAttribute="bottom" constant="8" id="7rQ-X1-zY9"/>
+                <constraint firstItem="p7B-J5-AyW" firstAttribute="leading" secondItem="gM5-Ve-oPY" secondAttribute="leading" constant="20" id="S1M-Wj-oU1"/>
+                <constraint firstItem="ZxV-hR-YSk" firstAttribute="top" secondItem="p7B-J5-AyW" secondAttribute="bottom" constant="8" id="yJf-hQ-jK2"/>
+                <constraint firstItem="ZxV-hR-YSk" firstAttribute="leading" secondItem="gM5-Ve-oPY" secondAttribute="leading" constant="20" id="1kJ-0M-NUr"/>
+                <constraint firstItem="v1S-Qe-zWu" firstAttribute="top" secondItem="ZxV-hR-YSk" secondAttribute="bottom" constant="8" id="mD5-rN-W0J"/>
+                <constraint firstItem="v1S-Qe-zWu" firstAttribute="leading" secondItem="gM5-Ve-oPY" secondAttribute="leading" constant="20" id="vY5-sB-v9X"/>
+            </constraints>
+            <point key="canvasLocation" x="118" y="178"/>
+        </customView>
+    </objects>
+</document>

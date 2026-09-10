@@ -1,0 +1,185 @@
+"History" = "History";
+"Snippets" = "Snippets";
+"Edit Templates..." = "Edit Templates...";
+"Preferences..." = "Preferences...";
+"Quit Revclip" = "Quit Revclip";
+"Clear All" = "Clear All";
+"Clear All History" = "Clear All History";
+"Are you sure you want to clear all clipboard history?" = "Are you sure you want to clear all clipboard history?";
+"Cancel" = "Cancel";
+"Delete" = "Delete";
+"Delete this folder and all its snippets?" = "Delete this folder and all its snippets?";
+"Target folder: %@" = "Target folder: %@";
+"Delete this snippet?" = "Delete this snippet?";
+"Target snippet: %@" = "Target snippet: %@";
+
+"General" = "General";
+"Menu" = "Menu";
+"Type" = "Type";
+"Excluded Apps" = "Excluded Apps";
+"Shortcuts" = "Shortcuts";
+"Updates" = "Updates";
+"Beta" = "Beta";
+
+"Launch Revclip on login" = "Launch Revclip on login";
+"Max clipboard history size" = "Max clipboard history size";
+"Max menu items to display" = "Max menu items to display";
+
+"Main" = "Main";
+"Click to record shortcut" = "Click to record shortcut";
+
+"Template Editor" = "Template Editor";
+"Add Folder" = "Add Folder";
+"Add Snippet" = "Add Snippet";
+"Title:" = "Title:";
+"Content:" = "Content:";
+"Shortcut:" = "Shortcut:";
+"Save" = "Save";
+"Save with ⌘S" = "Save with ⌘S";
+"Enable/Disable" = "Enable/Disable";
+"Untitled Folder" = "Untitled Folder";
+"Untitled Snippet" = "Untitled Snippet";
+
+"Import Snippets..." = "Import Snippets...";
+"Export Snippets..." = "Export Snippets...";
+"Merge" = "Merge";
+"Replace" = "Replace";
+
+"Excluded Applications" = "Excluded Applications";
+"Add Current App" = "Add Current App";
+"Cannot add current application" = "Cannot add current application";
+
+"Check for Updates" = "Check for Updates";
+"Automatically check for updates" = "Automatically check for updates";
+"Version" = "Version";
+
+// Menu
+"No History" = "No History";
+"No Snippets" = "No Snippets";
+"(Empty)" = "(Empty)";
+"Clear History" = "Clear History";
+"Items %lu-%lu" = "Items %lu-%lu";
+"Clear clipboard history?" = "Clear clipboard history?";
+"All saved clips will be removed." = "All saved clips will be removed.";
+"Clear" = "Clear";
+"Search Snippets" = "Search Snippets";
+"Snippet" = "Snippet";
+"Folder" = "Folder";
+"Saved!" = "Saved!";
+"Paste" = "Paste";
+
+// Fallback titles
+"Image" = "Image";
+"URL" = "URL";
+"PDF" = "PDF";
+"Rich Text" = "Rich Text";
+"Files" = "Files";
+"Clip" = "Clip";
+
+// Import/Export
+"Failed to Import Snippets" = "Failed to Import Snippets";
+"Failed to Export Snippets" = "Failed to Export Snippets";
+"An unknown error occurred." = "An unknown error occurred.";
+"OK" = "OK";
+"How do you want to import snippets?" = "How do you want to import snippets?";
+"Choose whether to merge with existing snippets or replace them all." = "Choose whether to merge with existing snippets or replace them all.";
+"Merge with existing snippets" = "Merge with existing snippets";
+"Replace all snippets" = "Replace all snippets";
+
+// Shortcuts Prefs
+"Reset all shortcuts to defaults?" = "Reset all shortcuts to defaults?";
+"Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed." = "Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed.";
+"Reset" = "Reset";
+
+// Exclude Prefs
+"Application" = "Application";
+"Add" = "Add";
+"The frontmost application is Revclip itself. Please switch to the application you want to exclude, then click this button." = "The frontmost application is Revclip itself. Please switch to the application you want to exclude, then click this button.";
+
+// Menu Prefs
+"Menu Settings" = "Menu Settings";
+"Number of items inline" = "Number of items inline";
+"Number of items in folder" = "Number of items in folder";
+"Max title length" = "Max title length";
+"Mark with numbers" = "Mark with numbers";
+"Start numbering from 0" = "Start numbering from 0";
+"Add numeric key equivalents" = "Add numeric key equivalents";
+"Add clear history item" = "Add clear history item";
+"Show alert before clear" = "Show alert before clear";
+"Show tooltip" = "Show tooltip";
+"Max tooltip length" = "Max tooltip length";
+"Show image preview" = "Show image preview";
+"Thumbnail width" = "Thumbnail width";
+"Thumbnail height" = "Thumbnail height";
+"Show color preview" = "Show color preview";
+"Show icon" = "Show icon";
+"Icon size" = "Icon size";
+
+// General Prefs
+"Hide" = "Hide";
+"Show" = "Show";
+
+// HotKey Recorder
+"Type shortcut" = "Type shortcut";
+"Click to record" = "Click to record";
+"This shortcut may not work" = "This shortcut may not work";
+"On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control.";
+
+// Template Editor
+"New Folder" = "New Folder";
+"New Snippet" = "New Snippet";
+
+// Updates Prefs
+"Not Available Yet" = "Not Available Yet";
+"Update checking will be available in a future release." = "Update checking will be available in a future release.";
+
+// Accessibility
+"Revclip requires Accessibility permission" = "Revclip requires Accessibility permission";
+"Revclip needs Accessibility permission to paste clipboard items. Please enable it in System Settings > Privacy & Security > Accessibility." = "Revclip needs Accessibility permission to paste clipboard items. Please enable it in System Settings > Privacy & Security > Accessibility.";
+"Open System Settings" = "Open System Settings";
+"Later" = "Later";
+
+// Clipboard privacy (macOS 15.4+)
+"Revclip needs clipboard access" = "Revclip needs clipboard access";
+"macOS requires explicit permission for clipboard access. Please allow Revclip to access the clipboard in System Settings." = "macOS requires explicit permission for clipboard access. Please allow Revclip to access the clipboard in System Settings.";
+
+// Preferences Window
+"Preferences" = "Preferences";
+
+// Version Info
+"Version %@ (%@)" = "Version %@ (%@)";
+"Version %@" = "Version %@";
+"Build %@" = "Build %@";
+"Version -" = "Version -";
+
+// Move to Applications
+"Move to Applications folder?" = "Move to Applications folder?";
+"Revclip needs to be in the Applications folder to work properly. Would you like to move it there?" = "Revclip needs to be in the Applications folder to work properly. Would you like to move it there?";
+"Move to Applications" = "Move to Applications";
+"Do Not Move" = "Do Not Move";
+"Could not move Revclip to Applications folder" = "Could not move Revclip to Applications folder";
+"An unknown error occurred while moving Revclip." = "An unknown error occurred while moving Revclip.";
+"Failed to relaunch the app from Applications." = "Failed to relaunch the app from Applications.";
+
+"Import" = "Import";
+"Export" = "Export";
+"Import Source" = "Import Source";
+"Choose import source." = "Choose import source.";
+"Import from Clipy Default File" = "Import from Clipy Default File";
+"Choose File..." = "Choose File...";
+"Export Scope" = "Export Scope";
+"Choose what to export." = "Choose what to export.";
+"Export Selected Item" = "Export Selected Item";
+"Export All Snippets" = "Export All Snippets";
+
+"Failed to save snippets. Your changes have not been saved." = "Failed to save snippets. Your changes have not been saved.";
+"Enabled" = "Enabled";
+
+"Failed to read snippets. Please try again." = "Failed to read snippets. Please try again.";
+
+/* Application appearance */
+"Appearance" = "Appearance";
+"Theme System" = "System";
+"Theme Light" = "Light";
+"Theme Dark" = "Dark";
+"Theme Description" = "Choose the appearance of menus, preferences, and the snippet editor.";

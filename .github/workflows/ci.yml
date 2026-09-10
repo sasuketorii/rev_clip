@@ -1,0 +1,29 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build-and-test:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v7
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
+      - name: Install XcodeGen
+        run: command -v xcodegen || brew install xcodegen
+      - name: Generate project
+        run: make -C src/Revclip setup
+      - name: Test
+        run: make -C src/Revclip test
+      - name: Build universal app
+        working-directory: src/Revclip
+        run: >-
+          xcodebuild -project Revclip.xcodeproj -scheme Revclip
+          -configuration Release -arch arm64 -arch x86_64 ONLY_ACTIVE_ARCH=NO
+          CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build

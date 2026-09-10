@@ -1,0 +1,22 @@
+# Local builds and generated Xcode project
+build/
+dist/
+DerivedData/
+*.xcodeproj/
+xcuserdata/
+*.xcuserstate
+
+# Local settings, caches, and credentials
+.DS_Store
+.env
+.env.*
+!.env.example
+*.p12
+*.p8
+*.key
+*.mobileprovision
+.mcp.json
+.venv/
+__pycache__/
+.idea/
+.vscode/

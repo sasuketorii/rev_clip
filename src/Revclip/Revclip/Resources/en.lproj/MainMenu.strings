@@ -1,0 +1,36 @@
+/* Class = "NSMenu"; title = "MainMenu"; ObjectID = "M9f-Bh-3ry"; */
+"M9f-Bh-3ry.title" = "MainMenu";
+/* Class = "NSMenuItem"; title = "Revclip"; ObjectID = "t4q-Ln-F0x"; */
+"t4q-Ln-F0x.title" = "Revclip";
+/* Class = "NSMenu"; title = "Revclip"; ObjectID = "m2M-7M-q1P"; */
+"m2M-7M-q1P.title" = "Revclip";
+/* Class = "NSMenuItem"; title = "About Revclip"; ObjectID = "A9y-Ap-qzN"; */
+"A9y-Ap-qzN.title" = "About Revclip";
+/* Class = "NSMenuItem"; title = "Quit Revclip"; ObjectID = "KcD-Zd-z5u"; */
+"KcD-Zd-z5u.title" = "Quit Revclip";
+/* Class = "NSMenuItem"; title = "File"; ObjectID = "xJ0-zN-3xU"; */
+"xJ0-zN-3xU.title" = "File";
+/* Class = "NSMenu"; title = "File"; ObjectID = "V6Q-BM-uQn"; */
+"V6Q-BM-uQn.title" = "File";
+/* Class = "NSMenuItem"; title = "Import Snippets..."; ObjectID = "HVK-3U-jg9"; */
+"HVK-3U-jg9.title" = "Import Snippets...";
+/* Class = "NSMenuItem"; title = "Export Snippets..."; ObjectID = "zM9-aW-Jhj"; */
+"zM9-aW-Jhj.title" = "Export Snippets...";
+/* Class = "NSMenuItem"; title = "Edit"; ObjectID = "edt-M0-menu"; */
+"edt-M0-menu.title" = "Edit";
+/* Class = "NSMenu"; title = "Edit"; ObjectID = "edt-M1-subm"; */
+"edt-M1-subm.title" = "Edit";
+/* Class = "NSMenuItem"; title = "Undo"; ObjectID = "edt-U0-undo"; */
+"edt-U0-undo.title" = "Undo";
+/* Class = "NSMenuItem"; title = "Redo"; ObjectID = "edt-R0-redo"; */
+"edt-R0-redo.title" = "Redo";
+/* Class = "NSMenuItem"; title = "Cut"; ObjectID = "edt-C0-cut"; */
+"edt-C0-cut.title" = "Cut";
+/* Class = "NSMenuItem"; title = "Copy"; ObjectID = "edt-C2-copy"; */
+"edt-C2-copy.title" = "Copy";
+/* Class = "NSMenuItem"; title = "Paste"; ObjectID = "edt-P0-pste"; */
+"edt-P0-pste.title" = "Paste";
+/* Class = "NSMenuItem"; title = "Delete"; ObjectID = "edt-D0-dele"; */
+"edt-D0-dele.title" = "Delete";
+/* Class = "NSMenuItem"; title = "Select All"; ObjectID = "edt-A0-sela"; */
+"edt-A0-sela.title" = "Select All";

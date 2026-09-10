@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2024-2026 Revclip. Licensed under the MIT License. -->
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24116" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24116"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="RCShortcutsPreferencesViewController">
+            <connections>
+                <outlet property="clearHistoryRecorderView" destination="zL7-zl-6zP" id="4Z8-RS-bag"/>
+                <outlet property="historyMenuRecorderView" destination="2bI-q8-0Qn" id="1DG-uN-CVv"/>
+                <outlet property="mainMenuRecorderView" destination="yDi-xT-X7H" id="I2N-vX-y5g"/>
+                <outlet property="snippetMenuRecorderView" destination="1fm-Ye-jNe" id="oQL-xz-rGI"/>
+                <outlet property="view" destination="Lqy-MW-dP9" id="hLi-jN-lEt"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customView id="Lqy-MW-dP9">
+            <rect key="frame" x="0.0" y="0.0" width="700" height="246"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <subviews>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="BAS-Mf-7kE" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                    <rect key="frame" x="24" y="224" width="150" height="22"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" truncatesLastVisibleLine="YES" alignment="right" title="メインメニュー:" id="ZgK-s1-dYB">
+                        <font key="font" metaFont="message"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="yDi-xT-X7H" customClass="RCHotKeyRecorderView">
+                    <rect key="frame" x="186" y="220" width="200" height="30"/>
+                </customView>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Ppk-Kj-rnh" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                    <rect key="frame" x="24" y="190" width="150" height="22"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" truncatesLastVisibleLine="YES" alignment="right" title="履歴メニュー:" id="xhM-yq-5Ef">
+                        <font key="font" metaFont="message"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="2bI-q8-0Qn" customClass="RCHotKeyRecorderView">
+                    <rect key="frame" x="186" y="186" width="200" height="30"/>
+                </customView>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gEt-kQ-fUS" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                    <rect key="frame" x="24" y="156" width="150" height="22"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" truncatesLastVisibleLine="YES" alignment="right" title="スニペットメニュー:" id="MV8-qY-5rU">
+                        <font key="font" metaFont="message"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="1fm-Ye-jNe" customClass="RCHotKeyRecorderView">
+                    <rect key="frame" x="186" y="152" width="200" height="30"/>
+                </customView>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="pb0-ZG-cPu" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                    <rect key="frame" x="24" y="122" width="150" height="22"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" truncatesLastVisibleLine="YES" alignment="right" title="履歴消去:" id="W4b-7h-QK2">
+                        <font key="font" metaFont="message"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="zL7-zl-6zP" customClass="RCHotKeyRecorderView">
+                    <rect key="frame" x="186" y="118" width="200" height="30"/>
+                </customView>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="6xU-vh-rJm">
+                    <rect key="frame" x="24" y="20" width="135" height="32"/>
+                    <buttonCell key="cell" type="push" title="デフォルトにリセット" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="D9f-HL-0Nb"/>
+                    <connections>
+                        <action selector="resetToDefaults:" target="-2" id="Owq-I8-1FG"/>
+                    </connections>
+                </button>
+            </subviews>
+            <constraints>
+                <constraint firstAttribute="width" constant="700" id="0nm-GW-edb"/>
+                <constraint firstAttribute="height" constant="246" id="7zF-vb-4J4"/>
+                <constraint firstItem="BAS-Mf-7kE" firstAttribute="leading" secondItem="Lqy-MW-dP9" secondAttribute="leading" constant="24" id="9eG-xM-RY2"/>
+                <constraint firstItem="BAS-Mf-7kE" firstAttribute="top" secondItem="Lqy-MW-dP9" secondAttribute="top" constant="28" id="DrL-zk-sVs"/>
+                <constraint firstItem="BAS-Mf-7kE" firstAttribute="width" constant="150" id="ggU-35-z4i"/>
+
+                <constraint firstItem="Ppk-Kj-rnh" firstAttribute="leading" secondItem="BAS-Mf-7kE" secondAttribute="leading" id="w6E-2G-jdW"/>
+                <constraint firstItem="gEt-kQ-fUS" firstAttribute="leading" secondItem="BAS-Mf-7kE" secondAttribute="leading" id="LYk-Ia-hj5"/>
+                <constraint firstItem="pb0-ZG-cPu" firstAttribute="leading" secondItem="BAS-Mf-7kE" secondAttribute="leading" id="f6C-jM-kBb"/>
+
+                <constraint firstItem="Ppk-Kj-rnh" firstAttribute="top" secondItem="BAS-Mf-7kE" secondAttribute="bottom" constant="12" id="qQG-gd-fu9"/>
+                <constraint firstItem="gEt-kQ-fUS" firstAttribute="top" secondItem="Ppk-Kj-rnh" secondAttribute="bottom" constant="12" id="eVG-vU-TRK"/>
+                <constraint firstItem="pb0-ZG-cPu" firstAttribute="top" secondItem="gEt-kQ-fUS" secondAttribute="bottom" constant="12" id="NHZ-8x-9Mz"/>
+
+                <constraint firstItem="Ppk-Kj-rnh" firstAttribute="width" constant="150" id="GTL-es-WG7"/>
+                <constraint firstItem="gEt-kQ-fUS" firstAttribute="width" constant="150" id="NjA-oO-ARk"/>
+                <constraint firstItem="pb0-ZG-cPu" firstAttribute="width" constant="150" id="Xu4-Rj-xN9"/>
+
+                <constraint firstItem="yDi-xT-X7H" firstAttribute="leading" secondItem="BAS-Mf-7kE" secondAttribute="trailing" constant="12" id="0Eg-T3-jLF"/>
+                <constraint firstItem="2bI-q8-0Qn" firstAttribute="leading" secondItem="Ppk-Kj-rnh" secondAttribute="trailing" constant="12" id="LJj-5U-YkR"/>
+                <constraint firstItem="1fm-Ye-jNe" firstAttribute="leading" secondItem="gEt-kQ-fUS" secondAttribute="trailing" constant="12" id="S5s-Zz-C6h"/>
+                <constraint firstItem="zL7-zl-6zP" firstAttribute="leading" secondItem="pb0-ZG-cPu" secondAttribute="trailing" constant="12" id="eX4-10-zVb"/>
+
+                <constraint firstItem="yDi-xT-X7H" firstAttribute="width" constant="200" id="mZN-jB-hAc"/>
+                <constraint firstItem="2bI-q8-0Qn" firstAttribute="width" constant="200" id="yuj-i0-3Pl"/>
+                <constraint firstItem="1fm-Ye-jNe" firstAttribute="width" constant="200" id="f0R-S1-Ik2"/>
+                <constraint firstItem="zL7-zl-6zP" firstAttribute="width" constant="200" id="79a-vL-Ep0"/>
+
+                <constraint firstItem="yDi-xT-X7H" firstAttribute="height" constant="30" id="YPa-6x-bU2"/>
+                <constraint firstItem="2bI-q8-0Qn" firstAttribute="height" constant="30" id="e5n-pK-YzA"/>
+                <constraint firstItem="1fm-Ye-jNe" firstAttribute="height" constant="30" id="wdB-jD-npF"/>
+                <constraint firstItem="zL7-zl-6zP" firstAttribute="height" constant="30" id="zJX-tr-0xY"/>
+
+                <constraint firstItem="yDi-xT-X7H" firstAttribute="centerY" secondItem="BAS-Mf-7kE" secondAttribute="centerY" id="Y1I-5v-tY9"/>
+                <constraint firstItem="2bI-q8-0Qn" firstAttribute="centerY" secondItem="Ppk-Kj-rnh" secondAttribute="centerY" id="pOt-yA-U4w"/>
+                <constraint firstItem="1fm-Ye-jNe" firstAttribute="centerY" secondItem="gEt-kQ-fUS" secondAttribute="centerY" id="yHQ-2R-fT6"/>
+                <constraint firstItem="zL7-zl-6zP" firstAttribute="centerY" secondItem="pb0-ZG-cPu" secondAttribute="centerY" id="1qW-8g-c4A"/>
+
+                <constraint firstItem="6xU-vh-rJm" firstAttribute="leading" secondItem="Lqy-MW-dP9" secondAttribute="leading" constant="24" id="pE2-gf-S7g"/>
+                <constraint firstItem="Lqy-MW-dP9" firstAttribute="bottom" secondItem="6xU-vh-rJm" secondAttribute="bottom" constant="20" id="5zs-cX-Lvz"/>
+            </constraints>
+            <point key="canvasLocation" x="118" y="178"/>
+        </customView>
+    </objects>
+</document>

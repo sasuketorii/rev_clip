@@ -1,0 +1,10 @@
+//
+//  Revclip-Prefix.pch
+//  Revclip
+//
+//  Copyright (c) 2024-2026 Revclip. All rights reserved.
+//
+
+#ifdef __OBJC__
+    #import <Cocoa/Cocoa.h>
+#endif

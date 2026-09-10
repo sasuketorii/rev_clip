@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2024-2026 Revclip. Licensed under the MIT License. -->
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24116" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24116"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="RCExcludePreferencesViewController">
+            <connections>
+                <outlet property="view" destination="X8q-L4-YeJ" id="zVa-HN-2yD"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customView id="X8q-L4-YeJ">
+            <rect key="frame" x="0.0" y="0.0" width="700" height="350"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <constraints>
+                <constraint firstAttribute="width" constant="700" id="Szf-0d-VvN"/>
+                <constraint firstAttribute="height" constant="350" id="0hQ-WJ-EUh"/>
+            </constraints>
+            <point key="canvasLocation" x="118" y="178"/>
+        </customView>
+    </objects>
+</document>

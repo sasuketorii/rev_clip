@@ -1,0 +1,185 @@
+"History" = "履歴";
+"Snippets" = "スニペット";
+"Edit Templates..." = "テンプレートを編集...";
+"Preferences..." = "設定...";
+"Quit Revclip" = "Revclipを終了";
+"Clear All" = "すべて削除";
+"Clear All History" = "すべての履歴を削除";
+"Are you sure you want to clear all clipboard history?" = "クリップボード履歴をすべて削除しますか？";
+"Cancel" = "キャンセル";
+"Delete" = "削除";
+"Delete this folder and all its snippets?" = "このフォルダとすべてのスニペットを削除しますか？";
+"Target folder: %@" = "対象フォルダ: %@";
+"Delete this snippet?" = "このスニペットを削除しますか？";
+"Target snippet: %@" = "対象スニペット: %@";
+
+"General" = "一般";
+"Menu" = "メニュー";
+"Type" = "タイプ";
+"Excluded Apps" = "除外アプリ";
+"Shortcuts" = "ショートカット";
+"Updates" = "アップデート";
+"Beta" = "ベータ";
+
+"Launch Revclip on login" = "ログイン時にRevclipを起動";
+"Max clipboard history size" = "クリップボード履歴の最大保存数";
+"Max menu items to display" = "メニュー表示の最大項目数";
+
+"Main" = "メイン";
+"Click to record shortcut" = "クリックしてショートカットを記録";
+
+"Template Editor" = "テンプレートエディタ";
+"Add Folder" = "フォルダを追加";
+"Add Snippet" = "スニペットを追加";
+"Title:" = "タイトル:";
+"Content:" = "内容:";
+"Shortcut:" = "ショートカット:";
+"Save" = "保存";
+"Save with ⌘S" = "⌘Sで保存";
+"Enable/Disable" = "有効/無効";
+"Untitled Folder" = "無題のフォルダ";
+"Untitled Snippet" = "無題のスニペット";
+
+"Import Snippets..." = "スニペットをインポート...";
+"Export Snippets..." = "スニペットをエクスポート...";
+"Merge" = "マージ";
+"Replace" = "置換";
+
+"Excluded Applications" = "除外アプリケーション";
+"Add Current App" = "現在のアプリを追加";
+"Cannot add current application" = "現在のアプリを追加できません";
+
+"Check for Updates" = "アップデートを確認";
+"Automatically check for updates" = "自動的にアップデートを確認";
+"Version" = "バージョン";
+
+// メニュー
+"No History" = "履歴がありません";
+"No Snippets" = "スニペットがありません";
+"(Empty)" = "(空)";
+"Clear History" = "履歴を消去";
+"Items %lu-%lu" = "項目 %lu-%lu";
+"Clear clipboard history?" = "クリップボード履歴を消去しますか？";
+"All saved clips will be removed." = "保存されたすべてのクリップが削除されます。";
+"Clear" = "消去";
+"Search Snippets" = "スニペットを検索";
+"Snippet" = "スニペット";
+"Folder" = "フォルダ";
+"Saved!" = "保存しました";
+"Paste" = "ペースト";
+
+// フォールバックタイトル
+"Image" = "画像";
+"URL" = "URL";
+"PDF" = "PDF";
+"Rich Text" = "リッチテキスト";
+"Files" = "ファイル";
+"Clip" = "クリップ";
+
+// インポート/エクスポート
+"Failed to Import Snippets" = "スニペットのインポートに失敗しました";
+"Failed to Export Snippets" = "スニペットのエクスポートに失敗しました";
+"An unknown error occurred." = "不明なエラーが発生しました。";
+"OK" = "OK";
+"How do you want to import snippets?" = "スニペットをどのようにインポートしますか？";
+"Choose whether to merge with existing snippets or replace them all." = "既存のスニペットとマージするか、すべて置き換えるかを選択してください。";
+"Merge with existing snippets" = "既存のスニペットとマージ";
+"Replace all snippets" = "すべてのスニペットを置換";
+
+// ショートカット設定
+"Reset all shortcuts to defaults?" = "すべてのショートカットをデフォルトにリセットしますか？";
+"Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed." = "メインメニュー、履歴メニュー、スニペットメニューが復元されます。履歴消去は削除されます。";
+"Reset" = "リセット";
+
+// 除外アプリ設定
+"Application" = "アプリケーション";
+"Add" = "追加";
+"The frontmost application is Revclip itself. Please switch to the application you want to exclude, then click this button." = "最前面のアプリケーションはRevclip自身です。除外したいアプリケーションに切り替えてから、このボタンをクリックしてください。";
+
+// メニュー設定
+"Menu Settings" = "メニュー設定";
+"Number of items inline" = "インライン表示の項目数";
+"Number of items in folder" = "フォルダ内の項目数";
+"Max title length" = "タイトルの最大文字数";
+"Mark with numbers" = "番号を表示";
+"Start numbering from 0" = "0から番号を開始";
+"Add numeric key equivalents" = "数字キーのショートカットを追加";
+"Add clear history item" = "履歴消去の項目を追加";
+"Show alert before clear" = "消去前に確認を表示";
+"Show tooltip" = "ツールチップを表示";
+"Max tooltip length" = "ツールチップの最大文字数";
+"Show image preview" = "画像プレビューを表示";
+"Thumbnail width" = "サムネイルの幅";
+"Thumbnail height" = "サムネイルの高さ";
+"Show color preview" = "カラープレビューを表示";
+"Show icon" = "アイコンを表示";
+"Icon size" = "アイコンサイズ";
+
+// 一般設定
+"Hide" = "非表示";
+"Show" = "表示";
+
+// ホットキーレコーダー
+"Type shortcut" = "ショートカットを入力";
+"Click to record" = "クリックして記録";
+"This shortcut may not work" = "このショートカットは動作しない可能性があります";
+"On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "macOS 15 (Sequoia) 以降では、Option 単独または Option+Shift のみの修飾キー組み合わせはシステム制限により動作しません。\nCommand または Control を含む組み合わせを使用してください。";
+
+// スニペットエディタ
+"New Folder" = "新規フォルダ";
+"New Snippet" = "新規スニペット";
+
+// アップデート設定
+"Not Available Yet" = "まだ利用できません";
+"Update checking will be available in a future release." = "アップデート確認は将来のリリースで利用可能になります。";
+
+// アクセシビリティ
+"Revclip requires Accessibility permission" = "Revclipにはアクセシビリティの許可が必要です";
+"Revclip needs Accessibility permission to paste clipboard items. Please enable it in System Settings > Privacy & Security > Accessibility." = "Revclipがクリップボードの内容をペーストするにはアクセシビリティの許可が必要です。システム設定 > プライバシーとセキュリティ > アクセシビリティ で有効にしてください。";
+"Open System Settings" = "システム設定を開く";
+"Later" = "後で";
+
+// Clipboard privacy (macOS 15.4+)
+"Revclip needs clipboard access" = "Revclipにはクリップボードへのアクセス許可が必要です";
+"macOS requires explicit permission for clipboard access. Please allow Revclip to access the clipboard in System Settings." = "macOSはクリップボードへのアクセスに明示的な許可を求めます。システム設定でRevclipのクリップボードアクセスを許可してください。";
+
+// 設定ウィンドウ
+"Preferences" = "設定";
+
+// バージョン情報
+"Version %@ (%@)" = "バージョン %@ (%@)";
+"Version %@" = "バージョン %@";
+"Build %@" = "ビルド %@";
+"Version -" = "バージョン -";
+
+// Applicationsフォルダへの移動
+"Move to Applications folder?" = "Applicationsフォルダに移動しますか？";
+"Revclip needs to be in the Applications folder to work properly. Would you like to move it there?" = "Revclipが正しく動作するにはApplicationsフォルダに配置する必要があります。移動しますか？";
+"Move to Applications" = "Applicationsに移動";
+"Do Not Move" = "移動しない";
+"Could not move Revclip to Applications folder" = "RevclipをApplicationsフォルダに移動できませんでした";
+"An unknown error occurred while moving Revclip." = "Revclipの移動中に不明なエラーが発生しました。";
+"Failed to relaunch the app from Applications." = "Applicationsフォルダからアプリを再起動できませんでした。";
+
+"Import" = "インポート";
+"Export" = "エクスポート";
+"Import Source" = "インポート元";
+"Choose import source." = "インポート元を選択してください。";
+"Import from Clipy Default File" = "Clipy標準ファイルを読み込む";
+"Choose File..." = "ファイルを選択...";
+"Export Scope" = "エクスポート対象";
+"Choose what to export." = "エクスポート対象を選択してください。";
+"Export Selected Item" = "選択中のみエクスポート";
+"Export All Snippets" = "すべてエクスポート";
+
+"Failed to save snippets. Your changes have not been saved." = "スニペットを保存できませんでした。変更は保存されていません。";
+"Enabled" = "有効";
+
+"Failed to read snippets. Please try again." = "スニペットを読み込めませんでした。もう一度お試しください。";
+
+/* Application appearance */
+"Appearance" = "外観";
+"Theme System" = "システムに合わせる";
+"Theme Light" = "ライト";
+"Theme Dark" = "ダーク";
+"Theme Description" = "メニュー・設定・テンプレートエディタの外観を選べます。";
