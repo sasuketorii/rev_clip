@@ -11,6 +11,7 @@
   <img src="https://img.shields.io/badge/runtime_dependencies-2-5856d6" alt="2 direct third-party runtime dependencies" />
   <a href="https://github.com/sasuketorii/rev_clip/actions/workflows/ci.yml"><img src="https://github.com/sasuketorii/rev_clip/actions/workflows/ci.yml/badge.svg" alt="Build and tests" /></a>
 
+  <p><strong>日本語</strong> · <a href="README.en.md">English</a></p>
   <p><a href="#はじめる">はじめる</a> · <a href="docs/CUSTOMIZATION.md">カスタマイズ</a> · <a href="CONTRIBUTING.md">開発に参加</a></p>
 </div>
 
