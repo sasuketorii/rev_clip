@@ -6,7 +6,12 @@ options:
   bundleIdPrefix: com.revclip
   xcodeVersion: "26.6"
   createIntermediateGroups: true
+  developmentLanguage: en
   knownRegions:
+    - Base
+    - ko
+    - fr
+    - pt-BR
     - en
     - ja
     - de
@@ -30,8 +35,8 @@ targets:
         CFBundleName: "Revclip"
         CFBundleDisplayName: "Revclip"
         CFBundleIdentifier: "$(PRODUCT_BUNDLE_IDENTIFIER)"
-        CFBundleVersion: "26"
-        CFBundleShortVersionString: "0.0.26"
+        CFBundleVersion: "27"
+        CFBundleShortVersionString: "0.0.27"
         CFBundleExecutable: "$(EXECUTABLE_NAME)"
         CFBundlePackageType: "APPL"
         CFBundleSignature: "????"

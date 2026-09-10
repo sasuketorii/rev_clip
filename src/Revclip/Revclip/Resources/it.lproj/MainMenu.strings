@@ -13,9 +13,9 @@
 /* Class = "NSMenu"; title = "File"; ObjectID = "V6Q-BM-uQn"; */
 "V6Q-BM-uQn.title" = "File";
 /* Class = "NSMenuItem"; title = "Import Snippets..."; ObjectID = "HVK-3U-jg9"; */
-"HVK-3U-jg9.title" = "Importa snippet...";
+"HVK-3U-jg9.title" = "Importa modelli...";
 /* Class = "NSMenuItem"; title = "Export Snippets..."; ObjectID = "zM9-aW-Jhj"; */
-"zM9-aW-Jhj.title" = "Esporta snippet...";
+"zM9-aW-Jhj.title" = "Esporta modelli...";
 /* Class = "NSMenuItem"; title = "Edit"; ObjectID = "edt-M0-menu"; */
 "edt-M0-menu.title" = "Modifica";
 /* Class = "NSMenu"; title = "Edit"; ObjectID = "edt-M1-subm"; */

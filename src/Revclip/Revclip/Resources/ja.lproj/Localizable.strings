@@ -1,5 +1,5 @@
 "History" = "履歴";
-"Snippets" = "スニペット";
+"Snippets" = "テンプレート";
 "Edit Templates..." = "テンプレートを編集...";
 "Preferences..." = "設定...";
 "Quit Revclip" = "Revclipを終了";
@@ -8,29 +8,34 @@
 "Are you sure you want to clear all clipboard history?" = "クリップボード履歴をすべて削除しますか？";
 "Cancel" = "キャンセル";
 "Delete" = "削除";
-"Delete this folder and all its snippets?" = "このフォルダとすべてのスニペットを削除しますか？";
+"Delete this folder and all its snippets?" = "このフォルダとすべてのテンプレートを削除しますか？";
 "Target folder: %@" = "対象フォルダ: %@";
-"Delete this snippet?" = "このスニペットを削除しますか？";
-"Target snippet: %@" = "対象スニペット: %@";
+"Delete this snippet?" = "このテンプレートを削除しますか？";
+"Target snippet: %@" = "対象テンプレート: %@";
 
 "General" = "一般";
 "Menu" = "メニュー";
-"Type" = "タイプ";
+"Type" = "種類";
 "Excluded Apps" = "除外アプリ";
 "Shortcuts" = "ショートカット";
 "Updates" = "アップデート";
 "Beta" = "ベータ";
+"Coming soon" = "近日公開";
 
 "Launch Revclip on login" = "ログイン時にRevclipを起動";
 "Max clipboard history size" = "クリップボード履歴の最大保存数";
 "Max menu items to display" = "メニュー表示の最大項目数";
+"Days" = "日";
+"Hours" = "時間";
+"Minutes" = "分";
 
 "Main" = "メイン";
 "Click to record shortcut" = "クリックしてショートカットを記録";
 
 "Template Editor" = "テンプレートエディタ";
 "Add Folder" = "フォルダを追加";
-"Add Snippet" = "スニペットを追加";
+"Add Snippet" = "テンプレートを追加";
+"Add Template" = "テンプレートを追加";
 "Title:" = "タイトル:";
 "Content:" = "内容:";
 "Shortcut:" = "ショートカット:";
@@ -38,37 +43,42 @@
 "Save with ⌘S" = "⌘Sで保存";
 "Enable/Disable" = "有効/無効";
 "Untitled Folder" = "無題のフォルダ";
-"Untitled Snippet" = "無題のスニペット";
+"Untitled Snippet" = "無題のテンプレート";
 
-"Import Snippets..." = "スニペットをインポート...";
-"Export Snippets..." = "スニペットをエクスポート...";
-"Merge" = "マージ";
+"Import Snippets..." = "テンプレートをインポート...";
+"Import Templates..." = "テンプレートをインポート...";
+"Export Snippets..." = "テンプレートをエクスポート...";
+"Export All Snippets" = "すべてのテンプレートをエクスポート";
+"Export All Templates..." = "すべてのテンプレートをエクスポート...";
+"Merge" = "統合";
 "Replace" = "置換";
 
 "Excluded Applications" = "除外アプリケーション";
 "Add Current App" = "現在のアプリを追加";
-"Cannot add current application" = "現在のアプリを追加できません";
+"Cannot add current application" = "現在のアプリケーションを追加できません";
+"No other application was detected. Please switch to the application you want to exclude, then click this button." = "ほかのアプリケーションが見つかりません。除外したいアプリケーションに切り替えてから、このボタンをクリックしてください。";
 
 "Check for Updates" = "アップデートを確認";
 "Automatically check for updates" = "自動的にアップデートを確認";
 "Version" = "バージョン";
 
-// メニュー
+// Menu
 "No History" = "履歴がありません";
-"No Snippets" = "スニペットがありません";
+"No Snippets" = "テンプレートがありません";
 "(Empty)" = "(空)";
 "Clear History" = "履歴を消去";
 "Items %lu-%lu" = "項目 %lu-%lu";
 "Clear clipboard history?" = "クリップボード履歴を消去しますか？";
 "All saved clips will be removed." = "保存されたすべてのクリップが削除されます。";
 "Clear" = "消去";
-"Search Snippets" = "スニペットを検索";
-"Snippet" = "スニペット";
+"Search Snippets" = "テンプレートを検索";
+"Snippet" = "テンプレート";
 "Folder" = "フォルダ";
 "Saved!" = "保存しました";
 "Paste" = "ペースト";
 
-// フォールバックタイトル
+// Fallback titles
+"(Image)" = "(画像)";
 "Image" = "画像";
 "URL" = "URL";
 "PDF" = "PDF";
@@ -76,27 +86,27 @@
 "Files" = "ファイル";
 "Clip" = "クリップ";
 
-// インポート/エクスポート
-"Failed to Import Snippets" = "スニペットのインポートに失敗しました";
-"Failed to Export Snippets" = "スニペットのエクスポートに失敗しました";
+// Import/Export
+"Failed to Import Snippets" = "テンプレートのインポートに失敗しました";
+"Failed to Export Snippets" = "テンプレートのエクスポートに失敗しました";
 "An unknown error occurred." = "不明なエラーが発生しました。";
 "OK" = "OK";
-"How do you want to import snippets?" = "スニペットをどのようにインポートしますか？";
-"Choose whether to merge with existing snippets or replace them all." = "既存のスニペットとマージするか、すべて置き換えるかを選択してください。";
-"Merge with existing snippets" = "既存のスニペットとマージ";
-"Replace all snippets" = "すべてのスニペットを置換";
+"How do you want to import snippets?" = "テンプレートをどのようにインポートしますか？";
+"Choose whether to merge with existing snippets or replace them all." = "既存のテンプレートに追加するか、すべて置き換えるかを選択してください。";
+"Merge with existing snippets" = "既存のテンプレートに追加";
+"Replace all snippets" = "すべてのテンプレートを置換";
 
-// ショートカット設定
+// Shortcuts Prefs
 "Reset all shortcuts to defaults?" = "すべてのショートカットをデフォルトにリセットしますか？";
-"Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed." = "メインメニュー、履歴メニュー、スニペットメニューが復元されます。履歴消去は削除されます。";
+"Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed." = "メインメニュー・履歴メニュー・テンプレートメニューのショートカットを既定に戻し、履歴消去のショートカットを解除します。";
 "Reset" = "リセット";
 
-// 除外アプリ設定
+// Exclude Prefs
 "Application" = "アプリケーション";
 "Add" = "追加";
 "The frontmost application is Revclip itself. Please switch to the application you want to exclude, then click this button." = "最前面のアプリケーションはRevclip自身です。除外したいアプリケーションに切り替えてから、このボタンをクリックしてください。";
 
-// メニュー設定
+// Menu Prefs
 "Menu Settings" = "メニュー設定";
 "Number of items inline" = "インライン表示の項目数";
 "Number of items in folder" = "フォルダ内の項目数";
@@ -115,27 +125,37 @@
 "Show icon" = "アイコンを表示";
 "Icon size" = "アイコンサイズ";
 
-// 一般設定
+// General Prefs
 "Hide" = "非表示";
 "Show" = "表示";
 
-// ホットキーレコーダー
+// HotKey Recorder
 "Type shortcut" = "ショートカットを入力";
 "Click to record" = "クリックして記録";
 "This shortcut may not work" = "このショートカットは動作しない可能性があります";
-"On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "macOS 15 (Sequoia) 以降では、Option 単独または Option+Shift のみの修飾キー組み合わせはシステム制限により動作しません。\nCommand または Control を含む組み合わせを使用してください。";
+"On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "macOS 15 (Sequoia) 以降では、Option 単独またはOption+Shiftのみの修飾キー組み合わせはシステム制限により動作しません。\nCommand またはControlを含む組み合わせを使用してください。";
 
-// スニペットエディタ
+// Template Editor
 "New Folder" = "新規フォルダ";
-"New Snippet" = "新規スニペット";
+"New Snippet" = "新規テンプレート";
+"Select a folder or template" = "フォルダまたはテンプレートを選択";
+"Add a folder to organize your templates." = "テンプレートを整理するフォルダを追加します。";
+"Add a template to this folder." = "このフォルダにテンプレートを追加します。";
+"This folder is hidden from the menu." = "このフォルダはメニューに表示されません。";
+"Template Content" = "テンプレートの内容";
+"Changes are saved when you switch items or close the editor." = "項目を切り替えるかエディタを閉じると変更が保存されます。";
+"Show in Menu" = "メニューに表示";
+"Hide from Menu" = "メニューに表示しない";
+"Delete Folder" = "フォルダを削除";
+"Delete Template" = "テンプレートを削除";
 
-// アップデート設定
+// Updates Prefs
 "Not Available Yet" = "まだ利用できません";
 "Update checking will be available in a future release." = "アップデート確認は将来のリリースで利用可能になります。";
 
-// アクセシビリティ
+// Accessibility
 "Revclip requires Accessibility permission" = "Revclipにはアクセシビリティの許可が必要です";
-"Revclip needs Accessibility permission to paste clipboard items. Please enable it in System Settings > Privacy & Security > Accessibility." = "Revclipがクリップボードの内容をペーストするにはアクセシビリティの許可が必要です。システム設定 > プライバシーとセキュリティ > アクセシビリティ で有効にしてください。";
+"Revclip needs Accessibility permission to paste clipboard items. Please enable it in System Settings > Privacy & Security > Accessibility." = "Revclipがクリップボードの内容をペーストするにはアクセシビリティの許可が必要です。システム設定 > プライバシーとセキュリティ > アクセシビリティで有効にしてください。";
 "Open System Settings" = "システム設定を開く";
 "Later" = "後で";
 
@@ -143,16 +163,17 @@
 "Revclip needs clipboard access" = "Revclipにはクリップボードへのアクセス許可が必要です";
 "macOS requires explicit permission for clipboard access. Please allow Revclip to access the clipboard in System Settings." = "macOSはクリップボードへのアクセスに明示的な許可を求めます。システム設定でRevclipのクリップボードアクセスを許可してください。";
 
-// 設定ウィンドウ
+// Preferences Window
 "Preferences" = "設定";
+"Panic" = "Panic";
 
-// バージョン情報
+// Version Info
 "Version %@ (%@)" = "バージョン %@ (%@)";
 "Version %@" = "バージョン %@";
 "Build %@" = "ビルド %@";
 "Version -" = "バージョン -";
 
-// Applicationsフォルダへの移動
+// Move to Applications
 "Move to Applications folder?" = "Applicationsフォルダに移動しますか？";
 "Revclip needs to be in the Applications folder to work properly. Would you like to move it there?" = "Revclipが正しく動作するにはApplicationsフォルダに配置する必要があります。移動しますか？";
 "Move to Applications" = "Applicationsに移動";
@@ -160,7 +181,10 @@
 "Could not move Revclip to Applications folder" = "RevclipをApplicationsフォルダに移動できませんでした";
 "An unknown error occurred while moving Revclip." = "Revclipの移動中に不明なエラーが発生しました。";
 "Failed to relaunch the app from Applications." = "Applicationsフォルダからアプリを再起動できませんでした。";
+"A newer version is already installed in Applications." = "Applicationsにはすでに新しいバージョンがインストールされています。";
+"Installed version (%@) is newer than this app (%@). Move was canceled to prevent a downgrade." = "インストール済みのバージョン（%@）はこのアプリ（%@）より新しいため、ダウングレードを防ぐため移動をキャンセルしました。";
 
+// Import/export UI
 "Import" = "インポート";
 "Export" = "エクスポート";
 "Import Source" = "インポート元";
@@ -170,12 +194,10 @@
 "Export Scope" = "エクスポート対象";
 "Choose what to export." = "エクスポート対象を選択してください。";
 "Export Selected Item" = "選択中のみエクスポート";
-"Export All Snippets" = "すべてエクスポート";
 
-"Failed to save snippets. Your changes have not been saved." = "スニペットを保存できませんでした。変更は保存されていません。";
+"Failed to save snippets. Your changes have not been saved." = "テンプレートを保存できませんでした。変更は保存されていません。";
 "Enabled" = "有効";
-
-"Failed to read snippets. Please try again." = "スニペットを読み込めませんでした。もう一度お試しください。";
+"Failed to read snippets. Please try again." = "テンプレートを読み込めませんでした。もう一度お試しください。";
 
 /* Application appearance */
 "Appearance" = "外観";
@@ -183,3 +205,51 @@
 "Theme Light" = "ライト";
 "Theme Dark" = "ダーク";
 "Theme Description" = "メニュー・設定・テンプレートエディタの外観を選べます。";
+
+// Panic erase
+"Delete Revclip Data" = "Revclipのデータ削除";
+"Delete All Revclip Data" = "Revclipの全データを削除";
+"Delete Revclip Data and Quit" = "Revclipのデータを削除して終了";
+"This deletes clipboard history, templates, and settings stored by Revclip, clears the current clipboard, then quits Revclip. Other files on your Mac are not deleted. This cannot be undone." = "Revclipに保存されたクリップボード履歴・テンプレート・設定を削除し、現在のクリップボードを空にしてRevclipを終了します。Mac内のほかのファイルは削除されません。この操作は取り消せません。";
+"Type \"Panic\" to confirm:" = "確認のため「Panic」と入力してください：";
+"Incorrect confirmation" = "入力が正しくありません";
+"Type \"Panic\" exactly to confirm." = "確認のため「Panic」と正確に入力してください。";
+"Delete all Revclip data?" = "Revclipの全データを削除しますか？";
+"Warning" = "警告";
+
+// Import/export validation errors
+"Export destination is invalid." = "エクスポート先が無効です。";
+"Failed to write snippets file." = "テンプレートファイルの書き込みに失敗しました。";
+"Failed to build snippets XML plist data." = "テンプレートのXML plistデータの作成に失敗しました。";
+"Import source is invalid." = "インポート元が無効です。";
+"Import file is too large (exceeds 50 MB limit)." = "インポートファイルが大きすぎます（50 MBの上限を超えています）。";
+"Failed to read snippets file." = "テンプレートファイルの読み込みに失敗しました。";
+"Snippets data is empty." = "テンプレートデータが空です。";
+"Database is not ready." = "データベースの準備ができていません。";
+"Unsupported snippets file format." = "サポートされていないテンプレートファイル形式です。";
+"Plist does not contain supported snippet folders." = "plistにサポートされているテンプレートフォルダが含まれていません。";
+"Snippets plist root must be a dictionary." = "テンプレートplistのルートは辞書である必要があります。";
+"Snippets format identifier is missing or invalid." = "テンプレート形式の識別子がないか、無効です。";
+"Snippets format version is missing or invalid." = "テンプレート形式のバージョンがないか、無効です。";
+"Unsupported snippets format version." = "サポートされていないテンプレート形式のバージョンです。";
+"Imported folder count exceeds the maximum supported limit (100)." = "インポートするフォルダ数がサポート上限（100）を超えています。";
+"Folder title exceeds the maximum length (500 characters)." = "フォルダのタイトルが最大長（500文字）を超えています。";
+"Imported snippet count exceeds the maximum supported limit (10000)." = "インポートするテンプレート数がサポート上限（10000）を超えています。";
+"Snippet title exceeds the maximum length (500 characters)." = "テンプレートのタイトルが最大長（500文字）を超えています。";
+"Snippet content exceeds the maximum size (1 MB)." = "テンプレートの内容が最大サイズ（1 MB）を超えています。";
+"DOCTYPE is not allowed in imported XML." = "インポートするXMLにDOCTYPEを含めることはできません。";
+"Root element must be <folders> or <snippets>." = "ルート要素は<folders>または<snippets>である必要があります。";
+"Failed to delete all snippets." = "すべてのテンプレートを削除できませんでした。";
+"Failed to delete all snippet folders." = "すべてのテンプレートフォルダを削除できませんでした。";
+"Failed to insert snippet folder." = "テンプレートフォルダを追加できませんでした。";
+"Failed to insert snippet." = "テンプレートを追加できませんでした。";
+"Failed to persist imported snippets." = "インポートしたテンプレートを保存できませんでした。";
+"Failed to read snippets." = "テンプレートを読み込めませんでした。";
+"Database operation failed." = "データベース操作に失敗しました。";
+
+// Japanese source keys retained for compatibility with existing callers
+"アップデートの確認に失敗しました" = "アップデートの確認に失敗しました";
+"アップデートの確認中に問題が発生しました。しばらくしてからもう一度お試しください。" = "アップデートの確認中に問題が発生しました。しばらくしてからもう一度お試しください。";
+"ログインアイテムの設定に失敗しました" = "ログイン項目の設定に失敗しました";
+"システム環境設定の「ログイン項目」で手動で設定してください。" = "システム設定の「一般」>「ログイン項目」で手動で設定してください。";
+"今後表示しない" = "今後表示しない";

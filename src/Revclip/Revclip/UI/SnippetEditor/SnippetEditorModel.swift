@@ -69,6 +69,19 @@ final class SnippetEditorModel {
         return folders.flatMap(\.snippets).first { $0.id == id }
     }
 
+    var selectedItemEnabled: Bool {
+        switch selection {
+        case .folder(let id): return folders.first { $0.id == id }?.enabled ?? false
+        case .snippet: return selectedSnippet?.enabled ?? false
+        case nil: return false
+        }
+    }
+
+    var selectedFolderEnabled: Bool {
+        guard let snippet = selectedSnippet else { return true }
+        return folders.first { $0.id == snippet.folderID }?.enabled ?? false
+    }
+
     var isEditingSnippet: Bool {
         if case .snippet = selection { return true }
         return false

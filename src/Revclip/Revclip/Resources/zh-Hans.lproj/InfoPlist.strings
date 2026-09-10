@@ -1,1 +1,2 @@
-"NSHumanReadableCopyright" = "Copyright © 2024-2026 Revclip. All rights reserved.";
+"NSAccessibilityUsageDescription" = "Revclip 需要辅助功能权限才能将剪贴板项目粘贴到其他应用程序。";
+"NSHumanReadableCopyright" = "Copyright © 2024-2026 Revclip. Licensed under the MIT License.";

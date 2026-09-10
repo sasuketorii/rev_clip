@@ -313,7 +313,7 @@ static const CGFloat RCPreferencesMinimumContentWidth = 700.0;
         return NSLocalizedString(@"Beta", nil);
     }
     if ([tabIdentifier isEqualToString:RCPreferencesTabPanic]) {
-        return @"パニック";
+        return NSLocalizedString(@"Panic", nil);
     }
     return @"";
 }

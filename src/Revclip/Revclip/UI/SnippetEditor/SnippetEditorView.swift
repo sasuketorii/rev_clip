@@ -14,13 +14,13 @@ struct SnippetEditorView: View {
     @State private var collapsedFolders: Set<String> = []
 
     var body: some View {
-        HSplitView {
-            sidebar
-                .frame(minWidth: 240, idealWidth: 280, maxWidth: 360)
-            editor
-                .frame(minWidth: 420)
-        }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
+        VStack(spacing: 0) {
+            HSplitView {
+                sidebar
+                    .frame(minWidth: 240, idealWidth: 280, maxWidth: 360)
+                editor
+                    .frame(minWidth: 420)
+            }
             toolbar
         }
         .background(.ultraThinMaterial)
@@ -95,9 +95,11 @@ struct SnippetEditorView: View {
 
     private var editor: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(model.isEditingSnippet
-                 ? NSLocalizedString("Snippet", comment: "")
-                 : NSLocalizedString("Folder", comment: ""))
+            Text(model.selection == nil
+                 ? NSLocalizedString("Select a folder or template", comment: "")
+                 : model.isEditingSnippet
+                    ? NSLocalizedString("Snippet", comment: "")
+                    : NSLocalizedString("Folder", comment: ""))
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
@@ -124,7 +126,16 @@ struct SnippetEditorView: View {
                 )) {
                     ForEach(model.folders) { folder in Text(folder.title).tag(folder.id) }
                 }
+                if !model.selectedFolderEnabled {
+                    Label(NSLocalizedString("This folder is hidden from the menu.", comment: ""), systemImage: "eye.slash")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Text(NSLocalizedString("Template Content", comment: ""))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 TextEditor(text: $model.contentDraft)
+                    .accessibilityLabel(NSLocalizedString("Template Content", comment: ""))
                     .font(.system(.body, design: .monospaced))
                     .scrollContentBackground(.hidden)
                     .padding(10)
@@ -140,13 +151,20 @@ struct SnippetEditorView: View {
                         systemImage: "folder"
                     )
                 } description: {
-                    Text(NSLocalizedString("Add Snippet", comment: ""))
+                    Text(model.selection == nil
+                         ? NSLocalizedString("Add a folder to organize your templates.", comment: "")
+                         : NSLocalizedString("Add a template to this folder.", comment: ""))
+                } actions: {
+                    Button(NSLocalizedString(model.selection == nil ? "Add Folder" : "Add Template", comment: "")) {
+                        if model.selection == nil { model.addFolder() }
+                        else { model.addSnippet() }
+                    }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
 
             HStack {
-                Text(NSLocalizedString("Save with ⌘S", comment: ""))
+                Text(NSLocalizedString("Changes are saved when you switch items or close the editor.", comment: ""))
                     .font(.system(size: 11))
                     .foregroundStyle(.tertiary)
                 Spacer()
@@ -157,40 +175,61 @@ struct SnippetEditorView: View {
     }
 
     private var toolbar: some View {
-        HStack(spacing: 10) {
-            Menu {
-                Button(NSLocalizedString("Add Folder", comment: ""), action: model.addFolder)
-                Button(NSLocalizedString("Add Snippet", comment: ""), action: model.addSnippet)
-            } label: {
-                Image(systemName: "plus")
+        VStack(spacing: 10) {
+            HStack(spacing: 12) {
+                Button(NSLocalizedString("Add Folder", comment: ""), systemImage: "folder.badge.plus", action: model.addFolder)
+                Button(NSLocalizedString("Add Template", comment: ""), systemImage: "doc.badge.plus", action: model.addSnippet)
+                    .disabled(model.folders.isEmpty)
+                Spacer()
+                Button(model.savedFlash ? NSLocalizedString("Saved!", comment: "") : NSLocalizedString("Save", comment: "")) {
+                    _ = model.save()
+                }
+                .keyboardShortcut("s", modifiers: .command)
+                .disabled(model.selection == nil)
+                .buttonStyle(.borderedProminent)
             }
-            .menuStyle(.borderlessButton)
-            .frame(width: 36)
-
-            Button(action: confirmDelete) {
-                Image(systemName: "minus")
+            Divider()
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 16) {
+                    selectionActions
+                    Spacer(minLength: 16)
+                    transferActions
+                }
+                VStack(alignment: .leading, spacing: 10) {
+                    selectionActions
+                    transferActions
+                }
             }
-            .disabled(model.selection == nil)
-            .help(NSLocalizedString("Delete", comment: ""))
-
-            Button(NSLocalizedString("Enabled", comment: ""), systemImage: "eye", action: model.toggleEnabled)
-            .disabled(model.selection == nil)
-
-            Button(NSLocalizedString("Import", comment: ""), systemImage: "square.and.arrow.down", action: importSnippets)
-            Button(NSLocalizedString("Export", comment: ""), systemImage: "square.and.arrow.up", action: exportSnippets)
-
-            Spacer()
-
-            Button(model.savedFlash ? NSLocalizedString("Saved!", comment: "") : NSLocalizedString("Save", comment: "")) {
-                _ = model.save()
-            }
-            .keyboardShortcut("s", modifiers: .command)
-            .disabled(model.selection == nil)
-            .buttonStyle(.borderedProminent)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.vertical, 12)
         .background(.bar)
+    }
+
+    private var selectionActions: some View {
+        HStack(spacing: 12) {
+            Button(model.isEditingSnippet
+                   ? NSLocalizedString("Delete Template", comment: "")
+                   : NSLocalizedString("Delete Folder", comment: ""),
+                   systemImage: "trash", action: confirmDelete)
+                .disabled(model.selection == nil)
+            Toggle(NSLocalizedString("Show in Menu", comment: ""), isOn: Binding(
+                get: { model.selectedItemEnabled },
+                set: { if $0 != model.selectedItemEnabled { model.toggleEnabled() } }
+            ))
+            .toggleStyle(.checkbox)
+            .disabled(model.selection == nil)
+        }
+        .fixedSize(horizontal: true, vertical: false)
+    }
+
+    private var transferActions: some View {
+        HStack(spacing: 12) {
+            Button(NSLocalizedString("Import Templates...", comment: ""), systemImage: "square.and.arrow.down", action: importSnippets)
+            Button(NSLocalizedString("Export All Templates...", comment: ""), systemImage: "square.and.arrow.up", action: exportSnippets)
+        }
+        .fixedSize(horizontal: true, vertical: false)
     }
 
     private var selectionBinding: Binding<SnippetEditorSelection?> {
@@ -247,8 +286,10 @@ struct SnippetEditorView: View {
         alert.alertStyle = .warning
         if model.isEditingSnippet {
             alert.messageText = NSLocalizedString("Delete this snippet?", comment: "")
+            alert.informativeText = String(format: NSLocalizedString("Target snippet: %@", comment: ""), model.titleDraft)
         } else {
             alert.messageText = NSLocalizedString("Delete this folder and all its snippets?", comment: "")
+            alert.informativeText = String(format: NSLocalizedString("Target folder: %@", comment: ""), model.titleDraft)
         }
         alert.addButton(withTitle: NSLocalizedString("Delete", comment: ""))
         alert.addButton(withTitle: NSLocalizedString("Cancel", comment: ""))
@@ -290,7 +331,7 @@ struct SnippetEditorView: View {
     private func exportSnippets() {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [UTType(filenameExtension: "revclipsnippets") ?? .data]
-        panel.nameFieldStringValue = "snippets.revclipsnippets"
+        panel.nameFieldStringValue = "templates.revclipsnippets"
         guard panel.runModal() == .OK, let url = panel.url else {
             return
         }

@@ -11,7 +11,7 @@
 static CGFloat const kRCMenuPreferencesContentInset = 16.0;
 static CGFloat const kRCMenuPreferencesColumnSpacing = 12.0;
 static CGFloat const kRCMenuPreferencesRowSpacing = 10.0;
-static CGFloat const kRCMenuPreferencesRowLabelWidth = 132.0;
+static CGFloat const kRCMenuPreferencesRowLabelWidth = 200.0;
 static CGFloat const kRCMenuPreferencesValueFieldWidth = 50.0;
 
 @interface RCMenuPreferencesViewController ()
@@ -237,9 +237,9 @@ static CGFloat const kRCMenuPreferencesValueFieldWidth = 50.0;
 }
 
 - (NSView *)numericRowWithTitle:(NSString *)title textField:(NSTextField *)textField stepper:(NSStepper *)stepper {
-    NSTextField *label = [NSTextField labelWithString:title];
+    NSTextField *label = [NSTextField wrappingLabelWithString:title];
     label.translatesAutoresizingMaskIntoConstraints = NO;
-    label.lineBreakMode = NSLineBreakByTruncatingTail;
+    label.preferredMaxLayoutWidth = kRCMenuPreferencesRowLabelWidth;
     [label.widthAnchor constraintEqualToConstant:kRCMenuPreferencesRowLabelWidth].active = YES;
 
     NSStackView *controlStack = [[NSStackView alloc] initWithFrame:NSZeroRect];

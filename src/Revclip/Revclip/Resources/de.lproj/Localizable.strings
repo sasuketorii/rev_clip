@@ -1,5 +1,5 @@
 "History" = "Verlauf";
-"Snippets" = "Snippets";
+"Snippets" = "Vorlagen";
 "Edit Templates..." = "Vorlagen bearbeiten...";
 "Preferences..." = "Einstellungen...";
 "Quit Revclip" = "Revclip beenden";
@@ -8,142 +8,164 @@
 "Are you sure you want to clear all clipboard history?" = "Möchten Sie wirklich den gesamten Zwischenablagenverlauf löschen?";
 "Cancel" = "Abbrechen";
 "Delete" = "Löschen";
-"Delete this folder and all its snippets?" = "Diesen Ordner und alle darin enthaltenen Snippets löschen?";
+"Delete this folder and all its snippets?" = "Diesen Ordner und alle darin enthaltenen Vorlagen löschen?";
 "Target folder: %@" = "Zielordner: %@";
-"Delete this snippet?" = "Dieses Snippet löschen?";
-"Target snippet: %@" = "Ziel-Snippet: %@";
+"Delete this snippet?" = "Diese Vorlage löschen?";
+"Target snippet: %@" = "Zielvorlage: %@";
 
 "General" = "Allgemein";
 "Menu" = "Menü";
 "Type" = "Typ";
 "Excluded Apps" = "Ausgeschlossene Apps";
-"Shortcuts" = "Kurzbefehle";
-"Updates" = "Updates";
+"Shortcuts" = "Tastenkürzel";
+"Updates" = "Aktualisierungen";
 "Beta" = "Beta";
+"Coming soon" = "Bald verfügbar";
 
-"Launch Revclip on login" = "Revclip beim Login starten";
+"Launch Revclip on login" = "Revclip bei der Anmeldung starten";
 "Max clipboard history size" = "Maximale Größe des Zwischenablagenverlaufs";
-"Max menu items to display" = "Maximale Anzahl anzuzeigender Menüeinträge";
+"Max menu items to display" = "Maximale Anzahl der anzuzeigenden Menüeinträge";
+"Days" = "Tage";
+"Hours" = "Stunden";
+"Minutes" = "Minuten";
 
-"Main" = "Haupt";
-"Click to record shortcut" = "Klicken, um Tastenkürzel aufzuzeichnen";
+"Main" = "Hauptmenü";
+"Click to record shortcut" = "Klicken, um das Tastenkürzel aufzuzeichnen";
 
 "Template Editor" = "Vorlageneditor";
 "Add Folder" = "Ordner hinzufügen";
-"Add Snippet" = "Snippet hinzufügen";
+"Add Snippet" = "Vorlage hinzufügen";
+"Add Template" = "Vorlage hinzufügen";
 "Title:" = "Titel:";
 "Content:" = "Inhalt:";
 "Shortcut:" = "Tastenkürzel:";
 "Save" = "Speichern";
 "Save with ⌘S" = "Mit ⌘S speichern";
+"Enable/Disable" = "Aktivieren/Deaktivieren";
 "Untitled Folder" = "Unbenannter Ordner";
-"Untitled Snippet" = "Unbenanntes Snippet";
+"Untitled Snippet" = "Unbenannte Vorlage";
 
-"Import Snippets..." = "Snippets importieren...";
-"Export Snippets..." = "Snippets exportieren...";
+"Import Snippets..." = "Vorlagen importieren...";
+"Import Templates..." = "Vorlagen importieren...";
+"Export Snippets..." = "Vorlagen exportieren...";
+"Export All Snippets" = "Alle Vorlagen exportieren";
+"Export All Templates..." = "Alle Vorlagen exportieren...";
 "Merge" = "Zusammenführen";
 "Replace" = "Ersetzen";
 
 "Excluded Applications" = "Ausgeschlossene Anwendungen";
 "Add Current App" = "Aktuelle App hinzufügen";
-"Cannot add current application" = "Aktuelle Anwendung kann nicht hinzugefügt werden";
+"Cannot add current application" = "Die aktuelle Anwendung kann nicht hinzugefügt werden";
+"No other application was detected. Please switch to the application you want to exclude, then click this button." = "Keine andere Anwendung wurde erkannt. Wechseln Sie zu der Anwendung, die Sie ausschließen möchten, und klicken Sie dann auf diese Schaltfläche.";
 
-"Check for Updates" = "Nach Updates suchen";
-"Automatically check for updates" = "Automatisch nach Updates suchen";
+"Check for Updates" = "Nach Aktualisierungen suchen";
+"Automatically check for updates" = "Automatisch nach Aktualisierungen suchen";
 "Version" = "Version";
 
 // Menu
-"No History" = "No History";
-"No Snippets" = "No Snippets";
-"(Empty)" = "(Empty)";
-"Clear History" = "Clear History";
-"Items %lu-%lu" = "Items %lu-%lu";
-"Clear clipboard history?" = "Clear clipboard history?";
-"All saved clips will be removed." = "All saved clips will be removed.";
-"Clear" = "Clear";
+"No History" = "Kein Verlauf";
+"No Snippets" = "Keine Vorlagen";
+"(Empty)" = "(Leer)";
+"Clear History" = "Verlauf löschen";
+"Items %lu-%lu" = "Elemente %lu–%lu";
+"Clear clipboard history?" = "Zwischenablagenverlauf löschen?";
+"All saved clips will be removed." = "Alle gespeicherten Clips werden entfernt.";
+"Clear" = "Löschen";
 "Search Snippets" = "Vorlagen suchen";
 "Snippet" = "Vorlage";
 "Folder" = "Ordner";
 "Saved!" = "Gespeichert!";
-"Paste" = "Paste";
+"Paste" = "Einfügen";
 
 // Fallback titles
-"Image" = "Image";
+"(Image)" = "(Bild)";
+"Image" = "Bild";
 "URL" = "URL";
 "PDF" = "PDF";
-"Rich Text" = "Rich Text";
-"Files" = "Files";
+"Rich Text" = "Rich-Text";
+"Files" = "Dateien";
 "Clip" = "Clip";
 
 // Import/Export
-"Failed to Import Snippets" = "Failed to Import Snippets";
-"Failed to Export Snippets" = "Failed to Export Snippets";
-"An unknown error occurred." = "An unknown error occurred.";
+"Failed to Import Snippets" = "Vorlagen konnten nicht importiert werden";
+"Failed to Export Snippets" = "Vorlagen konnten nicht exportiert werden";
+"An unknown error occurred." = "Ein unbekannter Fehler ist aufgetreten.";
 "OK" = "OK";
-"How do you want to import snippets?" = "How do you want to import snippets?";
-"Choose whether to merge with existing snippets or replace them all." = "Choose whether to merge with existing snippets or replace them all.";
-"Merge with existing snippets" = "Merge with existing snippets";
-"Replace all snippets" = "Replace all snippets";
+"How do you want to import snippets?" = "Wie möchten Sie Vorlagen importieren?";
+"Choose whether to merge with existing snippets or replace them all." = "Wählen Sie, ob die vorhandenen Vorlagen zusammengeführt oder alle ersetzt werden sollen.";
+"Merge with existing snippets" = "Mit vorhandenen Vorlagen zusammenführen";
+"Replace all snippets" = "Alle Vorlagen ersetzen";
 
 // Shortcuts Prefs
-"Reset all shortcuts to defaults?" = "Reset all shortcuts to defaults?";
-"Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed." = "Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed.";
-"Reset" = "Reset";
+"Reset all shortcuts to defaults?" = "Alle Tastenkürzel auf die Standardwerte zurücksetzen?";
+"Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed." = "Die Tastenkürzel für Hauptmenü, Verlaufsmenü und Vorlagenmenü werden auf die Standardwerte zurückgesetzt. Das Tastenkürzel für „Verlauf löschen“ wird entfernt.";
+"Reset" = "Zurücksetzen";
 
 // Exclude Prefs
-"Application" = "Application";
-"Add" = "Add";
-"The frontmost application is Revclip itself. Please switch to the application you want to exclude, then click this button." = "The frontmost application is Revclip itself. Please switch to the application you want to exclude, then click this button.";
+"Application" = "Anwendung";
+"Add" = "Hinzufügen";
+"The frontmost application is Revclip itself. Please switch to the application you want to exclude, then click this button." = "Die Anwendung im Vordergrund ist Revclip selbst. Wechseln Sie zu der Anwendung, die Sie ausschließen möchten, und klicken Sie dann auf diese Schaltfläche.";
 
 // Menu Prefs
-"Menu Settings" = "Menu Settings";
-"Number of items inline" = "Number of items inline";
-"Number of items in folder" = "Number of items in folder";
-"Max title length" = "Max title length";
-"Mark with numbers" = "Mark with numbers";
-"Start numbering from 0" = "Start numbering from 0";
-"Add numeric key equivalents" = "Add numeric key equivalents";
-"Add clear history item" = "Add clear history item";
-"Show alert before clear" = "Show alert before clear";
-"Show tooltip" = "Show tooltip";
-"Max tooltip length" = "Max tooltip length";
-"Show image preview" = "Show image preview";
-"Thumbnail width" = "Thumbnail width";
-"Thumbnail height" = "Thumbnail height";
-"Show color preview" = "Show color preview";
-"Show icon" = "Show icon";
-"Icon size" = "Icon size";
+"Menu Settings" = "Menüeinstellungen";
+"Number of items inline" = "Anzahl der Inline-Elemente";
+"Number of items in folder" = "Anzahl der Elemente im Ordner";
+"Max title length" = "Maximale Titellänge";
+"Mark with numbers" = "Mit Nummern markieren";
+"Start numbering from 0" = "Nummerierung bei 0 beginnen";
+"Add numeric key equivalents" = "Numerische Tastenkürzel hinzufügen";
+"Add clear history item" = "Eintrag zum Löschen des Verlaufs hinzufügen";
+"Show alert before clear" = "Vor dem Löschen Warnung anzeigen";
+"Show tooltip" = "Tooltip anzeigen";
+"Max tooltip length" = "Maximale Tooltip-Länge";
+"Show image preview" = "Bildvorschau anzeigen";
+"Thumbnail width" = "Miniaturbreite";
+"Thumbnail height" = "Miniaturhöhe";
+"Show color preview" = "Farbvorschau anzeigen";
+"Show icon" = "Symbol anzeigen";
+"Icon size" = "Symbolgröße";
 
 // General Prefs
-"Hide" = "Hide";
-"Show" = "Show";
+"Hide" = "Ausblenden";
+"Show" = "Einblenden";
 
 // HotKey Recorder
-"Type shortcut" = "Type shortcut";
-"Click to record" = "Click to record";
-"This shortcut may not work" = "This shortcut may not work";
-"On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control.";
+"Type shortcut" = "Tastenkürzel eingeben";
+"Click to record" = "Zum Aufzeichnen klicken";
+"This shortcut may not work" = "Dieses Tastenkürzel funktioniert möglicherweise nicht";
+"On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "Unter macOS 15 (Sequoia) und neuer werden Kombinationen nur mit Option oder nur mit Option+Umschalttaste aufgrund von Systembeschränkungen nicht unterstützt.\nVerwenden Sie eine Kombination mit Befehl oder Ctrl.";
 
 // Template Editor
-"New Folder" = "New Folder";
-"New Snippet" = "New Snippet";
+"New Folder" = "Neuer Ordner";
+"New Snippet" = "Neue Vorlage";
+"Select a folder or template" = "Ordner oder Vorlage auswählen";
+"Add a folder to organize your templates." = "Fügen Sie einen Ordner hinzu, um Ihre Vorlagen zu organisieren.";
+"Add a template to this folder." = "Fügen Sie diesem Ordner eine Vorlage hinzu.";
+"This folder is hidden from the menu." = "Dieser Ordner wird nicht im Menü angezeigt.";
+"Template Content" = "Vorlageninhalt";
+"Changes are saved when you switch items or close the editor." = "Änderungen werden gespeichert, wenn Sie das Element wechseln oder den Editor schließen.";
+"Show in Menu" = "Im Menü anzeigen";
+"Hide from Menu" = "Im Menü ausblenden";
+"Delete Folder" = "Ordner löschen";
+"Delete Template" = "Vorlage löschen";
 
 // Updates Prefs
-"Not Available Yet" = "Not Available Yet";
-"Update checking will be available in a future release." = "Update checking will be available in a future release.";
+"Not Available Yet" = "Noch nicht verfügbar";
+"Update checking will be available in a future release." = "Die Suche nach Aktualisierungen wird in einer zukünftigen Version verfügbar sein.";
 
 // Accessibility
-"Revclip requires Accessibility permission" = "Revclip requires Accessibility permission";
-"Revclip needs Accessibility permission to paste clipboard items. Please enable it in System Settings > Privacy & Security > Accessibility." = "Revclip needs Accessibility permission to paste clipboard items. Please enable it in System Settings > Privacy & Security > Accessibility.";
-"Open System Settings" = "Open System Settings";
-"Later" = "Later";
+"Revclip requires Accessibility permission" = "Revclip benötigt die Bedienungshilfen-Berechtigung";
+"Revclip needs Accessibility permission to paste clipboard items. Please enable it in System Settings > Privacy & Security > Accessibility." = "Revclip benötigt die Bedienungshilfen-Berechtigung, um Zwischenablageninhalte einzufügen. Aktivieren Sie sie unter Systemeinstellungen > Datenschutz & Sicherheit > Bedienungshilfen.";
+"Open System Settings" = "Systemeinstellungen öffnen";
+"Later" = "Später";
 
 // Clipboard privacy (macOS 15.4+)
-"Revclip needs clipboard access" = "Revclip needs clipboard access";
-"macOS requires explicit permission for clipboard access. Please allow Revclip to access the clipboard in System Settings." = "macOS requires explicit permission for clipboard access. Please allow Revclip to access the clipboard in System Settings.";
+"Revclip needs clipboard access" = "Revclip benötigt Zugriff auf die Zwischenablage";
+"macOS requires explicit permission for clipboard access. Please allow Revclip to access the clipboard in System Settings." = "macOS benötigt eine ausdrückliche Erlaubnis für den Zugriff auf die Zwischenablage. Erlauben Sie Revclip den Zugriff in den Systemeinstellungen.";
 
 // Preferences Window
 "Preferences" = "Einstellungen";
+"Panic" = "Panic";
 
 // Version Info
 "Version %@ (%@)" = "Version %@ (%@)";
@@ -152,21 +174,29 @@
 "Version -" = "Version -";
 
 // Move to Applications
-"Move to Applications folder?" = "In den Ordner \u201eProgramme\u201c verschieben?";
-"Revclip needs to be in the Applications folder to work properly. Would you like to move it there?" = "Revclip muss sich im Ordner \u201eProgramme\u201c befinden, um ordnungsgemäß zu funktionieren. Möchten Sie es dorthin verschieben?";
+"Move to Applications folder?" = "In den Ordner „Programme“ verschieben?";
+"Revclip needs to be in the Applications folder to work properly. Would you like to move it there?" = "Revclip muss sich im Ordner „Programme“ befinden, um ordnungsgemäß zu funktionieren. Möchten Sie es dorthin verschieben?";
 "Move to Applications" = "In Programme verschieben";
 "Do Not Move" = "Nicht verschieben";
-"Could not move Revclip to Applications folder" = "Revclip konnte nicht in den Ordner \u201eProgramme\u201c verschoben werden";
+"Could not move Revclip to Applications folder" = "Revclip konnte nicht in den Ordner „Programme“ verschoben werden";
 "An unknown error occurred while moving Revclip." = "Beim Verschieben von Revclip ist ein unbekannter Fehler aufgetreten.";
-"Failed to relaunch the app from Applications." = "Die App konnte nicht aus dem Ordner \u201eProgramme\u201c neu gestartet werden.";
+"Failed to relaunch the app from Applications." = "Die App konnte aus dem Ordner „Programme“ nicht neu gestartet werden.";
+"A newer version is already installed in Applications." = "In „Programme“ ist bereits eine neuere Version installiert.";
+"Installed version (%@) is newer than this app (%@). Move was canceled to prevent a downgrade." = "Die installierte Version (%@) ist neuer als diese App (%@). Das Verschieben wurde abgebrochen, um ein Downgrade zu verhindern.";
+
+// Import/export UI
+"Import" = "Importieren";
+"Export" = "Exportieren";
+"Import Source" = "Importquelle";
+"Choose import source." = "Importquelle auswählen.";
+"Import from Clipy Default File" = "Aus der Clipy-Standarddatei importieren";
+"Choose File..." = "Datei auswählen...";
+"Export Scope" = "Exportumfang";
+"Choose what to export." = "Wählen Sie aus, was exportiert werden soll.";
+"Export Selected Item" = "Ausgewähltes Element exportieren";
 
 "Failed to save snippets. Your changes have not been saved." = "Vorlagen konnten nicht gespeichert werden. Ihre Änderungen wurden nicht gespeichert.";
 "Enabled" = "Aktiviert";
-
-"Import" = "Importieren";
-
-"Export" = "Exportieren";
-
 "Failed to read snippets. Please try again." = "Vorlagen konnten nicht gelesen werden. Bitte versuchen Sie es erneut.";
 
 /* Application appearance */
@@ -174,4 +204,52 @@
 "Theme System" = "System";
 "Theme Light" = "Hell";
 "Theme Dark" = "Dunkel";
-"Theme Description" = "Wähle das Erscheinungsbild für Menüs, Einstellungen und den Vorlageneditor.";
+"Theme Description" = "Wählen Sie das Erscheinungsbild für Menüs, Einstellungen und den Vorlageneditor.";
+
+// Panic erase
+"Delete Revclip Data" = "Revclip-Daten löschen";
+"Delete All Revclip Data" = "Alle Revclip-Daten löschen";
+"Delete Revclip Data and Quit" = "Revclip-Daten löschen und beenden";
+"This deletes clipboard history, templates, and settings stored by Revclip, clears the current clipboard, then quits Revclip. Other files on your Mac are not deleted. This cannot be undone." = "Dadurch werden der Zwischenablagenverlauf, die in Revclip gespeicherten Vorlagen und Einstellungen sowie der aktuelle Inhalt der Zwischenablage gelöscht, anschließend wird Revclip beendet. Andere Dateien auf Ihrem Mac werden nicht gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden.";
+"Type \"Panic\" to confirm:" = "Geben Sie zur Bestätigung „Panic“ ein:";
+"Incorrect confirmation" = "Falsche Bestätigung";
+"Type \"Panic\" exactly to confirm." = "Geben Sie zur Bestätigung genau „Panic“ ein.";
+"Delete all Revclip data?" = "Alle Revclip-Daten löschen?";
+"Warning" = "Warnung";
+
+// Import/export validation errors
+"Export destination is invalid." = "Das Exportziel ist ungültig.";
+"Failed to write snippets file." = "Die Vorlagendatei konnte nicht geschrieben werden.";
+"Failed to build snippets XML plist data." = "Die XML-Plist-Daten der Vorlagen konnten nicht erstellt werden.";
+"Import source is invalid." = "Die Importquelle ist ungültig.";
+"Import file is too large (exceeds 50 MB limit)." = "Die Importdatei ist zu groß (das Limit von 50 MB wird überschritten).";
+"Failed to read snippets file." = "Die Vorlagendatei konnte nicht gelesen werden.";
+"Snippets data is empty." = "Die Vorlagendaten sind leer.";
+"Database is not ready." = "Die Datenbank ist nicht bereit.";
+"Unsupported snippets file format." = "Nicht unterstütztes Vorlagendateiformat.";
+"Plist does not contain supported snippet folders." = "Die Plist enthält keine unterstützten Vorlagenordner.";
+"Snippets plist root must be a dictionary." = "Das Stammobjekt der Vorlagen-Plist muss ein Wörterbuch sein.";
+"Snippets format identifier is missing or invalid." = "Die Kennung des Vorlagenformats fehlt oder ist ungültig.";
+"Snippets format version is missing or invalid." = "Die Version des Vorlagenformats fehlt oder ist ungültig.";
+"Unsupported snippets format version." = "Nicht unterstützte Version des Vorlagenformats.";
+"Imported folder count exceeds the maximum supported limit (100)." = "Die Anzahl der importierten Ordner überschreitet das unterstützte Limit (100).";
+"Folder title exceeds the maximum length (500 characters)." = "Der Ordnertitel überschreitet die Maximallänge (500 Zeichen).";
+"Imported snippet count exceeds the maximum supported limit (10000)." = "Die Anzahl der importierten Vorlagen überschreitet das unterstützte Limit (10000).";
+"Snippet title exceeds the maximum length (500 characters)." = "Der Vorlagentitel überschreitet die Maximallänge (500 Zeichen).";
+"Snippet content exceeds the maximum size (1 MB)." = "Der Vorlageninhalt überschreitet die maximale Größe (1 MB).";
+"DOCTYPE is not allowed in imported XML." = "DOCTYPE ist in importiertem XML nicht zulässig.";
+"Root element must be <folders> or <snippets>." = "Das Stammelement muss <folders> oder <snippets> sein.";
+"Failed to delete all snippets." = "Alle Vorlagen konnten nicht gelöscht werden.";
+"Failed to delete all snippet folders." = "Alle Vorlagenordner konnten nicht gelöscht werden.";
+"Failed to insert snippet folder." = "Der Vorlagenordner konnte nicht eingefügt werden.";
+"Failed to insert snippet." = "Die Vorlage konnte nicht eingefügt werden.";
+"Failed to persist imported snippets." = "Die importierten Vorlagen konnten nicht gespeichert werden.";
+"Failed to read snippets." = "Vorlagen konnten nicht gelesen werden.";
+"Database operation failed." = "Der Datenbankvorgang ist fehlgeschlagen.";
+
+// Japanese source keys retained for compatibility with existing callers
+"アップデートの確認に失敗しました" = "Die Suche nach Aktualisierungen ist fehlgeschlagen";
+"アップデートの確認中に問題が発生しました。しばらくしてからもう一度お試しください。" = "Bei der Suche nach Aktualisierungen ist ein Problem aufgetreten. Bitte versuchen Sie es später erneut.";
+"ログインアイテムの設定に失敗しました" = "Das Anmeldeobjekt konnte nicht eingerichtet werden";
+"システム環境設定の「ログイン項目」で手動で設定してください。" = "Richten Sie es manuell unter Systemeinstellungen > Allgemein > Anmeldeobjekte ein.";
+"今後表示しない" = "Nicht erneut anzeigen";

@@ -1,0 +1,9 @@
+"7yw-t6-KP3.title" = "저장할 유형";
+"4dM-4m-v0d.title" = "클립보드 기록에 저장할 클립보드 유형을 선택하십시오.";
+"D3w-gA-8QJ.title" = "일반 텍스트 (NSPasteboardTypeString)";
+"rL9-bK-Wx9.title" = "서식 있는 텍스트 (RTF) (NSPasteboardTypeRTF)";
+"w8y-aV-MhG.title" = "첨부 파일이 있는 서식 있는 텍스트 (RTFD) (NSPasteboardTypeRTFD)";
+"Xq9-19-kLj.title" = "PDF (NSPasteboardTypePDF)";
+"k8p-Pw-N0g.title" = "파일 이름 (NSFilenamesPboardType)";
+"z3J-YL-9kD.title" = "URL (NSPasteboardTypeURL)";
+"fY2-kC-G4L.title" = "이미지 (TIFF) (NSPasteboardTypeTIFF)";

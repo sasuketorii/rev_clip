@@ -1,5 +1,5 @@
 "History" = "历史记录";
-"Snippets" = "片段";
+"Snippets" = "模板";
 "Edit Templates..." = "编辑模板...";
 "Preferences..." = "偏好设置...";
 "Quit Revclip" = "退出 Revclip";
@@ -8,10 +8,10 @@
 "Are you sure you want to clear all clipboard history?" = "确定要清除所有剪贴板历史记录吗？";
 "Cancel" = "取消";
 "Delete" = "删除";
-"Delete this folder and all its snippets?" = "删除此文件夹及其所有片段吗？";
-"Target folder: %@" = "目标文件夹: %@";
-"Delete this snippet?" = "删除此片段吗？";
-"Target snippet: %@" = "目标片段: %@";
+"Delete this folder and all its snippets?" = "要删除此文件夹及其中的所有模板吗？";
+"Target folder: %@" = "目标文件夹：%@";
+"Delete this snippet?" = "要删除此模板吗？";
+"Target snippet: %@" = "目标模板：%@";
 
 "General" = "通用";
 "Menu" = "菜单";
@@ -20,158 +20,236 @@
 "Shortcuts" = "快捷键";
 "Updates" = "更新";
 "Beta" = "测试版";
+"Coming soon" = "即将推出";
 
 "Launch Revclip on login" = "登录时启动 Revclip";
 "Max clipboard history size" = "剪贴板历史记录最大数量";
 "Max menu items to display" = "菜单中显示的最大项目数";
+"Days" = "天";
+"Hours" = "小时";
+"Minutes" = "分钟";
 
 "Main" = "主菜单";
 "Click to record shortcut" = "点击以录制快捷键";
 
 "Template Editor" = "模板编辑器";
 "Add Folder" = "添加文件夹";
-"Add Snippet" = "添加片段";
-"Title:" = "标题:";
-"Content:" = "内容:";
-"Shortcut:" = "快捷键:";
+"Add Snippet" = "添加模板";
+"Add Template" = "添加模板";
+"Title:" = "标题：";
+"Content:" = "内容：";
+"Shortcut:" = "快捷键：";
 "Save" = "保存";
 "Save with ⌘S" = "按 ⌘S 保存";
+"Enable/Disable" = "启用/停用";
 "Untitled Folder" = "未命名文件夹";
-"Untitled Snippet" = "未命名片段";
+"Untitled Snippet" = "未命名模板";
 
-"Import Snippets..." = "导入片段...";
-"Export Snippets..." = "导出片段...";
+"Import Snippets..." = "导入模板...";
+"Import Templates..." = "导入模板...";
+"Export Snippets..." = "导出模板...";
+"Export All Snippets" = "导出所有模板";
+"Export All Templates..." = "导出所有模板...";
 "Merge" = "合并";
 "Replace" = "替换";
 
 "Excluded Applications" = "排除的应用程序";
 "Add Current App" = "添加当前应用";
 "Cannot add current application" = "无法添加当前应用程序";
+"No other application was detected. Please switch to the application you want to exclude, then click this button." = "未检测到其他应用程序。请切换到要排除的应用程序，然后点击此按钮。";
 
 "Check for Updates" = "检查更新";
 "Automatically check for updates" = "自动检查更新";
 "Version" = "版本";
 
 // Menu
-"No History" = "No History";
-"No Snippets" = "No Snippets";
-"(Empty)" = "(Empty)";
-"Clear History" = "Clear History";
-"Items %lu-%lu" = "Items %lu-%lu";
-"Clear clipboard history?" = "Clear clipboard history?";
-"All saved clips will be removed." = "All saved clips will be removed.";
-"Clear" = "Clear";
-"Search Snippets" = "搜索片段";
-"Snippet" = "片段";
+"No History" = "没有历史记录";
+"No Snippets" = "没有模板";
+"(Empty)" = "（空）";
+"Clear History" = "清除历史记录";
+"Items %lu-%lu" = "项目 %lu-%lu";
+"Clear clipboard history?" = "要清除剪贴板历史记录吗？";
+"All saved clips will be removed." = "所有已保存的剪贴内容都会被移除。";
+"Clear" = "清除";
+"Search Snippets" = "搜索模板";
+"Snippet" = "模板";
 "Folder" = "文件夹";
 "Saved!" = "已保存！";
-"Paste" = "Paste";
+"Paste" = "粘贴";
 
 // Fallback titles
-"Image" = "Image";
+"(Image)" = "（图像）";
+"Image" = "图像";
 "URL" = "URL";
 "PDF" = "PDF";
-"Rich Text" = "Rich Text";
-"Files" = "Files";
-"Clip" = "Clip";
+"Rich Text" = "富文本";
+"Files" = "文件";
+"Clip" = "剪贴内容";
 
 // Import/Export
-"Failed to Import Snippets" = "Failed to Import Snippets";
-"Failed to Export Snippets" = "Failed to Export Snippets";
-"An unknown error occurred." = "An unknown error occurred.";
-"OK" = "OK";
-"How do you want to import snippets?" = "How do you want to import snippets?";
-"Choose whether to merge with existing snippets or replace them all." = "Choose whether to merge with existing snippets or replace them all.";
-"Merge with existing snippets" = "Merge with existing snippets";
-"Replace all snippets" = "Replace all snippets";
+"Failed to Import Snippets" = "导入模板失败";
+"Failed to Export Snippets" = "导出模板失败";
+"An unknown error occurred." = "发生未知错误。";
+"OK" = "确定";
+"How do you want to import snippets?" = "要如何导入模板？";
+"Choose whether to merge with existing snippets or replace them all." = "请选择与现有模板合并，还是替换全部模板。";
+"Merge with existing snippets" = "与现有模板合并";
+"Replace all snippets" = "替换全部模板";
 
 // Shortcuts Prefs
-"Reset all shortcuts to defaults?" = "Reset all shortcuts to defaults?";
-"Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed." = "Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed.";
-"Reset" = "Reset";
+"Reset all shortcuts to defaults?" = "要将所有快捷键重置为默认值吗？";
+"Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed." = "主菜单、历史记录菜单和模板菜单的快捷键将重置为默认值；清除历史记录的快捷键将被取消分配。";
+"Reset" = "重置";
 
 // Exclude Prefs
-"Application" = "Application";
-"Add" = "Add";
-"The frontmost application is Revclip itself. Please switch to the application you want to exclude, then click this button." = "The frontmost application is Revclip itself. Please switch to the application you want to exclude, then click this button.";
+"Application" = "应用程序";
+"Add" = "添加";
+"The frontmost application is Revclip itself. Please switch to the application you want to exclude, then click this button." = "当前位于最前面的应用程序是 Revclip 本身。请切换到要排除的应用程序，然后点击此按钮。";
 
 // Menu Prefs
-"Menu Settings" = "Menu Settings";
-"Number of items inline" = "Number of items inline";
-"Number of items in folder" = "Number of items in folder";
-"Max title length" = "Max title length";
-"Mark with numbers" = "Mark with numbers";
-"Start numbering from 0" = "Start numbering from 0";
-"Add numeric key equivalents" = "Add numeric key equivalents";
-"Add clear history item" = "Add clear history item";
-"Show alert before clear" = "Show alert before clear";
-"Show tooltip" = "Show tooltip";
-"Max tooltip length" = "Max tooltip length";
-"Show image preview" = "Show image preview";
-"Thumbnail width" = "Thumbnail width";
-"Thumbnail height" = "Thumbnail height";
-"Show color preview" = "Show color preview";
-"Show icon" = "Show icon";
-"Icon size" = "Icon size";
+"Menu Settings" = "菜单设置";
+"Number of items inline" = "内联显示的项目数";
+"Number of items in folder" = "文件夹中的项目数";
+"Max title length" = "标题最大长度";
+"Mark with numbers" = "使用数字标记";
+"Start numbering from 0" = "从 0 开始编号";
+"Add numeric key equivalents" = "添加数字快捷键";
+"Add clear history item" = "添加清除历史记录项目";
+"Show alert before clear" = "清除前显示警告";
+"Show tooltip" = "显示工具提示";
+"Max tooltip length" = "工具提示最大长度";
+"Show image preview" = "显示图像预览";
+"Thumbnail width" = "缩略图宽度";
+"Thumbnail height" = "缩略图高度";
+"Show color preview" = "显示颜色预览";
+"Show icon" = "显示图标";
+"Icon size" = "图标大小";
 
 // General Prefs
-"Hide" = "Hide";
-"Show" = "Show";
+"Hide" = "隐藏";
+"Show" = "显示";
 
 // HotKey Recorder
-"Type shortcut" = "Type shortcut";
-"Click to record" = "Click to record";
-"This shortcut may not work" = "This shortcut may not work";
-"On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control.";
+"Type shortcut" = "输入快捷键";
+"Click to record" = "点击以录制";
+"This shortcut may not work" = "此快捷键可能无法使用";
+"On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "由于系统限制，macOS 15（Sequoia）及更高版本不支持仅使用 Option 或仅使用 Option+Shift 的修饰键组合。\n请使用包含 Command 或 Control 的组合。";
 
 // Template Editor
-"New Folder" = "New Folder";
-"New Snippet" = "New Snippet";
+"New Folder" = "新建文件夹";
+"New Snippet" = "新建模板";
+"Select a folder or template" = "选择文件夹或模板";
+"Add a folder to organize your templates." = "添加文件夹以整理模板。";
+"Add a template to this folder." = "向此文件夹添加模板。";
+"This folder is hidden from the menu." = "此文件夹不会显示在菜单中。";
+"Template Content" = "模板内容";
+"Changes are saved when you switch items or close the editor." = "切换项目或关闭编辑器时会保存更改。";
+"Show in Menu" = "在菜单中显示";
+"Hide from Menu" = "不在菜单中显示";
+"Delete Folder" = "删除文件夹";
+"Delete Template" = "删除模板";
 
 // Updates Prefs
-"Not Available Yet" = "Not Available Yet";
-"Update checking will be available in a future release." = "Update checking will be available in a future release.";
+"Not Available Yet" = "尚不可用";
+"Update checking will be available in a future release." = "检查更新功能将在未来版本中提供。";
 
 // Accessibility
-"Revclip requires Accessibility permission" = "Revclip requires Accessibility permission";
-"Revclip needs Accessibility permission to paste clipboard items. Please enable it in System Settings > Privacy & Security > Accessibility." = "Revclip needs Accessibility permission to paste clipboard items. Please enable it in System Settings > Privacy & Security > Accessibility.";
-"Open System Settings" = "Open System Settings";
-"Later" = "Later";
+"Revclip requires Accessibility permission" = "Revclip 需要辅助功能权限";
+"Revclip needs Accessibility permission to paste clipboard items. Please enable it in System Settings > Privacy & Security > Accessibility." = "Revclip 需要辅助功能权限才能粘贴剪贴板项目。请在系统设置 > 隐私与安全性 > 辅助功能中启用该权限。";
+"Open System Settings" = "打开系统设置";
+"Later" = "稍后";
 
 // Clipboard privacy (macOS 15.4+)
-"Revclip needs clipboard access" = "Revclip needs clipboard access";
-"macOS requires explicit permission for clipboard access. Please allow Revclip to access the clipboard in System Settings." = "macOS requires explicit permission for clipboard access. Please allow Revclip to access the clipboard in System Settings.";
+"Revclip needs clipboard access" = "Revclip 需要访问剪贴板";
+"macOS requires explicit permission for clipboard access. Please allow Revclip to access the clipboard in System Settings." = "macOS 要求明确授予剪贴板访问权限。请在系统设置中允许 Revclip 访问剪贴板。";
 
 // Preferences Window
 "Preferences" = "偏好设置";
+"Panic" = "Panic";
 
 // Version Info
-"Version %@ (%@)" = "版本 %@ (%@)";
+"Version %@ (%@)" = "版本 %@（%@）";
 "Version %@" = "版本 %@";
 "Build %@" = "构建版本 %@";
 "Version -" = "版本 -";
 
 // Move to Applications
-"Move to Applications folder?" = "移动到应用程序文件夹？";
-"Revclip needs to be in the Applications folder to work properly. Would you like to move it there?" = "Revclip 需要位于应用程序文件夹中才能正常工作。是否要将其移动到那里？";
+"Move to Applications folder?" = "要移动到应用程序文件夹吗？";
+"Revclip needs to be in the Applications folder to work properly. Would you like to move it there?" = "Revclip 必须位于应用程序文件夹中才能正常工作。要将它移动到那里吗？";
 "Move to Applications" = "移动到应用程序";
 "Do Not Move" = "不移动";
 "Could not move Revclip to Applications folder" = "无法将 Revclip 移动到应用程序文件夹";
 "An unknown error occurred while moving Revclip." = "移动 Revclip 时发生未知错误。";
 "Failed to relaunch the app from Applications." = "无法从应用程序文件夹重新启动应用。";
+"A newer version is already installed in Applications." = "应用程序文件夹中已经安装了更新版本。";
+"Installed version (%@) is newer than this app (%@). Move was canceled to prevent a downgrade." = "已安装的版本（%@）比此应用（%@）更新。为防止降级，已取消移动。";
 
-"Failed to save snippets. Your changes have not been saved." = "无法保存片段。您的更改尚未保存。";
-"Enabled" = "启用";
-
+// Import/export UI
 "Import" = "导入";
-
 "Export" = "导出";
+"Import Source" = "导入来源";
+"Choose import source." = "选择导入来源。";
+"Import from Clipy Default File" = "从 Clipy 默认文件导入";
+"Choose File..." = "选择文件...";
+"Export Scope" = "导出范围";
+"Choose what to export." = "选择要导出的内容。";
+"Export Selected Item" = "导出所选项目";
 
-"Failed to read snippets. Please try again." = "无法读取片段。请重试。";
+"Failed to save snippets. Your changes have not been saved." = "无法保存模板。您的更改尚未保存。";
+"Enabled" = "已启用";
+"Failed to read snippets. Please try again." = "无法读取模板。请重试。";
 
 /* Application appearance */
 "Appearance" = "外观";
 "Theme System" = "跟随系统";
 "Theme Light" = "浅色";
 "Theme Dark" = "深色";
-"Theme Description" = "选择菜单、设置和模板编辑器的外观。";
+"Theme Description" = "选择菜单、偏好设置和模板编辑器的外观。";
+
+// Panic erase
+"Delete Revclip Data" = "删除 Revclip 数据";
+"Delete All Revclip Data" = "删除 Revclip 的所有数据";
+"Delete Revclip Data and Quit" = "删除 Revclip 数据并退出";
+"This deletes clipboard history, templates, and settings stored by Revclip, clears the current clipboard, then quits Revclip. Other files on your Mac are not deleted. This cannot be undone." = "这会删除 Revclip 存储的剪贴板历史记录、模板和设置，清空当前剪贴板，然后退出 Revclip。Mac 上的其他文件不会被删除。此操作无法撤销。";
+"Type \"Panic\" to confirm:" = "输入“Panic”以确认：";
+"Incorrect confirmation" = "确认内容不正确";
+"Type \"Panic\" exactly to confirm." = "请输入“Panic”以确认。";
+"Delete all Revclip data?" = "要删除 Revclip 的所有数据吗？";
+"Warning" = "警告";
+
+// Import/export validation errors
+"Export destination is invalid." = "导出目标无效。";
+"Failed to write snippets file." = "无法写入模板文件。";
+"Failed to build snippets XML plist data." = "无法构建模板 XML plist 数据。";
+"Import source is invalid." = "导入来源无效。";
+"Import file is too large (exceeds 50 MB limit)." = "导入文件过大（超过 50 MB 限制）。";
+"Failed to read snippets file." = "无法读取模板文件。";
+"Snippets data is empty." = "模板数据为空。";
+"Database is not ready." = "数据库尚未准备就绪。";
+"Unsupported snippets file format." = "不支持的模板文件格式。";
+"Plist does not contain supported snippet folders." = "plist 不包含受支持的模板文件夹。";
+"Snippets plist root must be a dictionary." = "模板 plist 的根对象必须是字典。";
+"Snippets format identifier is missing or invalid." = "模板格式标识符缺失或无效。";
+"Snippets format version is missing or invalid." = "模板格式版本缺失或无效。";
+"Unsupported snippets format version." = "不支持的模板格式版本。";
+"Imported folder count exceeds the maximum supported limit (100)." = "导入的文件夹数量超过支持上限（100）。";
+"Folder title exceeds the maximum length (500 characters)." = "文件夹标题超过最大长度（500 个字符）。";
+"Imported snippet count exceeds the maximum supported limit (10000)." = "导入的模板数量超过支持上限（10000）。";
+"Snippet title exceeds the maximum length (500 characters)." = "模板标题超过最大长度（500 个字符）。";
+"Snippet content exceeds the maximum size (1 MB)." = "模板内容超过最大大小（1 MB）。";
+"DOCTYPE is not allowed in imported XML." = "导入的 XML 中不允许使用 DOCTYPE。";
+"Root element must be <folders> or <snippets>." = "根元素必须是 <folders> 或 <snippets>。";
+"Failed to delete all snippets." = "无法删除所有模板。";
+"Failed to delete all snippet folders." = "无法删除所有模板文件夹。";
+"Failed to insert snippet folder." = "无法插入模板文件夹。";
+"Failed to insert snippet." = "无法插入模板。";
+"Failed to persist imported snippets." = "无法保存导入的模板。";
+"Failed to read snippets." = "无法读取模板。";
+"Database operation failed." = "数据库操作失败。";
+
+// Japanese source keys retained for compatibility with existing callers
+"アップデートの確認に失敗しました" = "检查更新失败";
+"アップデートの確認中に問題が発生しました。しばらくしてからもう一度お試しください。" = "检查更新时出现问题。请稍后重试。";
+"ログインアイテムの設定に失敗しました" = "无法设置登录项目";
+"システム環境設定の「ログイン項目」で手動で設定してください。" = "请在系统设置 > 通用 > 登录项中手动设置。";
+"今後表示しない" = "不再显示";

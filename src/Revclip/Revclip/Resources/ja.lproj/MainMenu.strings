@@ -13,9 +13,9 @@
 /* Class = "NSMenu"; title = "File"; ObjectID = "V6Q-BM-uQn"; */
 "V6Q-BM-uQn.title" = "ファイル";
 /* Class = "NSMenuItem"; title = "Import Snippets..."; ObjectID = "HVK-3U-jg9"; */
-"HVK-3U-jg9.title" = "スニペットをインポート...";
+"HVK-3U-jg9.title" = "テンプレートをインポート...";
 /* Class = "NSMenuItem"; title = "Export Snippets..."; ObjectID = "zM9-aW-Jhj"; */
-"zM9-aW-Jhj.title" = "スニペットをエクスポート...";
+"zM9-aW-Jhj.title" = "テンプレートをエクスポート...";
 /* Class = "NSMenuItem"; title = "Edit"; ObjectID = "edt-M0-menu"; */
 "edt-M0-menu.title" = "編集";
 /* Class = "NSMenu"; title = "Edit"; ObjectID = "edt-M1-subm"; */

@@ -1,0 +1,9 @@
+"7yw-t6-KP3.title" = "Tipos a salvar";
+"4dM-4m-v0d.title" = "Escolha os tipos de conteúdo da área de transferência a serem salvos no histórico.";
+"D3w-gA-8QJ.title" = "Texto simples (NSPasteboardTypeString)";
+"rL9-bK-Wx9.title" = "Texto formatado (RTF) (NSPasteboardTypeRTF)";
+"w8y-aV-MhG.title" = "Texto formatado com anexos (RTFD) (NSPasteboardTypeRTFD)";
+"Xq9-19-kLj.title" = "PDF (NSPasteboardTypePDF)";
+"k8p-Pw-N0g.title" = "Nomes de arquivos (NSFilenamesPboardType)";
+"z3J-YL-9kD.title" = "URL (NSPasteboardTypeURL)";
+"fY2-kC-G4L.title" = "Imagens (TIFF) (NSPasteboardTypeTIFF)";

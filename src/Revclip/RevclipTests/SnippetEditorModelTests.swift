@@ -1,7 +1,52 @@
 import XCTest
+import SwiftUI
 @testable import Revclip
 
 final class SnippetEditorModelTests: XCTestCase {
+    @MainActor
+    func testTemplateEditorRendersAtMinimumWindowWidth() {
+        let model = SnippetEditorModel()
+        model.folders = [SnippetFolderDraft(id: "folder", title: "Examples", enabled: true,
+            snippets: [SnippetDraft(id: "template", folderID: "folder", title: "Greeting", content: "Hello", enabled: true)])]
+        model.selection = .snippet("template")
+        model.titleDraft = "Greeting"
+        model.contentDraft = "Hello"
+        let view = NSHostingView(rootView: SnippetEditorView(model: model))
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 600), styleMask: [.titled], backing: .buffered, defer: false)
+        window.contentView = view
+        view.layoutSubtreeIfNeeded()
+        // fittingSize is the ideal width of the first ViewThatFits candidate,
+        // not its minimum width. Check the rendered bounds and retain the image
+        // to inspect the stacked controls at the supported minimum window size.
+        XCTAssertEqual(view.bounds.width, 760, accuracy: 0.5)
+        XCTAssertEqual(view.bounds.height, 600, accuracy: 0.5)
+        guard let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds) else {
+            XCTFail("Could not render template editor"); return
+        }
+        view.cacheDisplay(in: view.bounds, to: bitmap)
+        let image = NSImage(size: view.bounds.size)
+        image.addRepresentation(bitmap)
+        let attachment = XCTAttachment(image: image)
+        attachment.name = "Template editor — \(Bundle.main.preferredLocalizations.first ?? "unknown")"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        window.contentView = nil
+    }
+
+    @MainActor
+    func testMenuVisibilityTracksSelectedItemAndParentFolder() {
+        let model = SnippetEditorModel()
+        model.folders = [SnippetFolderDraft(id: "folder", title: "Folder", enabled: false,
+            snippets: [SnippetDraft(id: "template", folderID: "folder", title: "Template", content: "text", enabled: true)])]
+        model.selection = .folder("folder")
+        XCTAssertFalse(model.selectedItemEnabled)
+        model.selection = .snippet("template")
+        XCTAssertTrue(model.selectedItemEnabled)
+        XCTAssertFalse(model.selectedFolderEnabled)
+        model.selection = nil
+        XCTAssertFalse(model.selectedItemEnabled)
+    }
+
     @MainActor
     func testFailedSaveKeepsDraftAndSelectionWithoutClaimingSuccess() {
         let model = SnippetEditorModel()
@@ -44,6 +89,17 @@ final class SnippetEditorModelTests: XCTestCase {
         XCTAssertTrue(model.save())
         model.reload()
         XCTAssertEqual(model.selectedSnippet?.content, "保存された本文")
+        XCTAssertTrue(model.selectedItemEnabled)
+        model.toggleEnabled()
+        model.reload()
+        XCTAssertFalse(model.selectedItemEnabled)
+        XCTAssertEqual(model.selectedSnippet?.content, "保存された本文")
+        model.toggleEnabled()
+        model.select(.folder(first))
+        model.toggleEnabled()
+        model.select(.snippet(a))
+        XCTAssertTrue(model.selectedItemEnabled)
+        XCTAssertFalse(model.selectedFolderEnabled)
         model.query = "B"
         model.moveSnippets(in:first,from:IndexSet(integer:0),to:2)
         XCTAssertEqual(model.folders.first { $0.id == first }?.snippets.map(\.id), [a,b])

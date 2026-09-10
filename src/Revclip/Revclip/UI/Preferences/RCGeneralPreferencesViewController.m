@@ -183,7 +183,7 @@ static const NSInteger RCShowStatusItemDefault = 1;
     self.autoExpiryValueStepper.valueWraps = NO;
 
     [self.autoExpiryUnitPopUpButton removeAllItems];
-    [self.autoExpiryUnitPopUpButton addItemsWithTitles:@[@"日", @"時間", @"分"]];
+    [self.autoExpiryUnitPopUpButton addItemsWithTitles:@[NSLocalizedString(@"Days", nil), NSLocalizedString(@"Hours", nil), NSLocalizedString(@"Minutes", nil)]];
 
     [self.showStatusItemPopUpButton removeAllItems];
     [self.showStatusItemPopUpButton addItemsWithTitles:@[NSLocalizedString(@"Hide", nil), NSLocalizedString(@"Show", nil)]];

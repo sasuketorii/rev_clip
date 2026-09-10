@@ -2,7 +2,7 @@
   <img src="revclip_icon_rounded.png" width="128" height="128" alt="Revclip icon" />
   <h1>Revclip</h1>
   <p><strong>Copy once. Find it again. Make your clipboard your own.</strong></p>
-  <p>A native macOS clipboard manager. Local history. Reusable snippets. Yours to customize.</p>
+  <p>A native macOS clipboard manager. Local history. Reusable templates. Yours to customize.</p>
 
   <a href="https://github.com/sasuketorii/rev_clip/releases/latest"><img src="https://img.shields.io/github/v/release/sasuketorii/rev_clip?color=007aff" alt="Latest release" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-34c759" alt="MIT License" /></a>
@@ -17,16 +17,16 @@
 
 ---
 
-**History, snippets, and settings—all at ⌘⇧V.** Revclip lives in your Mac's menu bar. Browse past copies, preview a snippet, and paste it into the app you were using. Keep your workflow moving from a single menu.
+**History, templates, and settings—all at ⌘⇧V.** Revclip lives in your Mac's menu bar. Browse past copies, preview a template, and paste it into the app you were using. Keep your workflow moving from a single menu.
 
 ## A small app for everyday copying
 
 | Feature | What it means for you |
 | --- | --- |
 | **Native macOS UI** | Standard AppKit menus and SwiftUI, without an Electron or WebView runtime. |
-| **Local history** | Your history and snippets stay on your Mac. No account or cloud setup required. |
+| **Local history** | Your history and templates stay on your Mac. No account or cloud setup required. |
 | **Ten items at a time** | History is grouped into folders of ten by default. Adjust the grouping and menu options in settings. |
-| **Reusable snippets** | Organize text into folders, edit it in a dedicated editor, and import or export your collection. |
+| **Reusable templates** | Organize text into folders, edit it in a dedicated editor, and import or export your collection. |
 | **Preview before pasting** | Hover to preview an item. When space allows, the preview appears below the submenu. |
 | **Your preferred appearance** | Choose light, dark, or system appearance. Change the source to build a UI that suits you. |
 
@@ -43,14 +43,16 @@ Native UI and few dependencies are the foundation of the design. We have not pub
 
 ## How to use it
 
+Available in Japanese, English, Korean, Simplified Chinese, French, German, Brazilian Portuguese, and Italian. Revclip follows your preferred macOS language. To choose a language for Revclip only, use System Settings → General → Language & Region → Applications, then restart Revclip.
+
 1. Launch Revclip and copy text or other content as usual.
-2. Press **⌘⇧V** and choose a history item or snippet.
+2. Press **⌘⇧V** and choose a history item or template.
 3. Paste into the original app. Turn off automatic paste if you only want to copy the selected item to the clipboard.
 
 | Entry point | Opens |
 | --- | --- |
-| **⌘⇧V** | History, snippets, clear history, settings, template editing, and quit |
-| **⌘⌃V** | History and app actions, without snippets |
+| **⌘⇧V** | History, templates, clear history, settings, template editing, and quit |
+| **⌘⌃V** | History and app actions, without templates |
 | **Menu bar icon** | The main menu |
 
 Automatic paste requires macOS Accessibility permission. Keyboard shortcuts can be changed in settings.
@@ -100,7 +102,7 @@ Menu density, preview spacing, editor layout, icons—change the parts you use e
 | Menu and history structure | [RCMenuManager.m](src/Revclip/Revclip/Managers/RCMenuManager.m) |
 | Preview position and timing | [RCFastPreviewController.m](src/Revclip/Revclip/UI/RCFastPreviewController.m) |
 | Light and dark appearance | [RCAppearanceController.swift](src/Revclip/Revclip/UI/Appearance/RCAppearanceController.swift) |
-| Snippet editor | [SnippetEditor](src/Revclip/Revclip/UI/SnippetEditor) |
+| Template editor | [SnippetEditor](src/Revclip/Revclip/UI/SnippetEditor) |
 | App configuration and build settings | [project.yml](src/Revclip/project.yml) |
 | Icons | [generate_icons.py](scripts/generate_icons.py) |
 

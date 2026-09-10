@@ -1,1 +1,2 @@
-"NSHumanReadableCopyright" = "Copyright © 2024-2026 Revclip. All rights reserved.";
+"NSAccessibilityUsageDescription" = "Revclip needs accessibility access to paste clipboard items into other applications.";
+"NSHumanReadableCopyright" = "Copyright © 2024-2026 Revclip. Licensed under the MIT License.";

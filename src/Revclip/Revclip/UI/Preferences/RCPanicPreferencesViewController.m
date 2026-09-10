@@ -33,12 +33,12 @@
     [container addSubview:warningIcon];
 
     // Title label
-    NSTextField *titleLabel = [self createLabel:@"パニック消去" bold:YES fontSize:16.0];
+    NSTextField *titleLabel = [self createLabel:NSLocalizedString(@"Delete Revclip Data", nil) bold:YES fontSize:16.0];
     [container addSubview:titleLabel];
 
     // Description label
     NSTextField *descriptionLabel = [self createWrappingLabel:
-        @"すべてのクリップボード履歴、テンプレート、設定を完全に削除してアプリを終了します。\nこの操作は取り消せません。"];
+        NSLocalizedString(@"This deletes clipboard history, templates, and settings stored by Revclip, clears the current clipboard, then quits Revclip. Other files on your Mac are not deleted. This cannot be undone.", nil)];
     [container addSubview:descriptionLabel];
 
     // Separator
@@ -48,7 +48,7 @@
     [container addSubview:separator];
 
     // Input label
-    NSTextField *inputLabel = [self createLabel:@"確認のため「Panic」と入力してください：" bold:NO fontSize:13.0];
+    NSTextField *inputLabel = [self createLabel:NSLocalizedString(@"Type \"Panic\" to confirm:", nil) bold:NO fontSize:13.0];
     [container addSubview:inputLabel];
 
     // Confirmation text field
@@ -60,7 +60,7 @@
     [container addSubview:self.confirmationTextField];
 
     // Erase button
-    self.eraseButton = [NSButton buttonWithTitle:@"全データ削除" target:self action:@selector(eraseButtonClicked:)];
+    self.eraseButton = [NSButton buttonWithTitle:NSLocalizedString(@"Delete All Revclip Data", nil) target:self action:@selector(eraseButtonClicked:)];
     self.eraseButton.translatesAutoresizingMaskIntoConstraints = NO;
     self.eraseButton.bezelStyle = NSBezelStyleRegularSquare;
     self.eraseButton.font = [NSFont systemFontOfSize:13.0 weight:NSFontWeightMedium];
@@ -105,6 +105,8 @@
         [self.eraseButton.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:20.0],
         [self.eraseButton.topAnchor constraintEqualToAnchor:self.confirmationTextField.bottomAnchor constant:16.0],
         [self.eraseButton.widthAnchor constraintGreaterThanOrEqualToConstant:120.0],
+        [self.eraseButton.trailingAnchor constraintLessThanOrEqualToAnchor:container.trailingAnchor constant:-20.0],
+        [self.eraseButton.bottomAnchor constraintLessThanOrEqualToAnchor:container.bottomAnchor constant:-20.0],
     ]];
 }
 
@@ -113,7 +115,7 @@
     imageView.translatesAutoresizingMaskIntoConstraints = NO;
 
     NSImage *warningImage = [NSImage imageWithSystemSymbolName:@"exclamationmark.triangle.fill"
-                                     accessibilityDescription:@"警告"];
+                                     accessibilityDescription:NSLocalizedString(@"Warning", nil)];
     if (warningImage != nil) {
         imageView.image = warningImage;
         imageView.contentTintColor = [NSColor systemOrangeColor];
@@ -151,20 +153,20 @@
 
     if (![typed isEqualToString:@"Panic"]) {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"入力が正しくありません";
-        alert.informativeText = @"確認のため「Panic」と正確に入力してください。";
+        alert.messageText = NSLocalizedString(@"Incorrect confirmation", nil);
+        alert.informativeText = NSLocalizedString(@"Type \"Panic\" exactly to confirm.", nil);
         alert.alertStyle = NSAlertStyleWarning;
-        [alert addButtonWithTitle:@"OK"];
+        [alert addButtonWithTitle:NSLocalizedString(@"OK", nil)];
         [alert beginSheetModalForWindow:self.view.window completionHandler:nil];
         return;
     }
 
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"最終確認";
-    alert.informativeText = @"すべてのクリップボード履歴、テンプレート、設定が完全に削除されます。アプリは終了します。\n\nこの操作は取り消せません。";
+    alert.messageText = NSLocalizedString(@"Delete all Revclip data?", nil);
+    alert.informativeText = NSLocalizedString(@"This deletes clipboard history, templates, and settings stored by Revclip, clears the current clipboard, then quits Revclip. Other files on your Mac are not deleted. This cannot be undone.", nil);
     alert.alertStyle = NSAlertStyleCritical;
-    [alert addButtonWithTitle:@"全データ削除して終了"];
-    [alert addButtonWithTitle:@"キャンセル"];
+    [alert addButtonWithTitle:NSLocalizedString(@"Delete Revclip Data and Quit", nil)];
+    [alert addButtonWithTitle:NSLocalizedString(@"Cancel", nil)];
 
     [alert beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse returnCode) {
         if (returnCode == NSAlertFirstButtonReturn) {

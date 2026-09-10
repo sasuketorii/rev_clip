@@ -1,5 +1,5 @@
 "History" = "History";
-"Snippets" = "Snippets";
+"Snippets" = "Templates";
 "Edit Templates..." = "Edit Templates...";
 "Preferences..." = "Preferences...";
 "Quit Revclip" = "Quit Revclip";
@@ -8,10 +8,10 @@
 "Are you sure you want to clear all clipboard history?" = "Are you sure you want to clear all clipboard history?";
 "Cancel" = "Cancel";
 "Delete" = "Delete";
-"Delete this folder and all its snippets?" = "Delete this folder and all its snippets?";
+"Delete this folder and all its snippets?" = "Delete this folder and all its templates?";
 "Target folder: %@" = "Target folder: %@";
-"Delete this snippet?" = "Delete this snippet?";
-"Target snippet: %@" = "Target snippet: %@";
+"Delete this snippet?" = "Delete this template?";
+"Target snippet: %@" = "Target template: %@";
 
 "General" = "General";
 "Menu" = "Menu";
@@ -20,17 +20,22 @@
 "Shortcuts" = "Shortcuts";
 "Updates" = "Updates";
 "Beta" = "Beta";
+"Coming soon" = "Coming soon";
 
 "Launch Revclip on login" = "Launch Revclip on login";
 "Max clipboard history size" = "Max clipboard history size";
 "Max menu items to display" = "Max menu items to display";
+"Days" = "Days";
+"Hours" = "Hours";
+"Minutes" = "Minutes";
 
 "Main" = "Main";
 "Click to record shortcut" = "Click to record shortcut";
 
 "Template Editor" = "Template Editor";
 "Add Folder" = "Add Folder";
-"Add Snippet" = "Add Snippet";
+"Add Snippet" = "Add Template";
+"Add Template" = "Add Template";
 "Title:" = "Title:";
 "Content:" = "Content:";
 "Shortcut:" = "Shortcut:";
@@ -38,16 +43,20 @@
 "Save with ⌘S" = "Save with ⌘S";
 "Enable/Disable" = "Enable/Disable";
 "Untitled Folder" = "Untitled Folder";
-"Untitled Snippet" = "Untitled Snippet";
+"Untitled Snippet" = "Untitled Template";
 
-"Import Snippets..." = "Import Snippets...";
-"Export Snippets..." = "Export Snippets...";
+"Import Snippets..." = "Import Templates...";
+"Import Templates..." = "Import Templates...";
+"Export Snippets..." = "Export Templates...";
+"Export All Snippets" = "Export All Templates";
+"Export All Templates..." = "Export All Templates...";
 "Merge" = "Merge";
 "Replace" = "Replace";
 
 "Excluded Applications" = "Excluded Applications";
 "Add Current App" = "Add Current App";
 "Cannot add current application" = "Cannot add current application";
+"No other application was detected. Please switch to the application you want to exclude, then click this button." = "No other application was detected. Please switch to the application you want to exclude, then click this button.";
 
 "Check for Updates" = "Check for Updates";
 "Automatically check for updates" = "Automatically check for updates";
@@ -55,20 +64,21 @@
 
 // Menu
 "No History" = "No History";
-"No Snippets" = "No Snippets";
+"No Snippets" = "No Templates";
 "(Empty)" = "(Empty)";
 "Clear History" = "Clear History";
 "Items %lu-%lu" = "Items %lu-%lu";
 "Clear clipboard history?" = "Clear clipboard history?";
 "All saved clips will be removed." = "All saved clips will be removed.";
 "Clear" = "Clear";
-"Search Snippets" = "Search Snippets";
-"Snippet" = "Snippet";
+"Search Snippets" = "Search Templates";
+"Snippet" = "Template";
 "Folder" = "Folder";
 "Saved!" = "Saved!";
 "Paste" = "Paste";
 
 // Fallback titles
+"(Image)" = "(Image)";
 "Image" = "Image";
 "URL" = "URL";
 "PDF" = "PDF";
@@ -77,18 +87,18 @@
 "Clip" = "Clip";
 
 // Import/Export
-"Failed to Import Snippets" = "Failed to Import Snippets";
-"Failed to Export Snippets" = "Failed to Export Snippets";
+"Failed to Import Snippets" = "Failed to Import Templates";
+"Failed to Export Snippets" = "Failed to Export Templates";
 "An unknown error occurred." = "An unknown error occurred.";
 "OK" = "OK";
-"How do you want to import snippets?" = "How do you want to import snippets?";
-"Choose whether to merge with existing snippets or replace them all." = "Choose whether to merge with existing snippets or replace them all.";
-"Merge with existing snippets" = "Merge with existing snippets";
-"Replace all snippets" = "Replace all snippets";
+"How do you want to import snippets?" = "How do you want to import templates?";
+"Choose whether to merge with existing snippets or replace them all." = "Choose whether to merge with existing templates or replace them all.";
+"Merge with existing snippets" = "Merge with existing templates";
+"Replace all snippets" = "Replace all templates";
 
 // Shortcuts Prefs
 "Reset all shortcuts to defaults?" = "Reset all shortcuts to defaults?";
-"Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed." = "Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed.";
+"Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed." = "The Main Menu, History Menu, and Template Menu shortcuts will be reset to their defaults. The Clear History shortcut will be unassigned.";
 "Reset" = "Reset";
 
 // Exclude Prefs
@@ -127,7 +137,17 @@
 
 // Template Editor
 "New Folder" = "New Folder";
-"New Snippet" = "New Snippet";
+"New Snippet" = "New Template";
+"Select a folder or template" = "Select a folder or template";
+"Add a folder to organize your templates." = "Add a folder to organize your templates.";
+"Add a template to this folder." = "Add a template to this folder.";
+"This folder is hidden from the menu." = "This folder is hidden from the menu.";
+"Template Content" = "Template Content";
+"Changes are saved when you switch items or close the editor." = "Changes are saved when you switch items or close the editor.";
+"Show in Menu" = "Show in Menu";
+"Hide from Menu" = "Hide from Menu";
+"Delete Folder" = "Delete Folder";
+"Delete Template" = "Delete Template";
 
 // Updates Prefs
 "Not Available Yet" = "Not Available Yet";
@@ -145,6 +165,7 @@
 
 // Preferences Window
 "Preferences" = "Preferences";
+"Panic" = "Panic";
 
 // Version Info
 "Version %@ (%@)" = "Version %@ (%@)";
@@ -160,7 +181,10 @@
 "Could not move Revclip to Applications folder" = "Could not move Revclip to Applications folder";
 "An unknown error occurred while moving Revclip." = "An unknown error occurred while moving Revclip.";
 "Failed to relaunch the app from Applications." = "Failed to relaunch the app from Applications.";
+"A newer version is already installed in Applications." = "A newer version is already installed in Applications.";
+"Installed version (%@) is newer than this app (%@). Move was canceled to prevent a downgrade." = "Installed version (%@) is newer than this app (%@). Move was canceled to prevent a downgrade.";
 
+// Import/export UI
 "Import" = "Import";
 "Export" = "Export";
 "Import Source" = "Import Source";
@@ -170,16 +194,62 @@
 "Export Scope" = "Export Scope";
 "Choose what to export." = "Choose what to export.";
 "Export Selected Item" = "Export Selected Item";
-"Export All Snippets" = "Export All Snippets";
 
-"Failed to save snippets. Your changes have not been saved." = "Failed to save snippets. Your changes have not been saved.";
+"Failed to save snippets. Your changes have not been saved." = "Failed to save templates. Your changes have not been saved.";
 "Enabled" = "Enabled";
-
-"Failed to read snippets. Please try again." = "Failed to read snippets. Please try again.";
+"Failed to read snippets. Please try again." = "Failed to read templates. Please try again.";
 
 /* Application appearance */
 "Appearance" = "Appearance";
 "Theme System" = "System";
 "Theme Light" = "Light";
 "Theme Dark" = "Dark";
-"Theme Description" = "Choose the appearance of menus, preferences, and the snippet editor.";
+"Theme Description" = "Choose the appearance of menus, preferences, and the template editor.";
+
+// Panic erase
+"Delete Revclip Data" = "Delete Revclip Data";
+"Delete All Revclip Data" = "Delete All Revclip Data";
+"Delete Revclip Data and Quit" = "Delete Revclip Data and Quit";
+"This deletes clipboard history, templates, and settings stored by Revclip, clears the current clipboard, then quits Revclip. Other files on your Mac are not deleted. This cannot be undone." = "This deletes clipboard history, templates, and settings stored by Revclip, clears the current clipboard, then quits Revclip. Other files on your Mac are not deleted. This cannot be undone.";
+"Type \"Panic\" to confirm:" = "Type \"Panic\" to confirm:";
+"Incorrect confirmation" = "Incorrect confirmation";
+"Type \"Panic\" exactly to confirm." = "Type \"Panic\" exactly to confirm.";
+"Delete all Revclip data?" = "Delete all Revclip data?";
+"Warning" = "Warning";
+
+// Import/export validation errors
+"Export destination is invalid." = "Export destination is invalid.";
+"Failed to write snippets file." = "Failed to write templates file.";
+"Failed to build snippets XML plist data." = "Failed to build the templates XML plist data.";
+"Import source is invalid." = "Import source is invalid.";
+"Import file is too large (exceeds 50 MB limit)." = "Import file is too large (exceeds the 50 MB limit).";
+"Failed to read snippets file." = "Failed to read the templates file.";
+"Snippets data is empty." = "Template data is empty.";
+"Database is not ready." = "Database is not ready.";
+"Unsupported snippets file format." = "Unsupported templates file format.";
+"Plist does not contain supported snippet folders." = "The plist does not contain supported template folders.";
+"Snippets plist root must be a dictionary." = "The templates plist root must be a dictionary.";
+"Snippets format identifier is missing or invalid." = "The templates format identifier is missing or invalid.";
+"Snippets format version is missing or invalid." = "The templates format version is missing or invalid.";
+"Unsupported snippets format version." = "Unsupported templates format version.";
+"Imported folder count exceeds the maximum supported limit (100)." = "The number of imported folders exceeds the supported limit (100).";
+"Folder title exceeds the maximum length (500 characters)." = "The folder title exceeds the maximum length (500 characters).";
+"Imported snippet count exceeds the maximum supported limit (10000)." = "The number of imported templates exceeds the supported limit (10000).";
+"Snippet title exceeds the maximum length (500 characters)." = "The template title exceeds the maximum length (500 characters).";
+"Snippet content exceeds the maximum size (1 MB)." = "The template content exceeds the maximum size (1 MB).";
+"DOCTYPE is not allowed in imported XML." = "DOCTYPE is not allowed in imported XML.";
+"Root element must be <folders> or <snippets>." = "The root element must be <folders> or <snippets>.";
+"Failed to delete all snippets." = "Failed to delete all templates.";
+"Failed to delete all snippet folders." = "Failed to delete all template folders.";
+"Failed to insert snippet folder." = "Failed to insert the template folder.";
+"Failed to insert snippet." = "Failed to insert the template.";
+"Failed to persist imported snippets." = "Failed to save the imported templates.";
+"Failed to read snippets." = "Failed to read templates.";
+"Database operation failed." = "Database operation failed.";
+
+// Japanese source keys retained for compatibility with existing callers
+"アップデートの確認に失敗しました" = "Update check failed";
+"アップデートの確認中に問題が発生しました。しばらくしてからもう一度お試しください。" = "Something went wrong while checking for updates. Please try again later.";
+"ログインアイテムの設定に失敗しました" = "Failed to configure the login item";
+"システム環境設定の「ログイン項目」で手動で設定してください。" = "Please configure it manually in System Settings > General > Login Items.";
+"今後表示しない" = "Do not show again";

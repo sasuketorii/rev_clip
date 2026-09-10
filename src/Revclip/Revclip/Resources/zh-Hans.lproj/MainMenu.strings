@@ -13,9 +13,9 @@
 /* Class = "NSMenu"; title = "File"; ObjectID = "V6Q-BM-uQn"; */
 "V6Q-BM-uQn.title" = "文件";
 /* Class = "NSMenuItem"; title = "Import Snippets..."; ObjectID = "HVK-3U-jg9"; */
-"HVK-3U-jg9.title" = "导入片段...";
+"HVK-3U-jg9.title" = "导入模板...";
 /* Class = "NSMenuItem"; title = "Export Snippets..."; ObjectID = "zM9-aW-Jhj"; */
-"zM9-aW-Jhj.title" = "导出片段...";
+"zM9-aW-Jhj.title" = "导出模板...";
 /* Class = "NSMenuItem"; title = "Edit"; ObjectID = "edt-M0-menu"; */
 "edt-M0-menu.title" = "编辑";
 /* Class = "NSMenu"; title = "Edit"; ObjectID = "edt-M1-subm"; */

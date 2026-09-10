@@ -84,12 +84,12 @@
                 <menuItem title="File" id="xJ0-zN-3xU">
                     <menu key="submenu" title="File" systemMenu="file" id="V6Q-BM-uQn">
                         <items>
-                            <menuItem title="Import Snippets..." id="HVK-3U-jg9">
+                            <menuItem title="Import Templates..." id="HVK-3U-jg9">
                                 <connections>
                                     <action selector="importSnippets:" target="RCd-YX-z1K" id="wFh-vQ-2v8"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Export Snippets..." id="zM9-aW-Jhj">
+                            <menuItem title="Export Templates..." id="zM9-aW-Jhj">
                                 <connections>
                                     <action selector="exportSnippets:" target="RCd-YX-z1K" id="W3V-jV-zHM"/>
                                 </connections>

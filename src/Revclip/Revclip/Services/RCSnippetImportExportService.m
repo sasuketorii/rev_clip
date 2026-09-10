@@ -38,8 +38,6 @@ static NSInteger const kRCMaxImportSnippetCount = 10000;
 static NSUInteger const kRCMaxImportTitleLength = 500;
 static NSUInteger const kRCMaxImportContentLengthBytes = 1024 * 1024;
 
-static NSString * const kRCFolderTitleFallback = @"untitled folder";
-static NSString * const kRCSnippetTitleFallback = @"untitled snippet";
 static NSString * const kRCImportedFolderTitle = @"Imported";
 
 static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
@@ -138,7 +136,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     if (![fileURL isFileURL]) {
         return [self assignSnippetError:error
                                    code:RCSnippetImportExportErrorFileWrite
-                            description:@"Export destination is invalid."
+                            description:NSLocalizedString(@"Export destination is invalid.", nil)
                         underlyingError:nil];
     }
 
@@ -152,7 +150,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     if (!written) {
         return [self assignSnippetError:error
                                    code:RCSnippetImportExportErrorFileWrite
-                            description:@"Failed to write snippets file."
+                            description:NSLocalizedString(@"Failed to write snippets file.", nil)
                         underlyingError:writeError];
     }
 
@@ -172,7 +170,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     if (![fileURL isFileURL]) {
         return [self assignSnippetError:error
                                    code:RCSnippetImportExportErrorFileWrite
-                            description:@"Export destination is invalid."
+                            description:NSLocalizedString(@"Export destination is invalid.", nil)
                         underlyingError:nil];
     }
 
@@ -186,7 +184,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     if (!written) {
         return [self assignSnippetError:error
                                    code:RCSnippetImportExportErrorFileWrite
-                            description:@"Failed to write snippets file."
+                            description:NSLocalizedString(@"Failed to write snippets file.", nil)
                         underlyingError:writeError];
     }
 
@@ -210,7 +208,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     if (xmlData.length == 0 || plistError != nil) {
         [self assignSnippetError:error
                             code:RCSnippetImportExportErrorFileWrite
-                     description:@"Failed to build snippets XML plist data."
+                     description:NSLocalizedString(@"Failed to build snippets XML plist data.", nil)
                  underlyingError:plistError];
         return nil;
     }
@@ -224,7 +222,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     if (![fileURL isFileURL]) {
         return [self assignSnippetError:error
                                    code:RCSnippetImportExportErrorFileRead
-                            description:@"Import source is invalid."
+                            description:NSLocalizedString(@"Import source is invalid.", nil)
                         underlyingError:nil];
     }
 
@@ -235,7 +233,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
         if (fileSize.unsignedLongLongValue > kRCMaxImportFileSize) {
             return [self assignSnippetError:error
                                        code:RCSnippetImportExportErrorFileRead
-                                description:@"Import file is too large (exceeds 50 MB limit)."
+                                description:NSLocalizedString(@"Import file is too large (exceeds 50 MB limit).", nil)
                             underlyingError:nil];
         }
     }
@@ -245,7 +243,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     if (data == nil) {
         return [self assignSnippetError:error
                                    code:RCSnippetImportExportErrorFileRead
-                            description:@"Failed to read snippets file."
+                            description:NSLocalizedString(@"Failed to read snippets file.", nil)
                         underlyingError:readError];
     }
 
@@ -256,13 +254,13 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     if (data.length == 0) {
         return [self assignSnippetError:error
                                    code:RCSnippetImportExportErrorInvalidXMLFormat
-                            description:@"Snippets data is empty."
+                            description:NSLocalizedString(@"Snippets data is empty.", nil)
                         underlyingError:nil];
     }
     if ((unsigned long long)data.length > kRCMaxImportFileSize) {
         return [self assignSnippetError:error
                                    code:RCSnippetImportExportErrorFileRead
-                            description:@"Import file is too large (exceeds 50 MB limit)."
+                            description:NSLocalizedString(@"Import file is too large (exceeds 50 MB limit).", nil)
                         underlyingError:nil];
     }
 
@@ -270,7 +268,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     if (![databaseManager setupDatabase]) {
         return [self assignSnippetError:error
                                    code:RCSnippetImportExportErrorDatabase
-                            description:@"Database is not ready."
+                            description:NSLocalizedString(@"Database is not ready.", nil)
                         underlyingError:nil];
     }
 
@@ -291,14 +289,14 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
             // Preserve the original parse error for diagnostics
             return [self assignSnippetError:error
                                        code:RCSnippetImportExportErrorInvalidXMLFormat
-                                description:@"Unsupported snippets file format."
+                                description:NSLocalizedString(@"Unsupported snippets file format.", nil)
                             underlyingError:plistParseError];
         }
     }
     if (parsedFolders == nil) {
         return [self assignSnippetError:error
                                    code:RCSnippetImportExportErrorInvalidXMLFormat
-                            description:@"Unsupported snippets file format."
+                            description:NSLocalizedString(@"Unsupported snippets file format.", nil)
                         underlyingError:nil];
     }
     if (![self validateImportLimitsForFolders:parsedFolders error:error]) {
@@ -315,7 +313,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     if (![databaseManager setupDatabase]) {
         [self assignSnippetError:error
                             code:RCSnippetImportExportErrorDatabase
-                     description:@"Database is not ready."
+                     description:NSLocalizedString(@"Database is not ready.", nil)
                  underlyingError:nil];
         return nil;
     }
@@ -323,7 +321,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     NSArray<NSDictionary *> *folders = [databaseManager fetchSnippetCatalog];
     if (folders == nil) {
         [self assignSnippetError:error code:RCSnippetImportExportErrorDatabase
-                     description:@"Failed to read snippets." underlyingError:nil];
+                     description:NSLocalizedString(@"Failed to read snippets.", nil) underlyingError:nil];
         return nil;
     }
     NSMutableArray<NSDictionary *> *result = [NSMutableArray arrayWithCapacity:folders.count];
@@ -351,7 +349,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
                 @"identifier": snippetIdentifier,
                 @"snippet_index": @([self integerValueInDictionary:snippet keys:@[@"snippet_index", @"snippetIndex"] defaultValue:(NSInteger)snippetDictionaries.count]),
                 @"enabled": @([self boolValueInDictionary:snippet keys:@[@"enabled", @"enable"] defaultValue:YES]),
-                @"title": [self stringValueInDictionary:snippet keys:@[@"title", @"name"] defaultValue:kRCSnippetTitleFallback],
+                @"title": [self stringValueInDictionary:snippet keys:@[@"title", @"name"] defaultValue:NSLocalizedString(@"Untitled Snippet", nil)],
                 @"content": [self stringValueInDictionary:snippet keys:@[@"content", @"text", @"value"] defaultValue:@""],
             };
             [snippetDictionaries addObject:snippetDictionary];
@@ -361,7 +359,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
             @"identifier": folderIdentifier,
             @"folder_index": @([self integerValueInDictionary:folder keys:@[@"folder_index", @"folderIndex", @"index"] defaultValue:(NSInteger)result.count]),
             @"enabled": @([self boolValueInDictionary:folder keys:@[@"enabled", @"enable"] defaultValue:YES]),
-            @"title": [self stringValueInDictionary:folder keys:@[@"title", @"name"] defaultValue:kRCFolderTitleFallback],
+            @"title": [self stringValueInDictionary:folder keys:@[@"title", @"name"] defaultValue:NSLocalizedString(@"Untitled Folder", nil)],
             @"snippets": [snippetDictionaries copy],
         };
         [result addObject:folderDictionary];
@@ -413,7 +411,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
                 @"identifier": snippetIdentifier,
                 @"snippet_index": @([self integerValueInDictionary:snippet keys:@[@"snippet_index", @"snippetIndex", @"index"] defaultValue:snippetIndex]),
                 @"enabled": @([self boolValueInDictionary:snippet keys:@[@"enabled", @"enable"] defaultValue:YES]),
-                @"title": [self stringValueInDictionary:snippet keys:@[@"title", @"name"] defaultValue:kRCSnippetTitleFallback],
+                @"title": [self stringValueInDictionary:snippet keys:@[@"title", @"name"] defaultValue:NSLocalizedString(@"Untitled Snippet", nil)],
                 @"content": [self stringValueInDictionary:snippet keys:@[@"content", @"text", @"value"] defaultValue:@""],
             };
             [normalizedSnippets addObject:normalizedSnippet];
@@ -424,7 +422,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
             @"identifier": folderIdentifier,
             @"folder_index": @([self integerValueInDictionary:folder keys:@[@"folder_index", @"folderIndex", @"index"] defaultValue:folderIndex]),
             @"enabled": @([self boolValueInDictionary:folder keys:@[@"enabled", @"enable"] defaultValue:YES]),
-            @"title": [self stringValueInDictionary:folder keys:@[@"title", @"name"] defaultValue:kRCFolderTitleFallback],
+            @"title": [self stringValueInDictionary:folder keys:@[@"title", @"name"] defaultValue:NSLocalizedString(@"Untitled Folder", nil)],
             @"snippets": [normalizedSnippets copy],
         };
 
@@ -503,7 +501,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     if (folderObjects == nil) {
         [self assignSnippetError:error
                             code:RCSnippetImportExportErrorInvalidXMLFormat
-                     description:@"Plist does not contain supported snippet folders."
+                     description:NSLocalizedString(@"Plist does not contain supported snippet folders.", nil)
                  underlyingError:nil];
         return nil;
     }
@@ -523,7 +521,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     if (![rootObject isKindOfClass:[NSDictionary class]]) {
         return [self assignSnippetError:error
                                    code:RCSnippetImportExportErrorInvalidXMLFormat
-                            description:@"Snippets plist root must be a dictionary."
+                            description:NSLocalizedString(@"Snippets plist root must be a dictionary.", nil)
                         underlyingError:nil];
     }
 
@@ -534,7 +532,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
         || ![(NSString *)formatValue isEqualToString:kRCRevclipPlistFormatValue]) {
         return [self assignSnippetError:error
                                    code:RCSnippetImportExportErrorMissingRequiredElement
-                            description:@"Snippets format identifier is missing or invalid."
+                            description:NSLocalizedString(@"Snippets format identifier is missing or invalid.", nil)
                         underlyingError:nil];
     }
 
@@ -542,14 +540,14 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     if (versionNumber == nil) {
         return [self assignSnippetError:error
                                    code:RCSnippetImportExportErrorMissingRequiredElement
-                            description:@"Snippets format version is missing or invalid."
+                            description:NSLocalizedString(@"Snippets format version is missing or invalid.", nil)
                         underlyingError:nil];
     }
 
     if (versionNumber.integerValue != kRCRevclipSupportedPlistVersion) {
         return [self assignSnippetError:error
                                    code:RCSnippetImportExportErrorInvalidXMLFormat
-                            description:@"Unsupported snippets format version."
+                            description:NSLocalizedString(@"Unsupported snippets format version.", nil)
                         underlyingError:nil];
     }
 
@@ -585,7 +583,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     }
 
     NSDictionary *dictionary = (NSDictionary *)object;
-    NSString *title = [self stringValueInDictionary:dictionary keys:@[@"title", @"name"] defaultValue:kRCFolderTitleFallback];
+    NSString *title = [self stringValueInDictionary:dictionary keys:@[@"title", @"name"] defaultValue:NSLocalizedString(@"Untitled Folder", nil)];
     NSString *identifier = [self stringValueInDictionary:dictionary keys:@[@"identifier", @"id", @"uuid", @"folder_id", @"folderId"] defaultValue:@""];
     BOOL enabled = [self boolValueInDictionary:dictionary keys:@[@"enabled", @"enable"] defaultValue:YES];
 
@@ -612,7 +610,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     }
 
     NSDictionary *dictionary = (NSDictionary *)object;
-    NSString *title = [self stringValueInDictionary:dictionary keys:@[@"title", @"name"] defaultValue:kRCSnippetTitleFallback];
+    NSString *title = [self stringValueInDictionary:dictionary keys:@[@"title", @"name"] defaultValue:NSLocalizedString(@"Untitled Snippet", nil)];
     NSString *content = [self stringValueInDictionary:dictionary keys:@[@"content", @"text", @"value", @"string"] defaultValue:@""];
     NSString *identifier = [self stringValueInDictionary:dictionary keys:@[@"identifier", @"id", @"uuid", @"snippet_id", @"snippetId"] defaultValue:@""];
     BOOL enabled = [self boolValueInDictionary:dictionary keys:@[@"enabled", @"enable"] defaultValue:YES];
@@ -684,17 +682,17 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     if (folders.count > kRCMaxImportFolderCount) {
         return [self assignSnippetError:error
                                    code:RCSnippetImportExportErrorInvalidXMLFormat
-                            description:@"Imported folder count exceeds the maximum supported limit (100)."
+                            description:NSLocalizedString(@"Imported folder count exceeds the maximum supported limit (100).", nil)
                         underlyingError:nil];
     }
 
     NSInteger snippetCount = 0;
     for (NSDictionary *folder in folders) {
-        NSString *folderTitle = [self stringValueInDictionary:folder keys:@[@"title", @"name"] defaultValue:kRCFolderTitleFallback];
+        NSString *folderTitle = [self stringValueInDictionary:folder keys:@[@"title", @"name"] defaultValue:NSLocalizedString(@"Untitled Folder", nil)];
         if (folderTitle.length > kRCMaxImportTitleLength) {
             return [self assignSnippetError:error
                                        code:RCSnippetImportExportErrorInvalidXMLFormat
-                                description:@"Folder title exceeds the maximum length (500 characters)."
+                                description:NSLocalizedString(@"Folder title exceeds the maximum length (500 characters).", nil)
                             underlyingError:nil];
         }
 
@@ -708,16 +706,16 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
             if (snippetCount > kRCMaxImportSnippetCount) {
                 return [self assignSnippetError:error
                                            code:RCSnippetImportExportErrorInvalidXMLFormat
-                                    description:@"Imported snippet count exceeds the maximum supported limit (10000)."
+                                    description:NSLocalizedString(@"Imported snippet count exceeds the maximum supported limit (10000).", nil)
                                 underlyingError:nil];
             }
 
             NSDictionary *snippet = (NSDictionary *)snippetObject;
-            NSString *snippetTitle = [self stringValueInDictionary:snippet keys:@[@"title", @"name"] defaultValue:kRCSnippetTitleFallback];
+            NSString *snippetTitle = [self stringValueInDictionary:snippet keys:@[@"title", @"name"] defaultValue:NSLocalizedString(@"Untitled Snippet", nil)];
             if (snippetTitle.length > kRCMaxImportTitleLength) {
                 return [self assignSnippetError:error
                                            code:RCSnippetImportExportErrorInvalidXMLFormat
-                                    description:@"Snippet title exceeds the maximum length (500 characters)."
+                                    description:NSLocalizedString(@"Snippet title exceeds the maximum length (500 characters).", nil)
                                 underlyingError:nil];
             }
 
@@ -728,7 +726,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
             if (contentData.length > kRCMaxImportContentLengthBytes) {
                 return [self assignSnippetError:error
                                            code:RCSnippetImportExportErrorInvalidXMLFormat
-                                    description:@"Snippet content exceeds the maximum size (1 MB)."
+                                    description:NSLocalizedString(@"Snippet content exceeds the maximum size (1 MB).", nil)
                                 underlyingError:nil];
             }
         }
@@ -743,7 +741,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     if ([self containsDisallowedDoctypeInXMLData:data]) {
         [self assignSnippetError:error
                             code:RCSnippetImportExportErrorInvalidXMLFormat
-                     description:@"DOCTYPE is not allowed in imported XML."
+                     description:NSLocalizedString(@"DOCTYPE is not allowed in imported XML.", nil)
                  underlyingError:nil];
         return nil;
     }
@@ -765,7 +763,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     if (!isRootSupported) {
         [self assignSnippetError:error
                             code:RCSnippetImportExportErrorInvalidXMLFormat
-                     description:@"Root element must be <folders> or <snippets>."
+                     description:NSLocalizedString(@"Root element must be <folders> or <snippets>.", nil)
                  underlyingError:nil];
         return nil;
     }
@@ -783,7 +781,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
 
     for (NSXMLElement *folderElement in folderElements) {
         NSString *folderIdentifier = [self trimmedValueForElement:kRCClipyXMLFolderIdentifierElement inElement:folderElement] ?: @"";
-        NSString *folderTitle = [self valueForElement:kRCClipyXMLFolderTitleElement inElement:folderElement] ?: kRCFolderTitleFallback;
+        NSString *folderTitle = [self valueForElement:kRCClipyXMLFolderTitleElement inElement:folderElement] ?: NSLocalizedString(@"Untitled Folder", nil);
         BOOL folderEnabled = [self boolValueFromXMLString:[self valueForElement:kRCClipyXMLFolderEnabledElement inElement:folderElement]
                                              defaultValue:YES];
 
@@ -798,7 +796,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
         NSMutableArray<NSDictionary *> *parsedSnippets = [NSMutableArray arrayWithCapacity:snippetElements.count];
         for (NSXMLElement *snippetElement in snippetElements) {
             NSString *snippetIdentifier = [self trimmedValueForElement:kRCClipyXMLSnippetIdentifierElement inElement:snippetElement] ?: @"";
-            NSString *snippetTitle = [self valueForElement:kRCClipyXMLSnippetTitleElement inElement:snippetElement] ?: kRCSnippetTitleFallback;
+            NSString *snippetTitle = [self valueForElement:kRCClipyXMLSnippetTitleElement inElement:snippetElement] ?: NSLocalizedString(@"Untitled Snippet", nil);
             NSString *snippetContent = [self valueForElement:kRCClipyXMLSnippetContentElement inElement:snippetElement] ?: @"";
             BOOL snippetEnabled = [self boolValueFromXMLString:[self valueForElement:kRCClipyXMLSnippetEnabledElement inElement:snippetElement]
                                                   defaultValue:YES];
@@ -884,7 +882,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     NSArray<NSDictionary *> *existingFolders = merge ? [databaseManager fetchSnippetCatalog] : @[];
     if (existingFolders == nil) {
         return [self assignSnippetError:error code:RCSnippetImportExportErrorDatabase
-                            description:@"Failed to read snippets." underlyingError:nil];
+                            description:NSLocalizedString(@"Failed to read snippets.", nil) underlyingError:nil];
     }
 
     NSMutableSet<NSString *> *usedFolderIdentifiers = [NSMutableSet set];
@@ -943,7 +941,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     }
 
     for (NSDictionary *parsedFolder in folders) {
-        NSString *folderTitle = [self stringValueInDictionary:parsedFolder keys:@[@"title", @"name"] defaultValue:kRCFolderTitleFallback];
+        NSString *folderTitle = [self stringValueInDictionary:parsedFolder keys:@[@"title", @"name"] defaultValue:NSLocalizedString(@"Untitled Folder", nil)];
         BOOL folderEnabled = [self boolValueInDictionary:parsedFolder keys:@[@"enabled", @"enable"] defaultValue:YES];
         NSString *folderIdentifier = [self trimmedString:[self stringValueInDictionary:parsedFolder keys:@[@"identifier", @"id", @"uuid"] defaultValue:@""]];
 
@@ -1019,7 +1017,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
             }
 
             NSDictionary *parsedSnippet = (NSDictionary *)parsedSnippetObject;
-            NSString *snippetTitle = [self stringValueInDictionary:parsedSnippet keys:@[@"title", @"name"] defaultValue:kRCSnippetTitleFallback];
+            NSString *snippetTitle = [self stringValueInDictionary:parsedSnippet keys:@[@"title", @"name"] defaultValue:NSLocalizedString(@"Untitled Snippet", nil)];
             NSString *snippetContent = [self stringValueInDictionary:parsedSnippet keys:@[@"content", @"text", @"value", @"string"] defaultValue:@""];
             BOOL snippetEnabled = [self boolValueInDictionary:parsedSnippet keys:@[@"enabled", @"enable"] defaultValue:YES];
 
@@ -1058,14 +1056,14 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
         if (!merge) {
             BOOL deletedSnippets = [db executeUpdate:@"DELETE FROM snippets"];
             if (!deletedSnippets) {
-                transactionError = [self databaseErrorFromDatabase:db fallbackDescription:@"Failed to delete all snippets."];
+                transactionError = [self databaseErrorFromDatabase:db fallbackDescription:NSLocalizedString(@"Failed to delete all snippets.", nil)];
                 *rollback = YES;
                 return NO;
             }
 
             BOOL deleted = [db executeUpdate:@"DELETE FROM snippet_folders"];
             if (!deleted) {
-                transactionError = [self databaseErrorFromDatabase:db fallbackDescription:@"Failed to delete all snippet folders."];
+                transactionError = [self databaseErrorFromDatabase:db fallbackDescription:NSLocalizedString(@"Failed to delete all snippet folders.", nil)];
                 *rollback = YES;
                 return NO;
             }
@@ -1077,10 +1075,10 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
                                    [self stringValueInDictionary:folderDictionary keys:@[@"identifier"] defaultValue:@""],
                                    folderDictionary[@"folder_index"] ?: @0,
                                    folderDictionary[@"enabled"] ?: @1,
-                                   [self stringValueInDictionary:folderDictionary keys:@[@"title", @"name"] defaultValue:kRCFolderTitleFallback],
+                                   [self stringValueInDictionary:folderDictionary keys:@[@"title", @"name"] defaultValue:NSLocalizedString(@"Untitled Folder", nil)],
                                ]];
             if (!insertedFolder) {
-                transactionError = [self databaseErrorFromDatabase:db fallbackDescription:@"Failed to insert snippet folder."];
+                transactionError = [self databaseErrorFromDatabase:db fallbackDescription:NSLocalizedString(@"Failed to insert snippet folder.", nil)];
                 *rollback = YES;
                 return NO;
             }
@@ -1095,11 +1093,11 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
                                         [self stringValueInDictionary:snippetDictionary keys:@[@"folder_id", @"folderId"] defaultValue:@""],
                                         snippetDictionary[@"snippet_index"] ?: @0,
                                         snippetDictionary[@"enabled"] ?: @1,
-                                        [self stringValueInDictionary:snippetDictionary keys:@[@"title", @"name"] defaultValue:kRCSnippetTitleFallback],
+                                        [self stringValueInDictionary:snippetDictionary keys:@[@"title", @"name"] defaultValue:NSLocalizedString(@"Untitled Snippet", nil)],
                                         [self stringValueInDictionary:snippetDictionary keys:@[@"content", @"text", @"value"] defaultValue:@""],
                                     ]];
                 if (!insertedSnippet) {
-                    transactionError = [self databaseErrorFromDatabase:db fallbackDescription:@"Failed to insert snippet."];
+                    transactionError = [self databaseErrorFromDatabase:db fallbackDescription:NSLocalizedString(@"Failed to insert snippet.", nil)];
                     *rollback = YES;
                     return NO;
                 }
@@ -1112,7 +1110,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
     if (!persisted) {
         return [self assignSnippetError:error
                                    code:RCSnippetImportExportErrorDatabase
-                            description:@"Failed to persist imported snippets."
+                            description:NSLocalizedString(@"Failed to persist imported snippets.", nil)
                         underlyingError:transactionError];
     }
 
@@ -1121,14 +1119,14 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
 }
 
 - (NSError *)databaseErrorFromDatabase:(FMDatabase *)db fallbackDescription:(NSString *)description {
-    NSString *message = db.lastErrorMessage;
-    if (message.length == 0) {
-        message = description;
+    NSString *message = description.length > 0 ? description : NSLocalizedString(@"Database operation failed.", nil);
+    NSMutableDictionary *userInfo = [@{NSLocalizedDescriptionKey: message} mutableCopy];
+    if (db.lastError != nil) {
+        userInfo[NSUnderlyingErrorKey] = db.lastError;
     }
-
     return [NSError errorWithDomain:@"com.revclip.database"
                                code:db.lastErrorCode
-                           userInfo:@{ NSLocalizedDescriptionKey: message ?: @"Database operation failed." }];
+                           userInfo:userInfo];
 }
 
 #pragma mark - Private: Dictionary helpers

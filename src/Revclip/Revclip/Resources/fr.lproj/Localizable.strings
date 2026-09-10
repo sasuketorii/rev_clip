@@ -1,0 +1,255 @@
+"History" = "Historique";
+"Snippets" = "Modèles";
+"Edit Templates..." = "Modifier les modèles...";
+"Preferences..." = "Préférences...";
+"Quit Revclip" = "Quitter Revclip";
+"Clear All" = "Tout effacer";
+"Clear All History" = "Effacer tout l’historique";
+"Are you sure you want to clear all clipboard history?" = "Voulez-vous vraiment effacer tout l’historique du presse-papiers ?";
+"Cancel" = "Annuler";
+"Delete" = "Supprimer";
+"Delete this folder and all its snippets?" = "Supprimer ce dossier et tous les modèles qu’il contient ?";
+"Target folder: %@" = "Dossier cible : %@";
+"Delete this snippet?" = "Supprimer ce modèle ?";
+"Target snippet: %@" = "Modèle cible : %@";
+
+"General" = "Général";
+"Menu" = "Menu";
+"Type" = "Type";
+"Excluded Apps" = "Apps exclues";
+"Shortcuts" = "Raccourcis";
+"Updates" = "Mises à jour";
+"Beta" = "Bêta";
+"Coming soon" = "Bientôt disponible";
+
+"Launch Revclip on login" = "Ouvrir Revclip à la connexion";
+"Max clipboard history size" = "Taille maximale de l’historique du presse-papiers";
+"Max menu items to display" = "Nombre maximal d’éléments à afficher dans le menu";
+"Days" = "Jours";
+"Hours" = "Heures";
+"Minutes" = "Minutes";
+
+"Main" = "Principal";
+"Click to record shortcut" = "Cliquez pour enregistrer le raccourci";
+
+"Template Editor" = "Éditeur de modèles";
+"Add Folder" = "Ajouter un dossier";
+"Add Snippet" = "Ajouter un modèle";
+"Add Template" = "Ajouter un modèle";
+"Title:" = "Titre :";
+"Content:" = "Contenu :";
+"Shortcut:" = "Raccourci :";
+"Save" = "Enregistrer";
+"Save with ⌘S" = "Enregistrer avec ⌘S";
+"Enable/Disable" = "Activer/Désactiver";
+"Untitled Folder" = "Dossier sans nom";
+"Untitled Snippet" = "Modèle sans nom";
+
+"Import Snippets..." = "Importer des modèles...";
+"Import Templates..." = "Importer des modèles...";
+"Export Snippets..." = "Exporter des modèles...";
+"Export All Snippets" = "Exporter tous les modèles";
+"Export All Templates..." = "Exporter tous les modèles...";
+"Merge" = "Fusionner";
+"Replace" = "Remplacer";
+
+"Excluded Applications" = "Applications exclues";
+"Add Current App" = "Ajouter l’app actuelle";
+"Cannot add current application" = "Impossible d’ajouter l’application actuelle";
+"No other application was detected. Please switch to the application you want to exclude, then click this button." = "Aucune autre application n’a été détectée. Passez à l’application à exclure, puis cliquez sur ce bouton.";
+
+"Check for Updates" = "Rechercher des mises à jour";
+"Automatically check for updates" = "Rechercher automatiquement les mises à jour";
+"Version" = "Version";
+
+// Menu
+"No History" = "Aucun historique";
+"No Snippets" = "Aucun modèle";
+"(Empty)" = "(Vide)";
+"Clear History" = "Effacer l’historique";
+"Items %lu-%lu" = "Éléments %lu–%lu";
+"Clear clipboard history?" = "Effacer l’historique du presse-papiers ?";
+"All saved clips will be removed." = "Tous les éléments enregistrés seront supprimés.";
+"Clear" = "Effacer";
+"Search Snippets" = "Rechercher des modèles";
+"Snippet" = "Modèle";
+"Folder" = "Dossier";
+"Saved!" = "Enregistré !";
+"Paste" = "Coller";
+
+// Fallback titles
+"(Image)" = "(Image)";
+"Image" = "Image";
+"URL" = "URL";
+"PDF" = "PDF";
+"Rich Text" = "Texte enrichi";
+"Files" = "Fichiers";
+"Clip" = "Élément";
+
+// Import/Export
+"Failed to Import Snippets" = "Échec de l’importation des modèles";
+"Failed to Export Snippets" = "Échec de l’exportation des modèles";
+"An unknown error occurred." = "Une erreur inconnue s’est produite.";
+"OK" = "OK";
+"How do you want to import snippets?" = "Comment souhaitez-vous importer les modèles ?";
+"Choose whether to merge with existing snippets or replace them all." = "Choisissez de fusionner les modèles existants ou de tous les remplacer.";
+"Merge with existing snippets" = "Fusionner avec les modèles existants";
+"Replace all snippets" = "Remplacer tous les modèles";
+
+// Shortcuts Prefs
+"Reset all shortcuts to defaults?" = "Rétablir tous les raccourcis par défaut ?";
+"Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed." = "Les raccourcis des menus Principal, Historique et Modèles seront rétablis par défaut. Le raccourci Effacer l’historique sera désattribué.";
+"Reset" = "Rétablir";
+
+// Exclude Prefs
+"Application" = "Application";
+"Add" = "Ajouter";
+"The frontmost application is Revclip itself. Please switch to the application you want to exclude, then click this button." = "L’application au premier plan est Revclip. Passez à l’application à exclure, puis cliquez sur ce bouton.";
+
+// Menu Prefs
+"Menu Settings" = "Réglages du menu";
+"Number of items inline" = "Nombre d’éléments en ligne";
+"Number of items in folder" = "Nombre d’éléments dans le dossier";
+"Max title length" = "Longueur maximale du titre";
+"Mark with numbers" = "Numéroter les éléments";
+"Start numbering from 0" = "Commencer la numérotation à 0";
+"Add numeric key equivalents" = "Ajouter des raccourcis numériques";
+"Add clear history item" = "Ajouter l’élément Effacer l’historique";
+"Show alert before clear" = "Afficher une alerte avant l’effacement";
+"Show tooltip" = "Afficher l’infobulle";
+"Max tooltip length" = "Longueur maximale de l’infobulle";
+"Show image preview" = "Afficher l’aperçu des images";
+"Thumbnail width" = "Largeur de la vignette";
+"Thumbnail height" = "Hauteur de la vignette";
+"Show color preview" = "Afficher l’aperçu des couleurs";
+"Show icon" = "Afficher l’icône";
+"Icon size" = "Taille de l’icône";
+
+// General Prefs
+"Hide" = "Masquer";
+"Show" = "Afficher";
+
+// HotKey Recorder
+"Type shortcut" = "Saisir le raccourci";
+"Click to record" = "Cliquez pour enregistrer";
+"This shortcut may not work" = "Ce raccourci risque de ne pas fonctionner";
+"On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "Sous macOS 15 (Sequoia) et les versions ultérieures, les combinaisons utilisant uniquement Option ou Option+Maj ne sont pas prises en charge en raison de restrictions système.\nUtilisez une combinaison incluant Commande ou Contrôle.";
+
+// Template Editor
+"New Folder" = "Nouveau dossier";
+"New Snippet" = "Nouveau modèle";
+"Select a folder or template" = "Sélectionnez un dossier ou un modèle";
+"Add a folder to organize your templates." = "Ajoutez un dossier pour organiser vos modèles.";
+"Add a template to this folder." = "Ajoutez un modèle à ce dossier.";
+"This folder is hidden from the menu." = "Ce dossier est masqué dans le menu.";
+"Template Content" = "Contenu du modèle";
+"Changes are saved when you switch items or close the editor." = "Les modifications sont enregistrées lorsque vous changez d’élément ou fermez l’éditeur.";
+"Show in Menu" = "Afficher dans le menu";
+"Hide from Menu" = "Masquer du menu";
+"Delete Folder" = "Supprimer le dossier";
+"Delete Template" = "Supprimer le modèle";
+
+// Updates Prefs
+"Not Available Yet" = "Pas encore disponible";
+"Update checking will be available in a future release." = "La recherche de mises à jour sera disponible dans une prochaine version.";
+
+// Accessibility
+"Revclip requires Accessibility permission" = "Revclip nécessite l’autorisation d’accessibilité";
+"Revclip needs Accessibility permission to paste clipboard items. Please enable it in System Settings > Privacy & Security > Accessibility." = "Revclip a besoin de l’autorisation d’accessibilité pour coller les éléments du presse-papiers. Activez-la dans Réglages Système > Confidentialité et sécurité > Accessibilité.";
+"Open System Settings" = "Ouvrir les réglages système";
+"Later" = "Plus tard";
+
+// Clipboard privacy (macOS 15.4+)
+"Revclip needs clipboard access" = "Revclip a besoin d’accéder au presse-papiers";
+"macOS requires explicit permission for clipboard access. Please allow Revclip to access the clipboard in System Settings." = "macOS exige une autorisation explicite pour accéder au presse-papiers. Autorisez Revclip à y accéder dans les réglages système.";
+
+// Preferences Window
+"Preferences" = "Préférences";
+"Panic" = "Panic";
+
+// Version Info
+"Version %@ (%@)" = "Version %@ (%@)";
+"Version %@" = "Version %@";
+"Build %@" = "Build %@";
+"Version -" = "Version -";
+
+// Move to Applications
+"Move to Applications folder?" = "Déplacer vers le dossier Applications ?";
+"Revclip needs to be in the Applications folder to work properly. Would you like to move it there?" = "Revclip doit se trouver dans le dossier Applications pour fonctionner correctement. Voulez-vous l’y déplacer ?";
+"Move to Applications" = "Déplacer vers Applications";
+"Do Not Move" = "Ne pas déplacer";
+"Could not move Revclip to Applications folder" = "Impossible de déplacer Revclip vers le dossier Applications";
+"An unknown error occurred while moving Revclip." = "Une erreur inconnue s’est produite lors du déplacement de Revclip.";
+"Failed to relaunch the app from Applications." = "Impossible de relancer l’app depuis le dossier Applications.";
+"A newer version is already installed in Applications." = "Une version plus récente est déjà installée dans Applications.";
+"Installed version (%@) is newer than this app (%@). Move was canceled to prevent a downgrade." = "La version installée (%@) est plus récente que cette app (%@). Le déplacement a été annulé pour éviter une rétrogradation.";
+
+// Import/export UI
+"Import" = "Importer";
+"Export" = "Exporter";
+"Import Source" = "Source de l’importation";
+"Choose import source." = "Choisissez la source de l’importation.";
+"Import from Clipy Default File" = "Importer depuis le fichier par défaut de Clipy";
+"Choose File..." = "Choisir un fichier...";
+"Export Scope" = "Portée de l’exportation";
+"Choose what to export." = "Choisissez les éléments à exporter.";
+"Export Selected Item" = "Exporter l’élément sélectionné";
+
+"Failed to save snippets. Your changes have not been saved." = "Impossible d’enregistrer les modèles. Vos modifications n’ont pas été enregistrées.";
+"Enabled" = "Activé";
+"Failed to read snippets. Please try again." = "Impossible de lire les modèles. Veuillez réessayer.";
+
+/* Application appearance */
+"Appearance" = "Apparence";
+"Theme System" = "Système";
+"Theme Light" = "Clair";
+"Theme Dark" = "Sombre";
+"Theme Description" = "Choisissez l’apparence des menus, des préférences et de l’éditeur de modèles.";
+
+// Panic erase
+"Delete Revclip Data" = "Supprimer les données de Revclip";
+"Delete All Revclip Data" = "Supprimer toutes les données de Revclip";
+"Delete Revclip Data and Quit" = "Supprimer les données de Revclip et quitter";
+"This deletes clipboard history, templates, and settings stored by Revclip, clears the current clipboard, then quits Revclip. Other files on your Mac are not deleted. This cannot be undone." = "Cette opération supprime l’historique du presse-papiers, les modèles et les réglages enregistrés par Revclip, efface le contenu actuel du presse-papiers, puis quitte Revclip. Les autres fichiers de votre Mac ne sont pas supprimés. Cette opération est irréversible.";
+"Type \"Panic\" to confirm:" = "Saisissez \"Panic\" pour confirmer :";
+"Incorrect confirmation" = "Confirmation incorrecte";
+"Type \"Panic\" exactly to confirm." = "Saisissez exactement \"Panic\" pour confirmer.";
+"Delete all Revclip data?" = "Supprimer toutes les données de Revclip ?";
+"Warning" = "Avertissement";
+
+// Import/export validation errors
+"Export destination is invalid." = "La destination d’exportation n’est pas valide.";
+"Failed to write snippets file." = "Impossible d’écrire le fichier des modèles.";
+"Failed to build snippets XML plist data." = "Impossible de créer les données plist XML des modèles.";
+"Import source is invalid." = "La source d’importation n’est pas valide.";
+"Import file is too large (exceeds 50 MB limit)." = "Le fichier d’importation est trop volumineux (la limite de 50 Mo est dépassée).";
+"Failed to read snippets file." = "Impossible de lire le fichier des modèles.";
+"Snippets data is empty." = "Les données des modèles sont vides.";
+"Database is not ready." = "La base de données n’est pas prête.";
+"Unsupported snippets file format." = "Format de fichier de modèles non pris en charge.";
+"Plist does not contain supported snippet folders." = "Le plist ne contient aucun dossier de modèles pris en charge.";
+"Snippets plist root must be a dictionary." = "La racine du plist des modèles doit être un dictionnaire.";
+"Snippets format identifier is missing or invalid." = "L’identifiant du format des modèles est absent ou non valide.";
+"Snippets format version is missing or invalid." = "La version du format des modèles est absente ou non valide.";
+"Unsupported snippets format version." = "Version du format des modèles non prise en charge.";
+"Imported folder count exceeds the maximum supported limit (100)." = "Le nombre de dossiers importés dépasse la limite prise en charge (100).";
+"Folder title exceeds the maximum length (500 characters)." = "Le titre du dossier dépasse la longueur maximale (500 caractères).";
+"Imported snippet count exceeds the maximum supported limit (10000)." = "Le nombre de modèles importés dépasse la limite prise en charge (10000).";
+"Snippet title exceeds the maximum length (500 characters)." = "Le titre du modèle dépasse la longueur maximale (500 caractères).";
+"Snippet content exceeds the maximum size (1 MB)." = "Le contenu du modèle dépasse la taille maximale (1 Mo).";
+"DOCTYPE is not allowed in imported XML." = "DOCTYPE n’est pas autorisé dans le fichier XML importé.";
+"Root element must be <folders> or <snippets>." = "L’élément racine doit être <folders> ou <snippets>.";
+"Failed to delete all snippets." = "Impossible de supprimer tous les modèles.";
+"Failed to delete all snippet folders." = "Impossible de supprimer tous les dossiers de modèles.";
+"Failed to insert snippet folder." = "Impossible d’ajouter le dossier de modèles.";
+"Failed to insert snippet." = "Impossible d’ajouter le modèle.";
+"Failed to persist imported snippets." = "Impossible d’enregistrer les modèles importés.";
+"Failed to read snippets." = "Impossible de lire les modèles.";
+"Database operation failed." = "L’opération sur la base de données a échoué.";
+
+// Japanese source keys retained for compatibility with existing callers
+"アップデートの確認に失敗しました" = "Échec de la recherche de mises à jour";
+"アップデートの確認中に問題が発生しました。しばらくしてからもう一度お試しください。" = "Un problème est survenu lors de la recherche de mises à jour. Veuillez réessayer plus tard.";
+"ログインアイテムの設定に失敗しました" = "Impossible de configurer l’élément d’ouverture";
+"システム環境設定の「ログイン項目」で手動で設定してください。" = "Configurez-le manuellement dans Réglages Système > Général > Ouverture.";
+"今後表示しない" = "Ne plus afficher";

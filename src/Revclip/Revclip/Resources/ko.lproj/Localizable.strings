@@ -1,0 +1,255 @@
+"History" = "기록";
+"Snippets" = "템플릿";
+"Edit Templates..." = "템플릿 편집...";
+"Preferences..." = "환경설정...";
+"Quit Revclip" = "Revclip 종료";
+"Clear All" = "모두 지우기";
+"Clear All History" = "클립보드 기록 모두 지우기";
+"Are you sure you want to clear all clipboard history?" = "클립보드 기록을 모두 지우겠습니까?";
+"Cancel" = "취소";
+"Delete" = "삭제";
+"Delete this folder and all its snippets?" = "이 폴더와 포함된 모든 템플릿을 삭제하겠습니까?";
+"Target folder: %@" = "대상 폴더: %@";
+"Delete this snippet?" = "이 템플릿을 삭제하겠습니까?";
+"Target snippet: %@" = "대상 템플릿: %@";
+
+"General" = "일반";
+"Menu" = "메뉴";
+"Type" = "유형";
+"Excluded Apps" = "제외된 앱";
+"Shortcuts" = "단축키";
+"Updates" = "업데이트";
+"Beta" = "베타";
+"Coming soon" = "곧 제공";
+
+"Launch Revclip on login" = "로그인 시 Revclip 실행";
+"Max clipboard history size" = "클립보드 기록 최대 개수";
+"Max menu items to display" = "메뉴에 표시할 최대 항목 수";
+"Days" = "일";
+"Hours" = "시간";
+"Minutes" = "분";
+
+"Main" = "메인";
+"Click to record shortcut" = "클릭하여 단축키 기록";
+
+"Template Editor" = "템플릿 편집기";
+"Add Folder" = "폴더 추가";
+"Add Snippet" = "템플릿 추가";
+"Add Template" = "템플릿 추가";
+"Title:" = "제목:";
+"Content:" = "내용:";
+"Shortcut:" = "단축키:";
+"Save" = "저장";
+"Save with ⌘S" = "⌘S로 저장";
+"Enable/Disable" = "활성화/비활성화";
+"Untitled Folder" = "이름 없는 폴더";
+"Untitled Snippet" = "이름 없는 템플릿";
+
+"Import Snippets..." = "템플릿 가져오기...";
+"Import Templates..." = "템플릿 가져오기...";
+"Export Snippets..." = "템플릿 내보내기...";
+"Export All Snippets" = "모든 템플릿 내보내기";
+"Export All Templates..." = "모든 템플릿 내보내기...";
+"Merge" = "병합";
+"Replace" = "대치";
+
+"Excluded Applications" = "제외된 애플리케이션";
+"Add Current App" = "현재 앱 추가";
+"Cannot add current application" = "현재 애플리케이션을 추가할 수 없습니다";
+"No other application was detected. Please switch to the application you want to exclude, then click this button." = "다른 애플리케이션을 찾지 못했습니다. 제외하려는 애플리케이션으로 전환한 다음 이 버튼을 클릭하십시오.";
+
+"Check for Updates" = "업데이트 확인";
+"Automatically check for updates" = "업데이트 자동 확인";
+"Version" = "버전";
+
+// Menu
+"No History" = "기록 없음";
+"No Snippets" = "템플릿 없음";
+"(Empty)" = "(비어 있음)";
+"Clear History" = "기록 지우기";
+"Items %lu-%lu" = "항목 %lu-%lu";
+"Clear clipboard history?" = "클립보드 기록을 지우겠습니까?";
+"All saved clips will be removed." = "저장된 클립보드 항목이 모두 삭제됩니다.";
+"Clear" = "지우기";
+"Search Snippets" = "템플릿 검색";
+"Snippet" = "템플릿";
+"Folder" = "폴더";
+"Saved!" = "저장됨!";
+"Paste" = "붙여넣기";
+
+// Fallback titles
+"(Image)" = "(이미지)";
+"Image" = "이미지";
+"URL" = "URL";
+"PDF" = "PDF";
+"Rich Text" = "서식 있는 텍스트";
+"Files" = "파일";
+"Clip" = "클립";
+
+// Import/Export
+"Failed to Import Snippets" = "템플릿을 가져오지 못했습니다";
+"Failed to Export Snippets" = "템플릿을 내보내지 못했습니다";
+"An unknown error occurred." = "알 수 없는 오류가 발생했습니다.";
+"OK" = "확인";
+"How do you want to import snippets?" = "템플릿을 어떻게 가져오겠습니까?";
+"Choose whether to merge with existing snippets or replace them all." = "기존 템플릿과 병합할지 모두 교체할지 선택하십시오.";
+"Merge with existing snippets" = "기존 템플릿과 병합";
+"Replace all snippets" = "모든 템플릿 교체";
+
+// Shortcuts Prefs
+"Reset all shortcuts to defaults?" = "모든 단축키를 기본값으로 재설정하겠습니까?";
+"Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed." = "메인 메뉴, 기록 메뉴 및 템플릿 메뉴 단축키가 기본값으로 재설정되고, 기록 지우기 단축키는 할당 해제됩니다.";
+"Reset" = "재설정";
+
+// Exclude Prefs
+"Application" = "애플리케이션";
+"Add" = "추가";
+"The frontmost application is Revclip itself. Please switch to the application you want to exclude, then click this button." = "현재 앞에 있는 앱은 Revclip 자체입니다. 제외하려는 애플리케이션으로 전환한 다음 이 버튼을 클릭하십시오.";
+
+// Menu Prefs
+"Menu Settings" = "메뉴 설정";
+"Number of items inline" = "인라인으로 표시할 항목 수";
+"Number of items in folder" = "폴더에 표시할 항목 수";
+"Max title length" = "제목 최대 길이";
+"Mark with numbers" = "번호로 표시";
+"Start numbering from 0" = "0부터 번호 매기기";
+"Add numeric key equivalents" = "숫자 단축키 추가";
+"Add clear history item" = "기록 지우기 항목 추가";
+"Show alert before clear" = "지우기 전에 경고 표시";
+"Show tooltip" = "도움말 표시";
+"Max tooltip length" = "도움말 최대 길이";
+"Show image preview" = "이미지 미리보기 표시";
+"Thumbnail width" = "썸네일 너비";
+"Thumbnail height" = "썸네일 높이";
+"Show color preview" = "색상 미리보기 표시";
+"Show icon" = "아이콘 표시";
+"Icon size" = "아이콘 크기";
+
+// General Prefs
+"Hide" = "가리기";
+"Show" = "표시";
+
+// HotKey Recorder
+"Type shortcut" = "단축키 입력";
+"Click to record" = "클릭하여 기록";
+"This shortcut may not work" = "이 단축키는 작동하지 않을 수 있습니다";
+"On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "macOS 15(Sequoia) 및 이후 버전에서는 시스템 제한으로 Option만 사용하거나 Option+Shift만 사용하는 조합을 지원하지 않습니다.\nCommand 또는 Control을 포함한 조합을 사용하십시오.";
+
+// Template Editor
+"New Folder" = "새 폴더";
+"New Snippet" = "새 템플릿";
+"Select a folder or template" = "폴더 또는 템플릿 선택";
+"Add a folder to organize your templates." = "템플릿을 정리할 폴더를 추가하십시오.";
+"Add a template to this folder." = "이 폴더에 템플릿을 추가하십시오.";
+"This folder is hidden from the menu." = "이 폴더는 메뉴에 표시되지 않습니다.";
+"Template Content" = "템플릿 내용";
+"Changes are saved when you switch items or close the editor." = "항목을 전환하거나 편집기를 닫으면 변경 사항이 저장됩니다.";
+"Show in Menu" = "메뉴에 표시";
+"Hide from Menu" = "메뉴에 표시하지 않기";
+"Delete Folder" = "폴더 삭제";
+"Delete Template" = "템플릿 삭제";
+
+// Updates Prefs
+"Not Available Yet" = "아직 사용할 수 없음";
+"Update checking will be available in a future release." = "업데이트 확인 기능은 향후 릴리스에서 제공됩니다.";
+
+// Accessibility
+"Revclip requires Accessibility permission" = "Revclip에 손쉬운 사용 권한이 필요합니다";
+"Revclip needs Accessibility permission to paste clipboard items. Please enable it in System Settings > Privacy & Security > Accessibility." = "Revclip이 클립보드 항목을 붙여넣으려면 손쉬운 사용 권한이 필요합니다. 시스템 설정 > 개인정보 보호 및 보안 > 손쉬운 사용에서 활성화하십시오.";
+"Open System Settings" = "시스템 설정 열기";
+"Later" = "나중에";
+
+// Clipboard privacy (macOS 15.4+)
+"Revclip needs clipboard access" = "Revclip에 클립보드 접근 권한이 필요합니다";
+"macOS requires explicit permission for clipboard access. Please allow Revclip to access the clipboard in System Settings." = "macOS에서는 클립보드 접근에 명시적인 권한이 필요합니다. 시스템 설정에서 Revclip의 클립보드 접근을 허용하십시오.";
+
+// Preferences Window
+"Preferences" = "환경설정";
+"Panic" = "Panic";
+
+// Version Info
+"Version %@ (%@)" = "버전 %@（%@）";
+"Version %@" = "버전 %@";
+"Build %@" = "빌드 %@";
+"Version -" = "버전 -";
+
+// Move to Applications
+"Move to Applications folder?" = "응용 프로그램 폴더로 이동하겠습니까?";
+"Revclip needs to be in the Applications folder to work properly. Would you like to move it there?" = "Revclip이 제대로 작동하려면 응용 프로그램 폴더에 있어야 합니다. 그곳으로 이동하겠습니까?";
+"Move to Applications" = "응용 프로그램으로 이동";
+"Do Not Move" = "이동하지 않음";
+"Could not move Revclip to Applications folder" = "Revclip을 응용 프로그램 폴더로 이동할 수 없습니다";
+"An unknown error occurred while moving Revclip." = "Revclip을 이동하는 동안 알 수 없는 오류가 발생했습니다.";
+"Failed to relaunch the app from Applications." = "응용 프로그램 폴더에서 앱을 다시 시작할 수 없습니다.";
+"A newer version is already installed in Applications." = "응용 프로그램 폴더에 이미 최신 버전이 설치되어 있습니다.";
+"Installed version (%@) is newer than this app (%@). Move was canceled to prevent a downgrade." = "설치된 버전（%@）이 이 앱（%@）보다 최신입니다. 다운그레이드를 방지하기 위해 이동을 취소했습니다.";
+
+// Import/export UI
+"Import" = "가져오기";
+"Export" = "내보내기";
+"Import Source" = "가져오기 소스";
+"Choose import source." = "가져오기 소스를 선택하십시오.";
+"Import from Clipy Default File" = "Clipy 기본 파일에서 가져오기";
+"Choose File..." = "파일 선택...";
+"Export Scope" = "내보내기 범위";
+"Choose what to export." = "내보낼 항목을 선택하십시오.";
+"Export Selected Item" = "선택한 항목 내보내기";
+
+"Failed to save snippets. Your changes have not been saved." = "템플릿을 저장하지 못했습니다. 변경 사항이 저장되지 않았습니다.";
+"Enabled" = "활성화됨";
+"Failed to read snippets. Please try again." = "템플릿을 읽지 못했습니다. 다시 시도하십시오.";
+
+/* Application appearance */
+"Appearance" = "모양";
+"Theme System" = "시스템";
+"Theme Light" = "라이트";
+"Theme Dark" = "다크";
+"Theme Description" = "메뉴, 환경설정 및 템플릿 편집기의 모양을 선택하십시오.";
+
+// Panic erase
+"Delete Revclip Data" = "Revclip 데이터 삭제";
+"Delete All Revclip Data" = "Revclip 데이터 모두 삭제";
+"Delete Revclip Data and Quit" = "Revclip 데이터를 삭제하고 종료";
+"This deletes clipboard history, templates, and settings stored by Revclip, clears the current clipboard, then quits Revclip. Other files on your Mac are not deleted. This cannot be undone." = "Revclip에 저장된 클립보드 기록, 템플릿 및 설정을 삭제하고 현재 클립보드를 비운 다음 Revclip을 종료합니다. Mac의 다른 파일은 삭제되지 않습니다. 이 작업은 취소할 수 없습니다.";
+"Type \"Panic\" to confirm:" = "확인하려면 \"Panic\"을 입력하십시오:";
+"Incorrect confirmation" = "확인 내용이 올바르지 않습니다";
+"Type \"Panic\" exactly to confirm." = "확인하려면 \"Panic\"을 정확히 입력하십시오.";
+"Delete all Revclip data?" = "Revclip 데이터를 모두 삭제하겠습니까?";
+"Warning" = "경고";
+
+// Import/export validation errors
+"Export destination is invalid." = "내보내기 대상이 올바르지 않습니다.";
+"Failed to write snippets file." = "템플릿 파일을 쓸 수 없습니다.";
+"Failed to build snippets XML plist data." = "템플릿 XML plist 데이터를 만들 수 없습니다.";
+"Import source is invalid." = "가져오기 소스가 올바르지 않습니다.";
+"Import file is too large (exceeds 50 MB limit)." = "가져오기 파일이 너무 큽니다(50MB 제한 초과).";
+"Failed to read snippets file." = "템플릿 파일을 읽을 수 없습니다.";
+"Snippets data is empty." = "템플릿 데이터가 비어 있습니다.";
+"Database is not ready." = "데이터베이스가 준비되지 않았습니다.";
+"Unsupported snippets file format." = "지원되지 않는 템플릿 파일 형식입니다.";
+"Plist does not contain supported snippet folders." = "plist에 지원되는 템플릿 폴더가 없습니다.";
+"Snippets plist root must be a dictionary." = "템플릿 plist의 루트는 딕셔너리여야 합니다.";
+"Snippets format identifier is missing or invalid." = "템플릿 형식 식별자가 없거나 올바르지 않습니다.";
+"Snippets format version is missing or invalid." = "템플릿 형식 버전이 없거나 올바르지 않습니다.";
+"Unsupported snippets format version." = "지원되지 않는 템플릿 형식 버전입니다.";
+"Imported folder count exceeds the maximum supported limit (100)." = "가져온 폴더 수가 지원 한도(100)를 초과했습니다.";
+"Folder title exceeds the maximum length (500 characters)." = "폴더 제목이 최대 길이(500자)를 초과했습니다.";
+"Imported snippet count exceeds the maximum supported limit (10000)." = "가져온 템플릿 수가 지원 한도(10000)를 초과했습니다.";
+"Snippet title exceeds the maximum length (500 characters)." = "템플릿 제목이 최대 길이(500자)를 초과했습니다.";
+"Snippet content exceeds the maximum size (1 MB)." = "템플릿 내용이 최대 크기(1MB)를 초과했습니다.";
+"DOCTYPE is not allowed in imported XML." = "가져온 XML에는 DOCTYPE을 사용할 수 없습니다.";
+"Root element must be <folders> or <snippets>." = "루트 요소는 <folders> 또는 <snippets>여야 합니다.";
+"Failed to delete all snippets." = "모든 템플릿을 삭제하지 못했습니다.";
+"Failed to delete all snippet folders." = "모든 템플릿 폴더를 삭제하지 못했습니다.";
+"Failed to insert snippet folder." = "템플릿 폴더를 삽입하지 못했습니다.";
+"Failed to insert snippet." = "템플릿을 삽입하지 못했습니다.";
+"Failed to persist imported snippets." = "가져온 템플릿을 저장하지 못했습니다.";
+"Failed to read snippets." = "템플릿을 읽지 못했습니다.";
+"Database operation failed." = "데이터베이스 작업에 실패했습니다.";
+
+// Japanese source keys retained for compatibility with existing callers
+"アップデートの確認に失敗しました" = "업데이트 확인에 실패했습니다";
+"アップデートの確認中に問題が発生しました。しばらくしてからもう一度お試しください。" = "업데이트를 확인하는 중 문제가 발생했습니다. 나중에 다시 시도하십시오.";
+"ログインアイテムの設定に失敗しました" = "로그인 항목을 설정하지 못했습니다";
+"システム環境設定の「ログイン項目」で手動で設定してください。" = "시스템 설정 > 일반 > 로그인 항목에서 직접 설정하십시오.";
+"今後表示しない" = "다시 표시하지 않음";

@@ -44,7 +44,7 @@
                 </customView>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gEt-kQ-fUS" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
                     <rect key="frame" x="24" y="156" width="150" height="22"/>
-                    <textFieldCell key="cell" lineBreakMode="clipping" truncatesLastVisibleLine="YES" alignment="right" title="スニペットメニュー:" id="MV8-qY-5rU">
+                    <textFieldCell key="cell" lineBreakMode="clipping" truncatesLastVisibleLine="YES" alignment="right" title="テンプレートメニュー:" id="MV8-qY-5rU">
                         <font key="font" metaFont="message"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>

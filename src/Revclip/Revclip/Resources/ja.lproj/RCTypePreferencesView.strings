@@ -1,0 +1,9 @@
+"7yw-t6-KP3.title" = "保存タイプ";
+"4dM-4m-v0d.title" = "クリップボード履歴に保存する種類を選択してください。";
+"D3w-gA-8QJ.title" = "プレーンテキスト (NSPasteboardTypeString)";
+"rL9-bK-Wx9.title" = "リッチテキスト (RTF) (NSPasteboardTypeRTF)";
+"w8y-aV-MhG.title" = "添付付きリッチテキスト (RTFD) (NSPasteboardTypeRTFD)";
+"Xq9-19-kLj.title" = "PDF (NSPasteboardTypePDF)";
+"k8p-Pw-N0g.title" = "ファイル名 (NSFilenamesPboardType)";
+"z3J-YL-9kD.title" = "URL (NSPasteboardTypeURL)";
+"fY2-kC-G4L.title" = "画像 (TIFF) (NSPasteboardTypeTIFF)";
