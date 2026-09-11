@@ -258,3 +258,9 @@
 "App Language" = "App Language";
 "Follow System" = "Follow System";
 "Language changes apply immediately to Revclip." = "Language changes apply immediately to Revclip.";
+
+/* Protected storage startup */
+"Protected storage unavailable" = "Protected storage unavailable";
+"Revclip could not safely open its saved data. Unlock your login keychain and try again. Existing data has not been replaced with an empty history." = "Revclip could not safely open its saved data. Unlock your login keychain and try again. Existing data has not been replaced with an empty history.";
+"Revclip data deletion incomplete" = "Revclip data deletion incomplete";
+"Not all Revclip data could be deleted. Clipboard recording is stopped. Some data may already have been deleted. Try the deletion again before quitting." = "Not all Revclip data could be deleted. Clipboard recording is stopped. Some data may already have been deleted. Try the deletion again before quitting.";

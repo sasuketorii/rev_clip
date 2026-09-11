@@ -8,7 +8,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-34c759" alt="MIT License" /></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-111827?logo=apple&amp;logoColor=white" alt="macOS 14 or later" />
   <img src="https://img.shields.io/badge/UI-AppKit%20%2B%20SwiftUI-007aff" alt="AppKit and SwiftUI" />
-  <img src="https://img.shields.io/badge/runtime_dependencies-2-5856d6" alt="2 direct third-party runtime dependencies" />
+  <img src="https://img.shields.io/badge/runtime_dependencies-3-5856d6" alt="3 direct third-party runtime dependencies" />
   <a href="https://github.com/sasuketorii/rev_clip/actions/workflows/ci.yml"><img src="https://github.com/sasuketorii/rev_clip/actions/workflows/ci.yml/badge.svg" alt="Build and tests" /></a>
 
   <p><strong>日本語</strong> · <a href="README.en.md">English</a></p>
@@ -35,7 +35,7 @@
 ## プライバシーと負荷への配慮
 
 - **保存するデータを選ぶ**: 機密・一時データとしてマークされたコピーを履歴に残さず、指定アプリを記録対象から除外できます。
-- **ローカルデータを保護する**: クリップファイルのアクセス権を制限し、型を制限したデコードを使用します。保存データの暗号化や、マークのない秘密情報の自動判別を保証するものではありません。
+- **保存データを暗号化する**: 履歴・テンプレートのデータベースはSQLCipher、クリップ本文とサムネイルはAES-256-GCMで暗号化。鍵はmacOSキーチェーンで管理します。保護範囲と制約は[セキュリティ方針](SECURITY.md)をご確認ください。
 - **変化があったときに処理する**: 監視では変更カウントを確認し、内容が変わっていなければ読み込みを省きます。保存時のアーカイブ変換は1回にまとめています。
 - **データの増加を抑える**: 履歴件数とクリップの保存サイズを制限できます。保存サイズの制限は、実行中のピークメモリを保証する上限ではありません。
 
@@ -86,11 +86,12 @@ open src/Revclip/Revclip.xcodeproj
 
 ## 依存は、必要な役割に絞る
 
-直接組み込むサードパーティの実行時依存は**2つ**です。どちらも同梱しているため、通常のビルドにCocoaPodsやSwift Package Managerでの取得は不要です。
+直接組み込むサードパーティの実行時依存は**3つ**です。すべて同梱しているため、通常のビルドにCocoaPodsやSwift Package Managerでの取得は不要です。
 
 | ライブラリ | 役割 | 同梱版 |
 | --- | --- | --- |
-| [FMDB](https://github.com/ccgus/fmdb) | macOSのSQLiteを扱うラッパー | 2.7.12 |
+| [FMDB](https://github.com/ccgus/fmdb) | SQLiteを扱うラッパー | 2.7.12 |
+| [SQLCipher](https://github.com/sqlcipher/sqlcipher) | 保存データベースの暗号化 | 4.19.0 |
 | [Sparkle](https://github.com/sparkle-project/Sparkle) | アプリの自動更新 | 2.9.6 |
 
 この数にはmacOS標準フレームワーク、Sparkle内部の構成要素、開発ツールを含めません。XcodeGenはプロジェクト生成用、Pillowはアイコン再生成時のみ必要です。ライセンスの内訳は[第三者ライセンス](THIRD_PARTY_NOTICES.md)をご覧ください。

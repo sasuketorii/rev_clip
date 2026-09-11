@@ -171,7 +171,15 @@
 
     [alert beginSheetModalForWindow:self.view.window completionHandler:^(NSModalResponse returnCode) {
         if (returnCode == NSAlertFirstButtonReturn) {
-            [[RCPanicEraseService shared] executePanicEraseWithCompletion:nil];
+            [[RCPanicEraseService shared] executePanicEraseWithCompletion:^(BOOL success) {
+                if (success) return;
+                NSAlert *failure = [NSAlert new];
+                failure.alertStyle = NSAlertStyleWarning;
+                failure.messageText = RCLocalizedString(@"Revclip data deletion incomplete", nil);
+                failure.informativeText = RCLocalizedString(@"Not all Revclip data could be deleted. Clipboard recording is stopped. Some data may already have been deleted. Try the deletion again before quitting.", nil);
+                [failure addButtonWithTitle:RCLocalizedString(@"OK", nil)];
+                [failure beginSheetModalForWindow:self.view.window completionHandler:nil];
+            }];
         }
     }];
 }

@@ -1,3 +1,7 @@
+#import <fcntl.h>
+#import <sys/stat.h>
+#import <unistd.h>
+#import <errno.h>
 #import "RCLocalization.h"
 //
 //  RCSnippetImportExportService.m
@@ -227,25 +231,39 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
                         underlyingError:nil];
     }
 
-    // Guard against abnormally large files (50 MB limit)
-    NSNumber *fileSize = nil;
-    NSError *attrError = nil;
-    if ([fileURL getResourceValue:&fileSize forKey:NSURLFileSizeKey error:&attrError] && fileSize != nil) {
-        if (fileSize.unsignedLongLongValue > kRCMaxImportFileSize) {
-            return [self assignSnippetError:error
-                                       code:RCSnippetImportExportErrorFileRead
-                                description:RCLocalizedString(@"Import file is too large (exceeds 50 MB limit).", nil)
-                            underlyingError:nil];
-        }
+    // Open once, validate that descriptor, and read a bounded amount. URL metadata
+    // plus mapped reads can race a replacement/growing file and do not bound allocation.
+    int descriptor = open(fileURL.fileSystemRepresentation, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+    if (descriptor < 0) {
+        return [self assignSnippetError:error code:RCSnippetImportExportErrorFileRead
+            description:RCLocalizedString(@"Failed to read snippets file.", nil)
+            underlyingError:[NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil]];
     }
-
-    NSError *readError = nil;
-    NSData *data = [NSData dataWithContentsOfURL:fileURL options:NSDataReadingMappedIfSafe error:&readError];
-    if (data == nil) {
-        return [self assignSnippetError:error
-                                   code:RCSnippetImportExportErrorFileRead
-                            description:RCLocalizedString(@"Failed to read snippets file.", nil)
-                        underlyingError:readError];
+    NSMutableData *data = [NSMutableData data];
+    BOOL tooLarge = NO;
+    int readFailure = 0;
+    @try {
+        struct stat info;
+        if (fstat(descriptor, &info) != 0) { readFailure = errno; }
+        else if (!S_ISREG(info.st_mode)) { readFailure = EINVAL; }
+        else if (info.st_size < 0 || (unsigned long long)info.st_size > kRCMaxImportFileSize) { tooLarge = YES; }
+        if (!readFailure && !tooLarge) {
+            uint8_t buffer[64 * 1024];
+            while (data.length <= kRCMaxImportFileSize) {
+                size_t count = MIN(sizeof(buffer), kRCMaxImportFileSize + 1 - data.length);
+                ssize_t received = read(descriptor, buffer, count);
+                if (received < 0 && errno == EINTR) { continue; }
+                if (received < 0) { readFailure = errno; break; }
+                if (received == 0) { break; }
+                [data appendBytes:buffer length:(NSUInteger)received];
+            }
+            tooLarge = data.length > kRCMaxImportFileSize;
+        }
+    } @finally { close(descriptor); }
+    if (tooLarge || readFailure) {
+        return [self assignSnippetError:error code:RCSnippetImportExportErrorFileRead
+            description:RCLocalizedString(tooLarge ? @"Import file is too large (exceeds 50 MB limit)." : @"Failed to read snippets file.", nil)
+            underlyingError:readFailure ? [NSError errorWithDomain:NSPOSIXErrorDomain code:readFailure userInfo:nil] : nil];
     }
 
     return [self importSnippetsFromData:data merge:merge error:error];

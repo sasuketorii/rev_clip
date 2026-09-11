@@ -8,7 +8,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-34c759" alt="MIT License" /></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-111827?logo=apple&amp;logoColor=white" alt="macOS 14 or later" />
   <img src="https://img.shields.io/badge/UI-AppKit%20%2B%20SwiftUI-007aff" alt="AppKit and SwiftUI" />
-  <img src="https://img.shields.io/badge/runtime_dependencies-2-5856d6" alt="2 direct third-party runtime dependencies" />
+  <img src="https://img.shields.io/badge/runtime_dependencies-3-5856d6" alt="3 direct third-party runtime dependencies" />
   <a href="https://github.com/sasuketorii/rev_clip/actions/workflows/ci.yml"><img src="https://github.com/sasuketorii/rev_clip/actions/workflows/ci.yml/badge.svg" alt="Build and tests" /></a>
 
   <p><a href="README.md">日本語</a> · <strong>English</strong></p>
@@ -35,7 +35,7 @@ Revclip uses the network for features such as update checks. It does not provide
 ## Privacy and resource use
 
 - **Choose what gets saved.** Copies marked as confidential or transient are excluded from history. You can also exclude specific apps from capture.
-- **Protect local files.** Clip files use restricted permissions, and decoding limits the allowed types. This does not guarantee encryption at rest or automatic detection of secrets that have not been marked as sensitive.
+- **Encrypt saved data.** SQLCipher protects the history and template database; AES-256-GCM protects clip payloads and thumbnails. Keys are managed in the macOS Keychain. See the [security policy](SECURITY.md) for the protection boundary and limitations.
 - **Read only when the clipboard changes.** Monitoring checks the change count and skips reading unchanged contents. Saving performs archive conversion once.
 - **Keep storage growth in check.** Set limits on history count and saved clip size. The saved-size limit is not a guarantee of maximum runtime memory use.
 
@@ -82,13 +82,14 @@ make -C src/Revclip test
 open src/Revclip/Revclip.xcodeproj
 ```
 
-## Just two direct runtime dependencies
+## Three focused runtime dependencies
 
-Both third-party dependencies are vendored. A normal build does not need to fetch them through CocoaPods or Swift Package Manager.
+All three third-party dependencies are vendored. A normal build does not need to fetch them through CocoaPods or Swift Package Manager.
 
 | Library | Purpose | Vendored version |
 | --- | --- | --- |
-| [FMDB](https://github.com/ccgus/fmdb) | A wrapper around macOS SQLite | 2.7.12 |
+| [FMDB](https://github.com/ccgus/fmdb) | A wrapper around SQLite | 2.7.12 |
+| [SQLCipher](https://github.com/sqlcipher/sqlcipher) | Encrypted storage database | 4.19.0 |
 | [Sparkle](https://github.com/sparkle-project/Sparkle) | App updates | 2.9.6 |
 
 This count excludes macOS system frameworks, Sparkle's internal components, and development tools. XcodeGen generates the project; Pillow is needed only to regenerate icons. See [third-party notices](THIRD_PARTY_NOTICES.md) for licensing details.

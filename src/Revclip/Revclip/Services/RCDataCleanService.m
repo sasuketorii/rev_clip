@@ -13,6 +13,8 @@
 #import "RCDatabaseManager.h"
 #import "RCPanicEraseService.h"
 #import "RCUtilities.h"
+#import "RCStorageMigration.h"
+#import <sys/stat.h>
 #import <CoreFoundation/CoreFoundation.h>
 #import <os/log.h>
 
@@ -318,7 +320,7 @@ static os_log_t RCDataCleanServiceLog(void) {
 
 - (void)removeOrphanClipFilesWithDatabaseManager:(RCDatabaseManager *)databaseManager {
     NSString *clipDirectoryPath = [RCUtilities clipDataDirectoryPath];
-    if (![RCUtilities ensureDirectoryExists:clipDirectoryPath]) {
+    if (![RCStorageMigration validatePrivateDirectory:clipDirectoryPath create:NO]) {
         return;
     }
     NSString *canonicalClipDataDirectoryPath = [self canonicalPath:clipDirectoryPath];
@@ -339,24 +341,23 @@ static os_log_t RCDataCleanServiceLog(void) {
 
     NSMutableSet<NSString *> *databaseClipPaths = [NSMutableSet set];
     NSMutableSet<NSString *> *databaseThumbnailPaths = [NSMutableSet set];
-    NSInteger count = [databaseManager clipItemCount];
-    if (count > 0) {
-        NSArray<NSDictionary *> *clipDictionaries = [databaseManager fetchClipItemsWithLimit:count];
-        for (NSDictionary *clipDictionary in clipDictionaries) {
-            RCClipItem *clipItem = [[RCClipItem alloc] initWithDictionary:clipDictionary];
-            NSString *canonicalDataPath = [self validatedCanonicalClipPath:clipItem.dataPath
-                                                     clipDataDirectoryPath:canonicalClipDataDirectoryPath];
-            if (canonicalDataPath.length > 0) {
-                [databaseClipPaths addObject:canonicalDataPath];
-            }
-
-            NSString *canonicalThumbnailPath = [self validatedCanonicalClipPath:clipItem.thumbnailPath
-                                                          clipDataDirectoryPath:canonicalClipDataDirectoryPath];
-            if (canonicalThumbnailPath.length > 0) {
-                [databaseThumbnailPaths addObject:canonicalThumbnailPath];
-            }
+    // A failed database read must never be mistaken for an empty history.
+    BOOL readSucceeded = [databaseManager performDatabaseOperation:^BOOL(FMDatabase *db) {
+        FMResultSet *rows = [db executeQuery:@"SELECT data_path, thumbnail_path FROM clip_items"];
+        if (!rows) return NO;
+        NSError *readError = nil;
+        while ([rows nextWithError:&readError]) {
+            NSString *data = [self validatedCanonicalClipPath:[rows stringForColumn:@"data_path"]
+                                       clipDataDirectoryPath:canonicalClipDataDirectoryPath];
+            NSString *thumbnail = [self validatedCanonicalClipPath:[rows stringForColumn:@"thumbnail_path"]
+                                            clipDataDirectoryPath:canonicalClipDataDirectoryPath];
+            if (data.length) [databaseClipPaths addObject:data];
+            if (thumbnail.length) [databaseThumbnailPaths addObject:thumbnail];
         }
-    }
+        [rows close];
+        return readError == nil;
+    }];
+    if (!readSucceeded) return;
 
     for (NSString *fileName in fileNames) {
         if (![self isClipDataFileName:fileName]) {
@@ -514,6 +515,11 @@ static os_log_t RCDataCleanServiceLog(void) {
 }
 
 - (void)removeFileAtPath:(NSString *)path {
+    NSString *root = [RCUtilities clipDataDirectoryPath].stringByStandardizingPath;
+    if (![RCStorageMigration validatePrivateDirectory:root create:NO]
+        || ![path.stringByStandardizingPath.stringByDeletingLastPathComponent isEqualToString:root]) return;
+    struct stat file;
+    if (lstat(path.fileSystemRepresentation, &file) != 0 || !S_ISREG(file.st_mode) || file.st_nlink != 1) return;
     NSString *canonicalClipDataDirectoryPath = [self canonicalPath:[RCUtilities clipDataDirectoryPath]];
     NSString *canonicalPath = [self validatedCanonicalClipPath:path
                                          clipDataDirectoryPath:canonicalClipDataDirectoryPath];

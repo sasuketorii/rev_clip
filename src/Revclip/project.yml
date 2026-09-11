@@ -25,6 +25,8 @@ targets:
     dependencies:
       - sdk: ApplicationServices.framework
       - sdk: Carbon.framework
+      - sdk: CoreFoundation.framework
+      - sdk: Security.framework
       - sdk: ServiceManagement.framework
       - framework: Revclip/Vendor/Sparkle/Sparkle.framework
         embed: true
@@ -35,8 +37,8 @@ targets:
         CFBundleName: "Revclip"
         CFBundleDisplayName: "Revclip"
         CFBundleIdentifier: "$(PRODUCT_BUNDLE_IDENTIFIER)"
-        CFBundleVersion: "28"
-        CFBundleShortVersionString: "0.0.28"
+        CFBundleVersion: "29"
+        CFBundleShortVersionString: "0.0.29"
         CFBundleExecutable: "$(EXECUTABLE_NAME)"
         CFBundlePackageType: "APPL"
         CFBundleSignature: "????"
@@ -54,6 +56,12 @@ targets:
       - path: Revclip
         excludes:
           - "Vendor/Sparkle/**"
+          - "Vendor/SQLCipher/sqlite3.c"
+      # SQLite's amalgamation is compiled with the release assert contract.
+      # The Cocoa prefix header imports assert.h before SQLite selects its
+      # NDEBUG/SQLITE_DEBUG mode; keep that mode consistent for this file.
+      - path: Revclip/Vendor/SQLCipher/sqlite3.c
+        compilerFlags: "-DNDEBUG"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.revclip.Revclip
@@ -71,9 +79,19 @@ targets:
         FRAMEWORK_SEARCH_PATHS:
           - "$(PROJECT_DIR)/Revclip/Vendor"
           - "$(PROJECT_DIR)/Revclip/Vendor/Sparkle"
+        HEADER_SEARCH_PATHS:
+          - "$(PROJECT_DIR)/Revclip/Vendor/SQLCipher"
+          - "$(inherited)"
         OTHER_LDFLAGS:
           - "$(inherited)"
-          - "-lsqlite3"
+        GCC_PREPROCESSOR_DEFINITIONS:
+          - "$(inherited)"
+          - "SQLITE_HAS_CODEC=1"
+          - "SQLCIPHER_CRYPTO_CC=1"
+          - "SQLITE_TEMP_STORE=2"
+          - "SQLITE_THREADSAFE=2"
+          - "SQLITE_EXTRA_INIT=sqlcipher_extra_init"
+          - "SQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown"
         CLANG_ENABLE_MODULES: true
         GCC_PRECOMPILE_PREFIX_HEADER: true
         DEFINES_MODULE: YES
@@ -104,6 +122,17 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.revclip.RevclipTests
         GENERATE_INFOPLIST_FILE: YES
+        HEADER_SEARCH_PATHS:
+          - "$(PROJECT_DIR)/Revclip/Vendor/SQLCipher"
+          - "$(inherited)"
+        GCC_PREPROCESSOR_DEFINITIONS:
+          - "$(inherited)"
+          - "SQLITE_HAS_CODEC=1"
+          - "SQLCIPHER_CRYPTO_CC=1"
+          - "SQLITE_TEMP_STORE=2"
+          - "SQLITE_THREADSAFE=2"
+          - "SQLITE_EXTRA_INIT=sqlcipher_extra_init"
+          - "SQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown"
         CODE_SIGNING_ALLOWED: NO
         CODE_SIGNING_REQUIRED: NO
         CODE_SIGN_IDENTITY: ""

@@ -10,6 +10,7 @@
 #import <Cocoa/Cocoa.h>
 #import <os/log.h>
 
+#import "Revclip-Swift.h"
 #import "RCConstants.h"
 #import "RCClipData.h"
 #import "RCClipItem.h"
@@ -17,6 +18,7 @@
 #import "RCDataCleanService.h"
 #import "RCDatabaseManager.h"
 #import "RCPanicEraseService.h"
+#import "RCStorageMigration.h"
 #import "RCUtilities.h"
 #import "NSImage+Resize.h"
 
@@ -354,7 +356,8 @@ static os_log_t RCScreenshotMonitorServiceLog(void) {
         return;
     }
 
-    NSData *imageData = [NSData dataWithContentsOfFile:filePath];
+    // External screenshot input is plaintext; still apply the bounded, no-follow reader.
+    NSData *imageData = [[RCStorageCipher shared] readDataAtPath:filePath allowPlaintext:YES error:nil];
     if (imageData.length == 0) {
         return;
     }
@@ -514,7 +517,8 @@ static os_log_t RCScreenshotMonitorServiceLog(void) {
     NSString *thumbnailPath = [directoryPath stringByAppendingPathComponent:thumbnailFileName];
 
     NSError *error = nil;
-    BOOL wrote = [thumbnailData writeToFile:thumbnailPath options:NSDataWritingAtomic error:&error];
+    BOOL wrote = [RCStorageMigration validatePrivateDirectory:directoryPath create:NO]
+        && [[RCStorageCipher shared] writeData:thumbnailData toPath:thumbnailPath error:&error];
     if (!wrote) {
         os_log_error(RCScreenshotMonitorServiceLog(),
                      "Failed to save thumbnail at path %{private}@ (%{private}@)",

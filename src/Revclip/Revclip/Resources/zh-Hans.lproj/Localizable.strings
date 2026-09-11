@@ -258,3 +258,9 @@
 "App Language" = "应用语言";
 "Follow System" = "跟随系统";
 "Language changes apply immediately to Revclip." = "所选语言会立即应用于 Revclip。";
+
+/* Protected storage startup */
+"Protected storage unavailable" = "无法打开存储的数据";
+"Revclip could not safely open its saved data. Unlock your login keychain and try again. Existing data has not been replaced with an empty history." = "Revclip 无法安全地打开已保存的数据。请解锁登录钥匙串后重新启动。现有数据并未被空白历史记录覆盖。";
+"Revclip data deletion incomplete" = "Revclip 数据删除未完成";
+"Not all Revclip data could be deleted. Clipboard recording is stopped. Some data may already have been deleted. Try the deletion again before quitting." = "未能删除所有 Revclip 数据。剪贴板记录已停止。部分数据可能已被删除。请在退出前重试删除。";

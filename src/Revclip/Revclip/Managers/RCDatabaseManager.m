@@ -11,6 +11,8 @@
 #import "RCClipItem.h"
 #import "RCPanicEraseService.h"
 #import "RCUtilities.h"
+#import "RCStorageMigration.h"
+#import "Revclip-Swift.h"
 #import <os/log.h>
 #import <sqlite3.h>
 
@@ -81,6 +83,7 @@ static os_log_t RCDatabaseManagerLog(void) {
 
 - (BOOL)setupDatabase {
     @synchronized (self) {
+        if ([RCPanicEraseService shared].isPanicInProgress) return NO;
         if (self.setupCompleted) {
             return YES;
         }
@@ -122,6 +125,8 @@ static os_log_t RCDatabaseManagerLog(void) {
         [self migrateAutoVacuumToIncrementalIfNeeded];
         [self applyDatabaseFilePermissionsIfNeeded];
 
+        if (![RCStorageMigration migrateClipFilesBesideDatabase:self.databasePath error:nil]) return NO;
+        if (![RCStorageMigration removeMigrationArtifactsBesideDatabase:self.databasePath error:nil]) return NO;
         self.setupCompleted = YES;
         return YES;
     }
@@ -1070,51 +1075,14 @@ static os_log_t RCDatabaseManagerLog(void) {
         return YES;
     }
 
-    NSString *directoryPath = [self.databasePath stringByDeletingLastPathComponent];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    BOOL isDirectory = NO;
-    BOOL exists = [fileManager fileExistsAtPath:directoryPath isDirectory:&isDirectory];
-
-    if (exists && !isDirectory) {
-        os_log_error(RCDatabaseManagerLog(),
-                     "Expected directory but found file at path %{private}@",
-                     directoryPath);
+    NSError *storageError = nil;
+    if (![RCStorageMigration prepareDatabaseAtPath:self.databasePath error:&storageError]) {
+        os_log_error(RCDatabaseManagerLog(), "Protected storage preparation failed; database remains closed.");
         return NO;
     }
-
-    NSDictionary *directoryAttributes = @{ NSFilePosixPermissions: kRCDatabaseDirectoryPermissions };
-    if (exists) {
-        NSError *permissionsError = nil;
-        BOOL applied = [fileManager setAttributes:directoryAttributes
-                                     ofItemAtPath:directoryPath
-                                            error:&permissionsError];
-        if (!applied && permissionsError != nil) {
-            os_log_with_type(RCDatabaseManagerLog(), OS_LOG_TYPE_DEBUG,
-                             "Failed to apply database directory permissions for %{private}@ (%{private}@)",
-                             directoryPath, permissionsError.localizedDescription);
-        }
-    } else {
-        NSError *directoryError = nil;
-        BOOL created = [fileManager createDirectoryAtPath:directoryPath
-                              withIntermediateDirectories:YES
-                                               attributes:directoryAttributes
-                                                    error:&directoryError];
-        if (!created || directoryError != nil) {
-            os_log_error(RCDatabaseManagerLog(),
-                         "Failed to create database directory %{private}@ (%{private}@)",
-                         directoryPath, directoryError.localizedDescription);
-            return NO;
-        }
-    }
-
-    BOOL databasePathIsDirectory = NO;
-    if ([fileManager fileExistsAtPath:self.databasePath isDirectory:&databasePathIsDirectory]
-        && databasePathIsDirectory) {
-        os_log_error(RCDatabaseManagerLog(),
-                     "Expected database file but found directory at path %{private}@",
-                     self.databasePath);
-        return NO;
-    }
+    NSFileManager *fileManager = NSFileManager.defaultManager;
+    NSData *key = [[RCStorageCipher shared] databaseKeyWithError:&storageError];
+    if (!key) return NO;
 
     self.databaseCreatedDuringCurrentSetup = ![fileManager fileExistsAtPath:self.databasePath];
     self.databaseQueue = [FMDatabaseQueue databaseQueueWithPath:self.databasePath];
@@ -1129,7 +1097,9 @@ static os_log_t RCDatabaseManagerLog(void) {
     // connection, so this setting persists for all subsequent operations.
     __block BOOL foreignKeysEnabled = NO;
     [self.databaseQueue inDatabase:^(FMDatabase * _Nonnull db) {
-        foreignKeysEnabled = [self enableForeignKeysForDatabase:db];
+        // The key must precede every schema read and PRAGMA on this connection.
+        foreignKeysEnabled = sqlite3_key(db.sqliteHandle, key.bytes, (int)key.length) == SQLITE_OK
+            && [self enableForeignKeysForDatabase:db];
     }];
     if (!foreignKeysEnabled) {
         self.databaseQueue = nil;

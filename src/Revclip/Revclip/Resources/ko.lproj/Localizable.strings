@@ -258,3 +258,9 @@
 "App Language" = "앱 언어";
 "Follow System" = "시스템 설정 따르기";
 "Language changes apply immediately to Revclip." = "선택한 언어가 Revclip에 즉시 적용됩니다.";
+
+/* Protected storage startup */
+"Protected storage unavailable" = "저장된 데이터를 열 수 없음";
+"Revclip could not safely open its saved data. Unlock your login keychain and try again. Existing data has not been replaced with an empty history." = "Revclip이 저장된 데이터를 안전하게 열지 못했습니다. 로그인 키체인의 잠금을 해제한 후 다시 실행해 주세요. 기존 데이터를 빈 기록으로 덮어쓰지 않았습니다.";
+"Revclip data deletion incomplete" = "Revclip 데이터 삭제가 완료되지 않음";
+"Not all Revclip data could be deleted. Clipboard recording is stopped. Some data may already have been deleted. Try the deletion again before quitting." = "Revclip 데이터를 모두 삭제하지 못했습니다. 클립보드 기록은 중지되었습니다. 일부 데이터는 이미 삭제되었을 수 있습니다. 종료하기 전에 삭제를 다시 시도해 주세요.";

@@ -8,6 +8,8 @@
 //
 
 #import "RCMenuManager.h"
+#import "Revclip-Swift.h"
+#import "RCStorageMigration.h"
 
 #import "RCClipboardService.h"
 #import "RCClipData.h"
@@ -1249,7 +1251,11 @@ static os_log_t RCMenuManagerLog(void) {
         return nil;
     }
 
-    NSImage *thumbnailImage = [[NSImage alloc] initWithContentsOfFile:thumbnailPath];
+    NSString *root = [RCUtilities clipDataDirectoryPath].stringByStandardizingPath;
+    if (![thumbnailPath.stringByStandardizingPath.stringByDeletingLastPathComponent isEqualToString:root]
+        || ![RCStorageMigration validatePrivateDirectory:root create:NO]) return nil;
+    NSData *data = [[RCStorageCipher shared] readDataAtPath:thumbnailPath allowPlaintext:NO error:nil];
+    NSImage *thumbnailImage = data ? [[NSImage alloc] initWithData:data] : nil;
     if (thumbnailImage == nil) {
         return nil;
     }

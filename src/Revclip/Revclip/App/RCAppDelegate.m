@@ -23,6 +23,7 @@
 #import "RCPreferencesWindowController.h"
 #import "RCPasteService.h"
 #import "RCPrivacyService.h"
+#import "RCPanicEraseService.h"
 #import "RCScreenshotMonitorService.h"
 #import "RCSnippetEditorWindowController.h"
 #import "RCSnippetImportExportService.h"
@@ -46,6 +47,8 @@ static UTType *RCSnippetImportExportContentType(void) {
 @implementation RCAppDelegate
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
+    // XCTest hosts must never migrate the signed-in user's store or start capture.
+    if (NSClassFromString(@"XCTestCase") != nil) return;
     // 0. Move to Applications check (before any setup)
     [[RCMoveToApplicationsService shared] checkAndMoveIfNeeded];
 
@@ -58,7 +61,15 @@ static UTType *RCSnippetImportExportContentType(void) {
 
     // 2. Database setup
     RCDatabaseManager *databaseManager = [RCDatabaseManager shared];
-    [databaseManager setupDatabase];
+    if (![databaseManager setupDatabase]) {
+        NSAlert *alert = [NSAlert new];
+        alert.messageText = RCLocalizedString(@"Protected storage unavailable", @"");
+        alert.informativeText = RCLocalizedString(@"Revclip could not safely open its saved data. Unlock your login keychain and try again. Existing data has not been replaced with an empty history.", @"");
+        [alert addButtonWithTitle:RCLocalizedString(@"Quit Revclip", @"")];
+        [alert runModal];
+        [NSApp terminate:nil];
+        return;
+    }
 
     // 2.5 Data protection (permissions + backup/index exclusions)
     [RCUtilities applyDataProtectionAttributes];
@@ -122,6 +133,9 @@ static UTType *RCSnippetImportExportContentType(void) {
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
     (void)sender;
+    if ([RCPanicEraseService shared].isPanicInProgress) {
+        return [RCPanicEraseService shared].isEraseAttemptActive ? NSTerminateCancel : NSTerminateNow;
+    }
     return [[RCSnippetEditorWindowController shared] saveChangesIfLoaded] ? NSTerminateNow : NSTerminateCancel;
 }
 

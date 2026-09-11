@@ -258,3 +258,9 @@
 "App Language" = "App-Sprache";
 "Follow System" = "Systemeinstellung verwenden";
 "Language changes apply immediately to Revclip." = "Die ausgewählte Sprache wird sofort in Revclip angewendet.";
+
+/* Protected storage startup */
+"Protected storage unavailable" = "Gespeicherte Daten nicht verfügbar";
+"Revclip could not safely open its saved data. Unlock your login keychain and try again. Existing data has not been replaced with an empty history." = "Revclip konnte die gespeicherten Daten nicht sicher öffnen. Entsperren Sie Ihren Anmeldeschlüsselbund und versuchen Sie es erneut. Vorhandene Daten wurden nicht durch einen leeren Verlauf ersetzt.";
+"Revclip data deletion incomplete" = "Revclip-Daten nicht vollständig gelöscht";
+"Not all Revclip data could be deleted. Clipboard recording is stopped. Some data may already have been deleted. Try the deletion again before quitting." = "Nicht alle Revclip-Daten konnten gelöscht werden. Die Aufzeichnung der Zwischenablage ist gestoppt. Einige Daten wurden möglicherweise bereits gelöscht. Versuchen Sie die Löschung vor dem Beenden erneut.";
