@@ -89,7 +89,7 @@ final class SnippetEditorModel {
 
     func reload() {
         guard let catalog = RCDatabaseManager.shared().fetchSnippetCatalog() else {
-            errorMessage = NSLocalizedString("Failed to read snippets. Please try again.", comment: "")
+            errorMessage = RCLocalizedString("Failed to read snippets. Please try again.", comment: "")
             return
         }
         folders = catalog.compactMap { folder in
@@ -144,7 +144,7 @@ final class SnippetEditorModel {
             guard let index = folders.firstIndex(where: { $0.id == id }) else {
                 return reportSaveFailure()
             }
-            let title = normalized(titleDraft, fallback: NSLocalizedString("Untitled Folder", comment: ""))
+            let title = normalized(titleDraft, fallback: RCLocalizedString("Untitled Folder", comment: ""))
             if folders[index].title == title {
                 return true
             }
@@ -159,7 +159,7 @@ final class SnippetEditorModel {
                   let snippetIndex = folders[folderIndex].snippets.firstIndex(where: { $0.id == id }) else {
                 return reportSaveFailure()
             }
-            let title = normalized(titleDraft, fallback: NSLocalizedString("Untitled Snippet", comment: ""))
+            let title = normalized(titleDraft, fallback: RCLocalizedString("Untitled Snippet", comment: ""))
             let content = contentDraft
             if folders[folderIndex].snippets[snippetIndex].title == title,
                folders[folderIndex].snippets[snippetIndex].content == content {
@@ -188,7 +188,7 @@ final class SnippetEditorModel {
     func addFolder() {
         guard persistDraftIfNeeded() else { return }
         let identifier = UUID().uuidString
-        let title = NSLocalizedString("New Folder", comment: "")
+        let title = RCLocalizedString("New Folder", comment: "")
         let inserted = RCDatabaseManager.shared().insertSnippetFolder([
             "identifier": identifier,
             "folder_index": folders.count,
@@ -235,7 +235,7 @@ final class SnippetEditorModel {
         }
 
         let snippetID = UUID().uuidString
-        let title = NSLocalizedString("New Snippet", comment: "")
+        let title = RCLocalizedString("New Snippet", comment: "")
         let inserted = RCDatabaseManager.shared().insertSnippet([
             "identifier": snippetID,
             "snippet_index": folders[folderIndex].snippets.count,
@@ -396,7 +396,7 @@ final class SnippetEditorModel {
 
     @discardableResult
     private func reportSaveFailure() -> Bool {
-        errorMessage = NSLocalizedString("Failed to save snippets. Your changes have not been saved.", comment: "")
+        errorMessage = RCLocalizedString("Failed to save snippets. Your changes have not been saved.", comment: "")
         savedFlash = false
         return false
     }

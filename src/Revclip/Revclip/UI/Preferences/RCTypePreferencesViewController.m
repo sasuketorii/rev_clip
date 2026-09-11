@@ -1,3 +1,4 @@
+#import "RCLocalization.h"
 //
 //  RCTypePreferencesViewController.m
 //  Revclip
@@ -33,6 +34,7 @@ static NSString * const kRCStoreTypeTIFF = @"TIFF";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    [RCLocalization localizeView:self.view table:@"RCTypePreferencesView"];
 
     NSDictionary<NSString *, id> *storeTypes = [[NSUserDefaults standardUserDefaults] dictionaryForKey:kRCPrefStoreTypesKey];
     [self setCheckbox:self.plainTextCheckbox enabled:[self isStoreTypeEnabledForKey:kRCStoreTypeString inStoreTypes:storeTypes]];

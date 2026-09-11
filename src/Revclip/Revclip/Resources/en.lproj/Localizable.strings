@@ -253,3 +253,8 @@
 "ログインアイテムの設定に失敗しました" = "Failed to configure the login item";
 "システム環境設定の「ログイン項目」で手動で設定してください。" = "Please configure it manually in System Settings > General > Login Items.";
 "今後表示しない" = "Do not show again";
+
+/* Application language preference */
+"App Language" = "App Language";
+"Follow System" = "Follow System";
+"Language changes apply immediately to Revclip." = "Language changes apply immediately to Revclip.";

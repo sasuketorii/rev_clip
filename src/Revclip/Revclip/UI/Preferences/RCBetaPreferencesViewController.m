@@ -1,3 +1,4 @@
+#import "RCLocalization.h"
 //
 //  RCBetaPreferencesViewController.m
 //  Revclip
@@ -42,6 +43,7 @@ static NSInteger const kRCBetaModifierMaximumIndex = 3;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    [RCLocalization localizeView:self.view table:@"RCBetaPreferencesView"];
 
     [self configureModifierPopUpButtons];
     [self loadSettingsFromUserDefaults];
@@ -115,7 +117,7 @@ static NSInteger const kRCBetaModifierMaximumIndex = 3;
 }
 
 - (void)configureUnavailableFeatureControls {
-    NSString *comingSoonText = NSLocalizedString(@"Coming soon", nil);
+    NSString *comingSoonText = RCLocalizedString(@"Coming soon", nil);
 
     self.deleteHistoryEnableButton.enabled = NO;
     self.deleteHistoryModifierPopUpButton.enabled = NO;

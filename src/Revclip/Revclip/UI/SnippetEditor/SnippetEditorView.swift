@@ -10,10 +10,12 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct SnippetEditorView: View {
+    @State private var languageRevision = 0
     @Bindable var model: SnippetEditorModel
     @State private var collapsedFolders: Set<String> = []
 
     var body: some View {
+        let _ = languageRevision
         VStack(spacing: 0) {
             HSplitView {
                 sidebar
@@ -23,15 +25,16 @@ struct SnippetEditorView: View {
             }
             toolbar
         }
+        .onReceive(NotificationCenter.default.publisher(for: .RCLanguageDidChange)) { _ in languageRevision += 1 }
         .background(.ultraThinMaterial)
         .alert(
-            NSLocalizedString("An unknown error occurred.", comment: ""),
+            RCLocalizedString("An unknown error occurred.", comment: ""),
             isPresented: Binding(
                 get: { model.errorMessage != nil },
                 set: { if !$0 { model.errorMessage = nil } }
             )
         ) {
-            Button(NSLocalizedString("OK", comment: ""), role: .cancel) {
+            Button(RCLocalizedString("OK", comment: ""), role: .cancel) {
                 model.errorMessage = nil
             }
         } message: {
@@ -45,7 +48,7 @@ struct SnippetEditorView: View {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
                 TextField(
-                    NSLocalizedString("Search Snippets", comment: ""),
+                    RCLocalizedString("Search Snippets", comment: ""),
                     text: $model.query
                 )
                 .textFieldStyle(.plain)
@@ -96,17 +99,17 @@ struct SnippetEditorView: View {
     private var editor: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(model.selection == nil
-                 ? NSLocalizedString("Select a folder or template", comment: "")
+                 ? RCLocalizedString("Select a folder or template", comment: "")
                  : model.isEditingSnippet
-                    ? NSLocalizedString("Snippet", comment: "")
-                    : NSLocalizedString("Folder", comment: ""))
+                    ? RCLocalizedString("Snippet", comment: "")
+                    : RCLocalizedString("Folder", comment: ""))
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
                 .tracking(0.4)
 
             TextField(
-                NSLocalizedString("Title:", comment: ""),
+                RCLocalizedString("Title:", comment: ""),
                 text: $model.titleDraft
             )
             .textFieldStyle(.plain)
@@ -120,22 +123,22 @@ struct SnippetEditorView: View {
             .disabled(model.selection == nil)
 
             if let snippet = model.selectedSnippet {
-                Picker(NSLocalizedString("Folder", comment: ""), selection: Binding(
+                Picker(RCLocalizedString("Folder", comment: ""), selection: Binding(
                     get: { snippet.folderID },
                     set: { model.moveSelectedSnippet(to: $0) }
                 )) {
                     ForEach(model.folders) { folder in Text(folder.title).tag(folder.id) }
                 }
                 if !model.selectedFolderEnabled {
-                    Label(NSLocalizedString("This folder is hidden from the menu.", comment: ""), systemImage: "eye.slash")
+                    Label(RCLocalizedString("This folder is hidden from the menu.", comment: ""), systemImage: "eye.slash")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                Text(NSLocalizedString("Template Content", comment: ""))
+                Text(RCLocalizedString("Template Content", comment: ""))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 TextEditor(text: $model.contentDraft)
-                    .accessibilityLabel(NSLocalizedString("Template Content", comment: ""))
+                    .accessibilityLabel(RCLocalizedString("Template Content", comment: ""))
                     .font(.system(.body, design: .monospaced))
                     .scrollContentBackground(.hidden)
                     .padding(10)
@@ -147,15 +150,15 @@ struct SnippetEditorView: View {
             } else {
                 ContentUnavailableView {
                     Label(
-                        NSLocalizedString("Folder", comment: ""),
+                        RCLocalizedString("Folder", comment: ""),
                         systemImage: "folder"
                     )
                 } description: {
                     Text(model.selection == nil
-                         ? NSLocalizedString("Add a folder to organize your templates.", comment: "")
-                         : NSLocalizedString("Add a template to this folder.", comment: ""))
+                         ? RCLocalizedString("Add a folder to organize your templates.", comment: "")
+                         : RCLocalizedString("Add a template to this folder.", comment: ""))
                 } actions: {
-                    Button(NSLocalizedString(model.selection == nil ? "Add Folder" : "Add Template", comment: "")) {
+                    Button(RCLocalizedString(model.selection == nil ? "Add Folder" : "Add Template", comment: "")) {
                         if model.selection == nil { model.addFolder() }
                         else { model.addSnippet() }
                     }
@@ -164,7 +167,7 @@ struct SnippetEditorView: View {
             }
 
             HStack {
-                Text(NSLocalizedString("Changes are saved when you switch items or close the editor.", comment: ""))
+                Text(RCLocalizedString("Changes are saved when you switch items or close the editor.", comment: ""))
                     .font(.system(size: 11))
                     .foregroundStyle(.tertiary)
                 Spacer()
@@ -177,11 +180,11 @@ struct SnippetEditorView: View {
     private var toolbar: some View {
         VStack(spacing: 10) {
             HStack(spacing: 12) {
-                Button(NSLocalizedString("Add Folder", comment: ""), systemImage: "folder.badge.plus", action: model.addFolder)
-                Button(NSLocalizedString("Add Template", comment: ""), systemImage: "doc.badge.plus", action: model.addSnippet)
+                Button(RCLocalizedString("Add Folder", comment: ""), systemImage: "folder.badge.plus", action: model.addFolder)
+                Button(RCLocalizedString("Add Template", comment: ""), systemImage: "doc.badge.plus", action: model.addSnippet)
                     .disabled(model.folders.isEmpty)
                 Spacer()
-                Button(model.savedFlash ? NSLocalizedString("Saved!", comment: "") : NSLocalizedString("Save", comment: "")) {
+                Button(model.savedFlash ? RCLocalizedString("Saved!", comment: "") : RCLocalizedString("Save", comment: "")) {
                     _ = model.save()
                 }
                 .keyboardShortcut("s", modifiers: .command)
@@ -210,11 +213,11 @@ struct SnippetEditorView: View {
     private var selectionActions: some View {
         HStack(spacing: 12) {
             Button(model.isEditingSnippet
-                   ? NSLocalizedString("Delete Template", comment: "")
-                   : NSLocalizedString("Delete Folder", comment: ""),
+                   ? RCLocalizedString("Delete Template", comment: "")
+                   : RCLocalizedString("Delete Folder", comment: ""),
                    systemImage: "trash", action: confirmDelete)
                 .disabled(model.selection == nil)
-            Toggle(NSLocalizedString("Show in Menu", comment: ""), isOn: Binding(
+            Toggle(RCLocalizedString("Show in Menu", comment: ""), isOn: Binding(
                 get: { model.selectedItemEnabled },
                 set: { if $0 != model.selectedItemEnabled { model.toggleEnabled() } }
             ))
@@ -226,8 +229,8 @@ struct SnippetEditorView: View {
 
     private var transferActions: some View {
         HStack(spacing: 12) {
-            Button(NSLocalizedString("Import Templates...", comment: ""), systemImage: "square.and.arrow.down", action: importSnippets)
-            Button(NSLocalizedString("Export All Templates...", comment: ""), systemImage: "square.and.arrow.up", action: exportSnippets)
+            Button(RCLocalizedString("Import Templates...", comment: ""), systemImage: "square.and.arrow.down", action: importSnippets)
+            Button(RCLocalizedString("Export All Templates...", comment: ""), systemImage: "square.and.arrow.up", action: exportSnippets)
         }
         .fixedSize(horizontal: true, vertical: false)
     }
@@ -243,7 +246,7 @@ struct SnippetEditorView: View {
         HStack(spacing: 8) {
             Image(systemName: "folder.fill")
                 .foregroundStyle(.secondary)
-            Text(folder.title.isEmpty ? NSLocalizedString("Untitled Folder", comment: "") : folder.title)
+            Text(folder.title.isEmpty ? RCLocalizedString("Untitled Folder", comment: "") : folder.title)
                 .lineLimit(1)
             Spacer()
             if !folder.enabled {
@@ -263,7 +266,7 @@ struct SnippetEditorView: View {
             Image(systemName: "doc.text")
                 .foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 2) {
-                Text(snippet.title.isEmpty ? NSLocalizedString("Untitled Snippet", comment: "") : snippet.title)
+                Text(snippet.title.isEmpty ? RCLocalizedString("Untitled Snippet", comment: "") : snippet.title)
                     .lineLimit(1)
                 if !snippet.content.isEmpty {
                     Text(snippet.content)
@@ -285,14 +288,14 @@ struct SnippetEditorView: View {
         let alert = NSAlert()
         alert.alertStyle = .warning
         if model.isEditingSnippet {
-            alert.messageText = NSLocalizedString("Delete this snippet?", comment: "")
-            alert.informativeText = String(format: NSLocalizedString("Target snippet: %@", comment: ""), model.titleDraft)
+            alert.messageText = RCLocalizedString("Delete this snippet?", comment: "")
+            alert.informativeText = String(format: RCLocalizedString("Target snippet: %@", comment: ""), model.titleDraft)
         } else {
-            alert.messageText = NSLocalizedString("Delete this folder and all its snippets?", comment: "")
-            alert.informativeText = String(format: NSLocalizedString("Target folder: %@", comment: ""), model.titleDraft)
+            alert.messageText = RCLocalizedString("Delete this folder and all its snippets?", comment: "")
+            alert.informativeText = String(format: RCLocalizedString("Target folder: %@", comment: ""), model.titleDraft)
         }
-        alert.addButton(withTitle: NSLocalizedString("Delete", comment: ""))
-        alert.addButton(withTitle: NSLocalizedString("Cancel", comment: ""))
+        alert.addButton(withTitle: RCLocalizedString("Delete", comment: ""))
+        alert.addButton(withTitle: RCLocalizedString("Cancel", comment: ""))
         if alert.runModal() == .alertFirstButtonReturn {
             model.deleteSelection()
         }
@@ -313,11 +316,11 @@ struct SnippetEditorView: View {
         }
 
         let mergeAlert = NSAlert()
-        mergeAlert.messageText = NSLocalizedString("How do you want to import snippets?", comment: "")
-        mergeAlert.informativeText = NSLocalizedString("Choose whether to merge with existing snippets or replace them all.", comment: "")
-        mergeAlert.addButton(withTitle: NSLocalizedString("Merge with existing snippets", comment: ""))
-        mergeAlert.addButton(withTitle: NSLocalizedString("Replace all snippets", comment: ""))
-        mergeAlert.addButton(withTitle: NSLocalizedString("Cancel", comment: ""))
+        mergeAlert.messageText = RCLocalizedString("How do you want to import snippets?", comment: "")
+        mergeAlert.informativeText = RCLocalizedString("Choose whether to merge with existing snippets or replace them all.", comment: "")
+        mergeAlert.addButton(withTitle: RCLocalizedString("Merge with existing snippets", comment: ""))
+        mergeAlert.addButton(withTitle: RCLocalizedString("Replace all snippets", comment: ""))
+        mergeAlert.addButton(withTitle: RCLocalizedString("Cancel", comment: ""))
         let response = mergeAlert.runModal()
         if response == .alertThirdButtonReturn {
             return

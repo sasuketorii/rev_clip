@@ -1,3 +1,4 @@
+#import "RCLocalization.h"
 #import "RCFastPreviewController.h"
 //
 //  RCMenuManager.m
@@ -389,7 +390,7 @@ static os_log_t RCMenuManagerLog(void) {
 
         NSString *title = [self stringValueFromDictionary:targetFolder key:@"title" defaultValue:@""];
         if (title.length == 0) {
-            title = NSLocalizedString(@"Untitled Folder", nil);
+            title = RCLocalizedString(@"Untitled Folder", nil);
         }
 
         NSMenu *menu = [self menuWithTitle:title];
@@ -428,12 +429,12 @@ static os_log_t RCMenuManagerLog(void) {
     BOOL addClearHistory = [self boolPreferenceForKey:kRCPrefAddClearHistoryMenuItemKey defaultValue:YES];
     [self.statusMenu addItem:[NSMenuItem separatorItem]];
     if (addClearHistory) {
-        NSMenuItem *clearHistoryItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Clear History", nil)
+        NSMenuItem *clearHistoryItem = [[NSMenuItem alloc] initWithTitle:RCLocalizedString(@"Clear History", nil)
                                                                    action:@selector(clearHistoryMenuItemSelected:)
                                                             keyEquivalent:@""];
         clearHistoryItem.target = self;
         [self applyNativeAppearanceToMenuItem:clearHistoryItem
-                                title:NSLocalizedString(@"Clear History", nil)
+                                title:RCLocalizedString(@"Clear History", nil)
                                number:nil
                                 image:[self templateSymbolNamed:@"trash"]
                       submenuChevron:NO];
@@ -454,12 +455,12 @@ static os_log_t RCMenuManagerLog(void) {
     BOOL addClearHistory = [self boolPreferenceForKey:kRCPrefAddClearHistoryMenuItemKey defaultValue:YES];
     [menu addItem:[NSMenuItem separatorItem]];
     if (addClearHistory) {
-        NSMenuItem *clearHistoryItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Clear History", nil)
+        NSMenuItem *clearHistoryItem = [[NSMenuItem alloc] initWithTitle:RCLocalizedString(@"Clear History", nil)
                                                                    action:@selector(clearHistoryMenuItemSelected:)
                                                             keyEquivalent:@""];
         clearHistoryItem.target = self;
         [self applyNativeAppearanceToMenuItem:clearHistoryItem
-                                title:NSLocalizedString(@"Clear History", nil)
+                                title:RCLocalizedString(@"Clear History", nil)
                                number:nil
                                 image:[self templateSymbolNamed:@"trash"]
                       submenuChevron:NO];
@@ -481,7 +482,7 @@ static os_log_t RCMenuManagerLog(void) {
     }
 
     if (clipRows.count == 0) {
-        NSMenuItem *noHistoryItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"No History", nil)
+        NSMenuItem *noHistoryItem = [[NSMenuItem alloc] initWithTitle:RCLocalizedString(@"No History", nil)
                                                                action:nil
                                                         keyEquivalent:@""];
         noHistoryItem.enabled = NO;
@@ -510,7 +511,7 @@ static os_log_t RCMenuManagerLog(void) {
 
     for (NSUInteger groupStart = inlineCount; groupStart < clipItems.count; groupStart += folderChunkSize) {
         NSUInteger groupEnd = MIN(groupStart + folderChunkSize, clipItems.count);
-        NSString *folderTitle = [NSString stringWithFormat:NSLocalizedString(@"Items %lu-%lu", nil),
+        NSString *folderTitle = [NSString stringWithFormat:RCLocalizedString(@"Items %lu-%lu", nil),
                                  (unsigned long)(groupStart + 1),
                                  (unsigned long)groupEnd];
 
@@ -537,7 +538,7 @@ static os_log_t RCMenuManagerLog(void) {
 - (void)appendSnippetSectionToMenu:(NSMenu *)menu {
     NSArray<NSDictionary *> *folders = [[RCDatabaseManager shared] fetchSnippetCatalog];
     if (folders == nil) {
-        NSMenuItem *errorItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Failed to read snippets. Please try again.", nil)
+        NSMenuItem *errorItem = [[NSMenuItem alloc] initWithTitle:RCLocalizedString(@"Failed to read snippets. Please try again.", nil)
                                                                        action:nil keyEquivalent:@""];
         errorItem.enabled = NO;
         [menu addItem:errorItem];
@@ -558,7 +559,7 @@ static os_log_t RCMenuManagerLog(void) {
 
         NSString *title = [self stringValueFromDictionary:folder key:@"title" defaultValue:@""];
         if (title.length == 0) {
-            title = NSLocalizedString(@"Untitled Folder", nil);
+            title = RCLocalizedString(@"Untitled Folder", nil);
         }
 
         NSMenuItem *folderItem = [[NSMenuItem alloc] initWithTitle:title
@@ -581,7 +582,7 @@ static os_log_t RCMenuManagerLog(void) {
     }
 
     if (!hasAtLeastOneFolder) {
-        NSMenuItem *noSnippetsItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"No Snippets", nil)
+        NSMenuItem *noSnippetsItem = [[NSMenuItem alloc] initWithTitle:RCLocalizedString(@"No Snippets", nil)
                                                                  action:nil
                                                           keyEquivalent:@""];
         noSnippetsItem.enabled = NO;
@@ -624,7 +625,7 @@ static os_log_t RCMenuManagerLog(void) {
             snippetTitle = [self truncatedString:snippetContent maxLength:24];
         }
         if (snippetTitle.length == 0) {
-            snippetTitle = NSLocalizedString(@"Untitled Snippet", nil);
+            snippetTitle = RCLocalizedString(@"Untitled Snippet", nil);
         }
 
         NSMenuItem *snippetItem = [[NSMenuItem alloc] initWithTitle:snippetTitle
@@ -648,7 +649,7 @@ static os_log_t RCMenuManagerLog(void) {
     }
 
     if (!hasSnippet) {
-        NSMenuItem *emptyItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"(Empty)", nil)
+        NSMenuItem *emptyItem = [[NSMenuItem alloc] initWithTitle:RCLocalizedString(@"(Empty)", nil)
                                                            action:nil
                                                     keyEquivalent:@""];
         emptyItem.enabled = NO;
@@ -657,24 +658,24 @@ static os_log_t RCMenuManagerLog(void) {
 }
 
 - (void)appendApplicationSectionToMenu:(NSMenu *)menu {
-    NSMenuItem *preferencesItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Preferences...", nil)
+    NSMenuItem *preferencesItem = [[NSMenuItem alloc] initWithTitle:RCLocalizedString(@"Preferences...", nil)
                                                               action:@selector(openPreferences:)
                                                        keyEquivalent:@","];
     preferencesItem.keyEquivalentModifierMask = NSEventModifierFlagCommand;
     preferencesItem.target = self;
     [self applyNativeAppearanceToMenuItem:preferencesItem
-                            title:NSLocalizedString(@"Preferences...", nil)
+                            title:RCLocalizedString(@"Preferences...", nil)
                            number:nil
                             image:[self templateSymbolNamed:@"gearshape"]
                   submenuChevron:NO];
     [menu addItem:preferencesItem];
 
-    NSMenuItem *editSnippetsItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Edit Templates...", nil)
+    NSMenuItem *editSnippetsItem = [[NSMenuItem alloc] initWithTitle:RCLocalizedString(@"Edit Templates...", nil)
                                                                action:@selector(openSnippetEditor:)
                                                         keyEquivalent:@""];
     editSnippetsItem.target = self;
     [self applyNativeAppearanceToMenuItem:editSnippetsItem
-                            title:NSLocalizedString(@"Edit Templates...", nil)
+                            title:RCLocalizedString(@"Edit Templates...", nil)
                            number:nil
                             image:[self templateSymbolNamed:@"square.and.pencil"]
                   submenuChevron:NO];
@@ -682,13 +683,13 @@ static os_log_t RCMenuManagerLog(void) {
 
     [menu addItem:[NSMenuItem separatorItem]];
 
-    NSMenuItem *quitItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Quit Revclip", nil)
+    NSMenuItem *quitItem = [[NSMenuItem alloc] initWithTitle:RCLocalizedString(@"Quit Revclip", nil)
                                                        action:@selector(terminate:)
                                                 keyEquivalent:@"q"];
     quitItem.keyEquivalentModifierMask = NSEventModifierFlagCommand;
     quitItem.target = NSApp;
     [self applyNativeAppearanceToMenuItem:quitItem
-                            title:NSLocalizedString(@"Quit Revclip", nil)
+                            title:RCLocalizedString(@"Quit Revclip", nil)
                            number:nil
                             image:nil
                   submenuChevron:NO];
@@ -916,27 +917,27 @@ static os_log_t RCMenuManagerLog(void) {
 
 - (NSString *)fallbackTitleForPrimaryType:(NSString *)primaryType {
     if ([primaryType isEqualToString:NSPasteboardTypeTIFF]) {
-        return NSLocalizedString(@"Image", nil);
+        return RCLocalizedString(@"Image", nil);
     }
     if ([primaryType isEqualToString:NSPasteboardTypeURL]) {
-        return NSLocalizedString(@"URL", nil);
+        return RCLocalizedString(@"URL", nil);
     }
     if ([primaryType isEqualToString:NSPasteboardTypePDF]) {
-        return NSLocalizedString(@"PDF", nil);
+        return RCLocalizedString(@"PDF", nil);
     }
     if ([primaryType isEqualToString:NSPasteboardTypeRTF] || [primaryType isEqualToString:NSPasteboardTypeRTFD]) {
-        return NSLocalizedString(@"Rich Text", nil);
+        return RCLocalizedString(@"Rich Text", nil);
     }
     if ([primaryType isEqualToString:NSPasteboardTypeFileURL]) {
-        return NSLocalizedString(@"Files", nil);
+        return RCLocalizedString(@"Files", nil);
     }
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
     if ([primaryType isEqualToString:NSFilenamesPboardType]) {
-        return NSLocalizedString(@"Files", nil);
+        return RCLocalizedString(@"Files", nil);
     }
 #pragma clang diagnostic pop
-    return NSLocalizedString(@"Clip", nil);
+    return RCLocalizedString(@"Clip", nil);
 }
 
 - (NSSize)thumbnailPreviewSize {
@@ -1386,10 +1387,10 @@ static os_log_t RCMenuManagerLog(void) {
     if (shouldShowAlert) {
         NSAlert *alert = [[NSAlert alloc] init];
         alert.alertStyle = NSAlertStyleWarning;
-        alert.messageText = NSLocalizedString(@"Clear clipboard history?", nil);
-        alert.informativeText = NSLocalizedString(@"All saved clips will be removed.", nil);
-        [alert addButtonWithTitle:NSLocalizedString(@"Clear", nil)];
-        [alert addButtonWithTitle:NSLocalizedString(@"Cancel", nil)];
+        alert.messageText = RCLocalizedString(@"Clear clipboard history?", nil);
+        alert.informativeText = RCLocalizedString(@"All saved clips will be removed.", nil);
+        [alert addButtonWithTitle:RCLocalizedString(@"Clear", nil)];
+        [alert addButtonWithTitle:RCLocalizedString(@"Cancel", nil)];
 
         NSModalResponse response = [alert runModal];
         if (response != NSAlertFirstButtonReturn) {

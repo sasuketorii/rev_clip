@@ -1,3 +1,4 @@
+#import "RCLocalization.h"
 //
 //  RCExcludePreferencesViewController.m
 //  Revclip
@@ -72,7 +73,7 @@ static NSString * const kRCExcludeColumnIdentifierName = @"name";
 #pragma mark - Layout
 
 - (void)configureUserInterface {
-    NSTextField *headerLabel = [NSTextField labelWithString:NSLocalizedString(@"Excluded Applications", nil)];
+    NSTextField *headerLabel = [NSTextField labelWithString:RCLocalizedString(@"Excluded Applications", nil)];
     headerLabel.translatesAutoresizingMaskIntoConstraints = NO;
     headerLabel.font = [NSFont boldSystemFontOfSize:13.0];
 
@@ -107,7 +108,7 @@ static NSString * const kRCExcludeColumnIdentifierName = @"name";
     [iconColumn setDataCell:iconCell];
 
     NSTableColumn *nameColumn = [[NSTableColumn alloc] initWithIdentifier:kRCExcludeColumnIdentifierName];
-    nameColumn.title = NSLocalizedString(@"Application", nil);
+    nameColumn.title = RCLocalizedString(@"Application", nil);
     nameColumn.minWidth = 120.0;
     nameColumn.editable = NO;
 
@@ -133,7 +134,7 @@ static NSString * const kRCExcludeColumnIdentifierName = @"name";
     self.removeButton.bezelStyle = NSBezelStyleRounded;
     self.removeButton.enabled = NO;
 
-    NSButton *addCurrentButton = [NSButton buttonWithTitle:NSLocalizedString(@"Add Current App", nil) target:self action:@selector(addCurrentApplication:)];
+    NSButton *addCurrentButton = [NSButton buttonWithTitle:RCLocalizedString(@"Add Current App", nil) target:self action:@selector(addCurrentApplication:)];
     addCurrentButton.translatesAutoresizingMaskIntoConstraints = NO;
     addCurrentButton.bezelStyle = NSBezelStyleRounded;
 
@@ -174,7 +175,7 @@ static NSString * const kRCExcludeColumnIdentifierName = @"name";
     (void)sender;
 
     NSOpenPanel *openPanel = [NSOpenPanel openPanel];
-    openPanel.prompt = NSLocalizedString(@"Add", nil);
+    openPanel.prompt = RCLocalizedString(@"Add", nil);
     openPanel.canChooseFiles = YES;
     openPanel.canChooseDirectories = NO;
     openPanel.canCreateDirectories = NO;
@@ -237,9 +238,9 @@ static NSString * const kRCExcludeColumnIdentifierName = @"name";
     if (bundleIdentifier.length == 0 || [bundleIdentifier isEqualToString:ownBundleIdentifier]) {
         NSAlert *alert = [[NSAlert alloc] init];
         alert.alertStyle = NSAlertStyleInformational;
-        alert.messageText = NSLocalizedString(@"Cannot add current application", nil);
-        alert.informativeText = NSLocalizedString(@"No other application was detected. Please switch to the application you want to exclude, then click this button.", nil);
-        [alert addButtonWithTitle:NSLocalizedString(@"OK", nil)];
+        alert.messageText = RCLocalizedString(@"Cannot add current application", nil);
+        alert.informativeText = RCLocalizedString(@"No other application was detected. Please switch to the application you want to exclude, then click this button.", nil);
+        [alert addButtonWithTitle:RCLocalizedString(@"OK", nil)];
 
         NSWindow *window = self.view.window;
         if (window != nil) {

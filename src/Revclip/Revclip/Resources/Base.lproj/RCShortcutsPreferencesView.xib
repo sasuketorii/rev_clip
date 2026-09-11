@@ -20,7 +20,7 @@
             <rect key="frame" x="0.0" y="0.0" width="700" height="246"/>
             <autoresizingMask key="autoresizingMask"/>
             <subviews>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="BAS-Mf-7kE" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="BAS-Mf-7kE" identifier="ZgK-s1-dYB" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
                     <rect key="frame" x="24" y="224" width="150" height="22"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" truncatesLastVisibleLine="YES" alignment="right" title="メインメニュー:" id="ZgK-s1-dYB">
                         <font key="font" metaFont="message"/>
@@ -31,7 +31,7 @@
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="yDi-xT-X7H" customClass="RCHotKeyRecorderView">
                     <rect key="frame" x="186" y="220" width="200" height="30"/>
                 </customView>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Ppk-Kj-rnh" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Ppk-Kj-rnh" identifier="xhM-yq-5Ef" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
                     <rect key="frame" x="24" y="190" width="150" height="22"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" truncatesLastVisibleLine="YES" alignment="right" title="履歴メニュー:" id="xhM-yq-5Ef">
                         <font key="font" metaFont="message"/>
@@ -42,7 +42,7 @@
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="2bI-q8-0Qn" customClass="RCHotKeyRecorderView">
                     <rect key="frame" x="186" y="186" width="200" height="30"/>
                 </customView>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gEt-kQ-fUS" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gEt-kQ-fUS" identifier="MV8-qY-5rU" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
                     <rect key="frame" x="24" y="156" width="150" height="22"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" truncatesLastVisibleLine="YES" alignment="right" title="テンプレートメニュー:" id="MV8-qY-5rU">
                         <font key="font" metaFont="message"/>
@@ -53,7 +53,7 @@
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="1fm-Ye-jNe" customClass="RCHotKeyRecorderView">
                     <rect key="frame" x="186" y="152" width="200" height="30"/>
                 </customView>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="pb0-ZG-cPu" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="pb0-ZG-cPu" identifier="W4b-7h-QK2" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
                     <rect key="frame" x="24" y="122" width="150" height="22"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" truncatesLastVisibleLine="YES" alignment="right" title="履歴消去:" id="W4b-7h-QK2">
                         <font key="font" metaFont="message"/>
@@ -64,7 +64,7 @@
                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="zL7-zl-6zP" customClass="RCHotKeyRecorderView">
                     <rect key="frame" x="186" y="118" width="200" height="30"/>
                 </customView>
-                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="6xU-vh-rJm">
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="6xU-vh-rJm" identifier="D9f-HL-0Nb">
                     <rect key="frame" x="24" y="20" width="135" height="32"/>
                     <buttonCell key="cell" type="push" title="デフォルトにリセット" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="D9f-HL-0Nb"/>
                     <connections>

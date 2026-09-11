@@ -1,3 +1,4 @@
+#import "RCLocalization.h"
 //
 //  RCPrivacyService.m
 //  Revclip
@@ -183,10 +184,10 @@ typedef NS_ENUM(NSInteger, RCPrivacyServiceErrorCode) {
     dispatch_block_t showAlert = ^{
         NSAlert *alert = [[NSAlert alloc] init];
         alert.alertStyle = NSAlertStyleWarning;
-        alert.messageText = NSLocalizedString(@"Revclip needs clipboard access", nil);
-        alert.informativeText = NSLocalizedString(@"macOS requires explicit permission for clipboard access. Please allow Revclip to access the clipboard in System Settings.", nil);
-        [alert addButtonWithTitle:NSLocalizedString(@"Open System Settings", nil)];
-        [alert addButtonWithTitle:NSLocalizedString(@"Later", nil)];
+        alert.messageText = RCLocalizedString(@"Revclip needs clipboard access", nil);
+        alert.informativeText = RCLocalizedString(@"macOS requires explicit permission for clipboard access. Please allow Revclip to access the clipboard in System Settings.", nil);
+        [alert addButtonWithTitle:RCLocalizedString(@"Open System Settings", nil)];
+        [alert addButtonWithTitle:RCLocalizedString(@"Later", nil)];
 
         NSModalResponse response = [alert runModal];
         if (response != NSAlertFirstButtonReturn) {

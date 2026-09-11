@@ -9,3 +9,5 @@
 #import "RCDatabaseManager.h"
 #import "RCHotKeyService.h"
 #import "RCSnippetImportExportService.h"
+
+#import "RCLocalization.h"

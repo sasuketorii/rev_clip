@@ -253,3 +253,8 @@
 "ログインアイテムの設定に失敗しました" = "ログイン項目の設定に失敗しました";
 "システム環境設定の「ログイン項目」で手動で設定してください。" = "システム設定の「一般」>「ログイン項目」で手動で設定してください。";
 "今後表示しない" = "今後表示しない";
+
+/* Application language preference */
+"App Language" = "アプリの言語";
+"Follow System" = "システムに従う";
+"Language changes apply immediately to Revclip." = "選んだ言語がすぐにRevclipに反映されます。";

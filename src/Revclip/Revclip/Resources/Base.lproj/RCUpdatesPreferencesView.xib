@@ -21,7 +21,7 @@
             <rect key="frame" x="0.0" y="0.0" width="700" height="200"/>
             <autoresizingMask key="autoresizingMask"/>
             <subviews>
-                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="h2L-C6-CtQ">
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="h2L-C6-CtQ" identifier="eTQ-ae-LlQ">
                     <rect key="frame" x="20" y="162" width="217" height="18"/>
                     <buttonCell key="cell" type="check" title="自動的にアップデートを確認" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="eTQ-ae-LlQ">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -31,7 +31,7 @@
                         <action selector="automaticCheckToggled:" target="-2" id="Qjb-RB-Owq"/>
                     </connections>
                 </button>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="H8Y-WN-YRt" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="H8Y-WN-YRt" identifier="n0h-kP-D2h" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
                     <rect key="frame" x="20" y="130" width="82" height="17"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="確認間隔:" id="n0h-kP-D2h">
                         <font key="font" metaFont="system"/>
@@ -39,16 +39,16 @@
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="4Nx-9w-HRR">
+                <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="4Nx-9w-HRR" identifier="Qbq-9x-u7d">
                     <rect key="frame" x="114" y="124" width="120" height="26"/>
                     <popUpButtonCell key="cell" type="push" title="毎日" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="F0z-FY-hWw" id="Qbq-9x-u7d">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" id="CUJ-Zn-eJ8">
                             <items>
-                                <menuItem title="毎日" state="on" tag="86400" id="F0z-FY-hWw"/>
-                                <menuItem title="毎週" tag="604800" id="dV1-6K-i2N"/>
-                                <menuItem title="毎月" tag="2592000" id="yyd-84-J9K"/>
+                                <menuItem title="毎日" state="on" tag="86400" id="F0z-FY-hWw" identifier="F0z-FY-hWw"/>
+                                <menuItem title="毎週" tag="604800" id="dV1-6K-i2N" identifier="dV1-6K-i2N"/>
+                                <menuItem title="毎月" tag="2592000" id="yyd-84-J9K" identifier="yyd-84-J9K"/>
                             </items>
                         </menu>
                     </popUpButtonCell>
@@ -56,7 +56,7 @@
                         <action selector="checkIntervalChanged:" target="-2" id="4ZX-Df-aEA"/>
                     </connections>
                 </popUpButton>
-                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Qgg-fD-IJT">
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Qgg-fD-IJT" identifier="4h6-KP-YBH">
                     <rect key="frame" x="20" y="20" width="97" height="32"/>
                     <buttonCell key="cell" type="push" title="今すぐ確認" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="4h6-KP-YBH">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -70,7 +70,7 @@
                     <rect key="frame" x="125" y="28" width="16" height="16"/>
                     <progressIndicatorCell key="cell" controlSize="small" indeterminate="YES" style="spinning"/>
                 </progressIndicator>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="4qK-4z-vwY" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="4qK-4z-vwY" identifier="Z8L-zv-szg" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
                     <rect key="frame" x="358" y="27" width="102" height="17"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="バージョン -" id="Z8L-zv-szg">
                         <font key="font" metaFont="smallSystem"/>

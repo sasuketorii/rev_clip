@@ -34,6 +34,43 @@ final class SnippetEditorModelTests: XCTestCase {
     }
 
     @MainActor
+    func testLanguageChangeKeepsUnsavedTemplateDraft() {
+        let original = RCLocalization.selectedLanguage()
+        defer { RCLocalization.setLanguage(original) }
+        let model = SnippetEditorModel()
+        model.folders = [SnippetFolderDraft(id: "folder", title: "Examples", enabled: true,
+            snippets: [SnippetDraft(id: "template", folderID: "folder", title: "Greeting", content: "Saved content", enabled: true)])]
+        model.selection = .snippet("template")
+        model.titleDraft = "Unsaved title"
+        model.contentDraft = "Unsaved content"
+        model.query = "Greeting"
+        let view = NSHostingView(rootView: SnippetEditorView(model: model))
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 600), styleMask: [.titled], backing: .buffered, defer: false)
+        window.contentView = view
+        view.layoutSubtreeIfNeeded()
+        for language in ["en", "ja"] {
+            RCLocalization.setLanguage(language)
+            RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.15))
+            view.layoutSubtreeIfNeeded()
+            XCTAssertEqual(model.titleDraft, "Unsaved title")
+            XCTAssertEqual(model.contentDraft, "Unsaved content")
+            XCTAssertEqual(model.query, "Greeting")
+            XCTAssertEqual(model.selection, .snippet("template"))
+            guard let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds) else {
+                XCTFail("Could not render language switch"); return
+            }
+            view.cacheDisplay(in: view.bounds, to: bitmap)
+            let image = NSImage(size: view.bounds.size)
+            image.addRepresentation(bitmap)
+            let attachment = XCTAttachment(image: image)
+            attachment.name = "Live language switch — \(language)"
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
+        window.contentView = nil
+    }
+
+    @MainActor
     func testMenuVisibilityTracksSelectedItemAndParentFolder() {
         let model = SnippetEditorModel()
         model.folders = [SnippetFolderDraft(id: "folder", title: "Folder", enabled: false,

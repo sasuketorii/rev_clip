@@ -1,3 +1,4 @@
+#import "RCLocalization.h"
 //
 //  RCClipData.m
 //  Revclip
@@ -194,7 +195,7 @@ static os_log_t RCClipDataLog(void) {
         || self.fileURLs.count > 0
         || self.URLString.length > 0;
     if (self.TIFFData.length > 0 && !hasNonImageData) {
-        return NSLocalizedString(@"(Image)", @"Title for image-only clipboard data");
+        return RCLocalizedString(@"(Image)", @"Title for image-only clipboard data");
     }
 
     return @"";

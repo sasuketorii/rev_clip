@@ -253,3 +253,8 @@
 "ログインアイテムの設定に失敗しました" = "Das Anmeldeobjekt konnte nicht eingerichtet werden";
 "システム環境設定の「ログイン項目」で手動で設定してください。" = "Richten Sie es manuell unter Systemeinstellungen > Allgemein > Anmeldeobjekte ein.";
 "今後表示しない" = "Nicht erneut anzeigen";
+
+/* Application language preference */
+"App Language" = "App-Sprache";
+"Follow System" = "Systemeinstellung verwenden";
+"Language changes apply immediately to Revclip." = "Die ausgewählte Sprache wird sofort in Revclip angewendet.";

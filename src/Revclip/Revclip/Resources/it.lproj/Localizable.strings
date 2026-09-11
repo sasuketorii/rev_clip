@@ -253,3 +253,8 @@
 "ログインアイテムの設定に失敗しました" = "Impossibile configurare l'elemento di accesso";
 "システム環境設定の「ログイン項目」で手動で設定してください。" = "Configuralo manualmente in Impostazioni di Sistema > Generali > Elementi login.";
 "今後表示しない" = "Non mostrare più";
+
+/* Application language preference */
+"App Language" = "Lingua dell’app";
+"Follow System" = "Segui il sistema";
+"Language changes apply immediately to Revclip." = "La lingua selezionata viene applicata subito a Revclip.";

@@ -253,3 +253,8 @@
 "ログインアイテムの設定に失敗しました" = "Impossible de configurer l’élément d’ouverture";
 "システム環境設定の「ログイン項目」で手動で設定してください。" = "Configurez-le manuellement dans Réglages Système > Général > Ouverture.";
 "今後表示しない" = "Ne plus afficher";
+
+/* Application language preference */
+"App Language" = "Langue de l’application";
+"Follow System" = "Suivre le système";
+"Language changes apply immediately to Revclip." = "La langue choisie est immédiatement appliquée à Revclip.";

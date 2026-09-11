@@ -8,7 +8,7 @@
 - **プレビュー**: `UI/RCFastPreviewController.m` に遅延と配置処理があります。画面端では上側に回り込むため、下端や複数画面でも確認してください。
 - **エディタ**: `UI/SnippetEditor/SnippetEditorView.swift` がSwiftUIの表示、`SnippetEditorModel.swift` が保存などの操作を担当します。
 - **テーマ**: `UI/Appearance/RCAppearanceController.swift` がアプリの外観を適用します。固定の白・黒より、外観に追従する色を使うと両モードに対応しやすくなります。
-- **翻訳**: `Resources/*.lproj/Localizable.strings` を編集します。新しい表示文字列には各言語のキーを揃えてください。
+- **翻訳**: `Resources/*.lproj/Localizable.strings` を編集します。新しい表示文字列には各言語のキーを揃え、`RCLocalizedString` で取得してください。`UI/Localization/RCLocalization` が選択言語を管理し、`RCLanguageDidChangeNotification` で表示を更新します。XIBの固定ラベルには対応するセルのObject IDをidentifierとして設定し、同名の`.strings`テーブルで翻訳します。入力値やユーザーが作成した本文は翻訳しません。
 
 変更後はリポジトリのルートから `make -C src/Revclip test` を実行し、実際の貼り付け先アプリでも確認してください。
 

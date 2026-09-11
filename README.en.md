@@ -43,7 +43,7 @@ Native UI and few dependencies are the foundation of the design. We have not pub
 
 ## How to use it
 
-Available in Japanese, English, Korean, Simplified Chinese, French, German, Brazilian Portuguese, and Italian. Revclip follows your preferred macOS language. To choose a language for Revclip only, use System Settings → General → Language & Region → Applications, then restart Revclip.
+Available in Japanese, English, Korean, Simplified Chinese, French, German, Brazilian Portuguese, and Italian. Choose a language in Settings → General → App Language, and the change applies immediately. Choose Follow System to use your preferred macOS language.
 
 1. Launch Revclip and copy text or other content as usual.
 2. Press **⌘⇧V** and choose a history item or template.

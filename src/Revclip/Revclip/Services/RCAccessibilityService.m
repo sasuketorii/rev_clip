@@ -1,3 +1,4 @@
+#import "RCLocalization.h"
 //
 //  RCAccessibilityService.m
 //  Revclip
@@ -56,10 +57,10 @@
 
     NSAlert *alert = [[NSAlert alloc] init];
     alert.alertStyle = NSAlertStyleWarning;
-    alert.messageText = NSLocalizedString(@"Revclip requires Accessibility permission", nil);
-    alert.informativeText = NSLocalizedString(@"Revclip needs Accessibility permission to paste clipboard items. Please enable it in System Settings > Privacy & Security > Accessibility.", nil);
-    [alert addButtonWithTitle:NSLocalizedString(@"Open System Settings", nil)];
-    [alert addButtonWithTitle:NSLocalizedString(@"Later", nil)];
+    alert.messageText = RCLocalizedString(@"Revclip requires Accessibility permission", nil);
+    alert.informativeText = RCLocalizedString(@"Revclip needs Accessibility permission to paste clipboard items. Please enable it in System Settings > Privacy & Security > Accessibility.", nil);
+    [alert addButtonWithTitle:RCLocalizedString(@"Open System Settings", nil)];
+    [alert addButtonWithTitle:RCLocalizedString(@"Later", nil)];
 
     NSModalResponse response = [alert runModal];
     if (response != NSAlertFirstButtonReturn) {

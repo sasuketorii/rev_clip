@@ -1,3 +1,4 @@
+#import "RCLocalization.h"
 //
 //  RCAppDelegate.m
 //  Revclip
@@ -47,6 +48,9 @@ static UTType *RCSnippetImportExportContentType(void) {
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
     // 0. Move to Applications check (before any setup)
     [[RCMoveToApplicationsService shared] checkAndMoveIfNeeded];
+
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(languageDidChange:) name:RCLanguageDidChangeNotification object:nil];
+    [RCLocalization localizeMenu:NSApp.mainMenu table:@"MainMenu"];
 
     // 1. Register defaults
     [RCUtilities registerDefaultSettings];
@@ -109,6 +113,11 @@ static UTType *RCSnippetImportExportContentType(void) {
     }
 
     NSLog(@"[Revclip] Application did finish launching.");
+}
+
+- (void)languageDidChange:(NSNotification *)notification {
+    [RCLocalization localizeMenu:NSApp.mainMenu table:@"MainMenu"];
+    [[RCMenuManager shared] rebuildMenu];
 }
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
@@ -184,7 +193,7 @@ static UTType *RCSnippetImportExportContentType(void) {
                                                                             merge:merge
                                                                             error:&importError];
     if (!imported) {
-        [self presentSnippetImportExportError:importError title:NSLocalizedString(@"Failed to Import Snippets", nil)];
+        [self presentSnippetImportExportError:importError title:RCLocalizedString(@"Failed to Import Snippets", nil)];
         return;
     }
 
@@ -209,7 +218,7 @@ static UTType *RCSnippetImportExportContentType(void) {
     NSError *exportError = nil;
     BOOL exported = [[RCSnippetImportExportService shared] exportSnippetsToURL:panel.URL error:&exportError];
     if (!exported) {
-        [self presentSnippetImportExportError:exportError title:NSLocalizedString(@"Failed to Export Snippets", nil)];
+        [self presentSnippetImportExportError:exportError title:RCLocalizedString(@"Failed to Export Snippets", nil)];
     }
 }
 
@@ -219,19 +228,19 @@ static UTType *RCSnippetImportExportContentType(void) {
     NSAlert *alert = [[NSAlert alloc] init];
     alert.alertStyle = NSAlertStyleCritical;
     alert.messageText = title;
-    alert.informativeText = error.localizedDescription ?: NSLocalizedString(@"An unknown error occurred.", nil);
-    [alert addButtonWithTitle:NSLocalizedString(@"OK", nil)];
+    alert.informativeText = error.localizedDescription ?: RCLocalizedString(@"An unknown error occurred.", nil);
+    [alert addButtonWithTitle:RCLocalizedString(@"OK", nil)];
     [alert runModal];
 }
 
 - (BOOL)promptMergeOptionReturningMerge:(BOOL *)merge {
     NSAlert *alert = [[NSAlert alloc] init];
     alert.alertStyle = NSAlertStyleInformational;
-    alert.messageText = NSLocalizedString(@"How do you want to import snippets?", nil);
-    alert.informativeText = NSLocalizedString(@"Choose whether to merge with existing snippets or replace them all.", nil);
-    [alert addButtonWithTitle:NSLocalizedString(@"Merge with existing snippets", nil)];
-    [alert addButtonWithTitle:NSLocalizedString(@"Replace all snippets", nil)];
-    [alert addButtonWithTitle:NSLocalizedString(@"Cancel", nil)];
+    alert.messageText = RCLocalizedString(@"How do you want to import snippets?", nil);
+    alert.informativeText = RCLocalizedString(@"Choose whether to merge with existing snippets or replace them all.", nil);
+    [alert addButtonWithTitle:RCLocalizedString(@"Merge with existing snippets", nil)];
+    [alert addButtonWithTitle:RCLocalizedString(@"Replace all snippets", nil)];
+    [alert addButtonWithTitle:RCLocalizedString(@"Cancel", nil)];
 
     NSModalResponse response = [alert runModal];
     if (response == NSAlertFirstButtonReturn) {

@@ -1,3 +1,4 @@
+#import "RCLocalization.h"
 //
 //  RCSnippetEditorWindowController.m
 //  Revclip
@@ -32,8 +33,9 @@
 - (void)windowDidLoad {
     [super windowDidLoad];
 
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(languageDidChange:) name:RCLanguageDidChangeNotification object:nil];
     NSWindow *window = self.window;
-    window.title = NSLocalizedString(@"Template Editor", nil);
+    window.title = RCLocalizedString(@"Template Editor", nil);
     window.styleMask = NSWindowStyleMaskTitled
                      | NSWindowStyleMaskClosable
                      | NSWindowStyleMaskMiniaturizable
@@ -45,6 +47,10 @@
     window.minSize = NSMakeSize(760.0, 520.0);
     [window setContentSize:NSMakeSize(960.0, 640.0)];
     self.editorHost = [RCSnippetEditorHost installInWindow:window];
+}
+
+- (void)languageDidChange:(NSNotification *)notification {
+    self.window.title = RCLocalizedString(@"Template Editor", nil);
 }
 
 - (BOOL)saveChangesIfLoaded {

@@ -1,3 +1,4 @@
+#import "RCLocalization.h"
 //
 //  RCGeneralPreferencesViewController.m
 //  Revclip
@@ -23,6 +24,7 @@ static const NSInteger RCShowStatusItemDefault = 1;
 
 @interface RCGeneralPreferencesViewController ()
 
+@property (nonatomic, strong) NSPopUpButton *languagePopUpButton;
 @property (nonatomic, weak) IBOutlet NSTextField *maxHistorySizeTextField;
 @property (nonatomic, weak) IBOutlet NSStepper *maxHistorySizeStepper;
 @property (nonatomic, weak) IBOutlet NSButton *loginAtStartupButton;
@@ -44,9 +46,11 @@ static const NSInteger RCShowStatusItemDefault = 1;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    [RCLocalization localizeView:self.view table:@"RCGeneralPreferencesView"];
 
     [self configureControls];
     [self applyPreferenceValues];
+    [self configureLanguageControls];
 }
 
 - (void)viewWillAppear {
@@ -107,11 +111,11 @@ static const NSInteger RCShowStatusItemDefault = 1;
         if (!suppressAlert) {
             NSAlert *alert = [[NSAlert alloc] init];
             alert.alertStyle = NSAlertStyleWarning;
-            alert.messageText = NSLocalizedString(@"ログインアイテムの設定に失敗しました", nil);
-            alert.informativeText = NSLocalizedString(@"システム環境設定の「ログイン項目」で手動で設定してください。", nil);
-            [alert addButtonWithTitle:NSLocalizedString(@"OK", nil)];
+            alert.messageText = RCLocalizedString(@"ログインアイテムの設定に失敗しました", nil);
+            alert.informativeText = RCLocalizedString(@"システム環境設定の「ログイン項目」で手動で設定してください。", nil);
+            [alert addButtonWithTitle:RCLocalizedString(@"OK", nil)];
             alert.showsSuppressionButton = YES;
-            alert.suppressionButton.title = NSLocalizedString(@"今後表示しない", nil);
+            alert.suppressionButton.title = RCLocalizedString(@"今後表示しない", nil);
 
             NSWindow *window = self.view.window;
             if (window != nil) {
@@ -169,6 +173,46 @@ static const NSInteger RCShowStatusItemDefault = 1;
 
 #pragma mark - Private
 
+- (void)languageChanged:(NSPopUpButton *)sender {
+    NSString *code = sender.selectedItem.representedObject;
+    if (code == nil || ![self.view.window makeFirstResponder:nil] && self.view.window != nil) { return; }
+    [RCLocalization setLanguage:code];
+}
+
+- (void)configureLanguageControls {
+    NSTextField *label = [NSTextField labelWithString:RCLocalizedString(@"App Language", nil)];
+    self.languagePopUpButton = [[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
+    NSArray *codes = @[@"", @"ja", @"en", @"ko", @"zh-Hans", @"fr", @"de", @"pt-BR", @"it"];
+    NSArray *titles = @[RCLocalizedString(@"Follow System", nil), @"日本語", @"English", @"한국어", @"简体中文", @"Français", @"Deutsch", @"Português (Brasil)", @"Italiano"];
+    NSString *selected = RCLocalization.selectedLanguage;
+    for (NSUInteger index = 0; index < codes.count; index++) {
+        [self.languagePopUpButton addItemWithTitle:titles[index]];
+        self.languagePopUpButton.lastItem.representedObject = codes[index];
+    }
+    [self.languagePopUpButton selectItemAtIndex:[codes indexOfObject:selected]];
+    self.languagePopUpButton.target = self;
+    self.languagePopUpButton.action = @selector(languageChanged:);
+    [self.languagePopUpButton setAccessibilityLabel:RCLocalizedString(@"App Language", nil)];
+    NSTextField *hint = [NSTextField wrappingLabelWithString:RCLocalizedString(@"Language changes apply immediately to Revclip.", nil)];
+    hint.textColor = NSColor.secondaryLabelColor;
+    for (NSView *control in @[label, self.languagePopUpButton, hint]) {
+        control.translatesAutoresizingMaskIntoConstraints = NO;
+        [self.view addSubview:control];
+    }
+    [NSLayoutConstraint activateConstraints:@[
+        [label.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
+        [label.topAnchor constraintEqualToAnchor:self.sameHistoryCopyButton.bottomAnchor constant:20],
+        [self.languagePopUpButton.centerYAnchor constraintEqualToAnchor:label.centerYAnchor],
+        [self.languagePopUpButton.leadingAnchor constraintGreaterThanOrEqualToAnchor:label.trailingAnchor constant:16],
+        [self.languagePopUpButton.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
+        [self.languagePopUpButton.widthAnchor constraintGreaterThanOrEqualToConstant:200],
+        [hint.topAnchor constraintEqualToAnchor:self.languagePopUpButton.bottomAnchor constant:8],
+        [hint.leadingAnchor constraintEqualToAnchor:label.leadingAnchor],
+        [hint.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
+        [self.view.bottomAnchor constraintGreaterThanOrEqualToAnchor:hint.bottomAnchor constant:20],
+    ]];
+}
+
 - (void)configureControls {
     self.maxHistorySizeStepper.minValue = RCMaxHistorySizeMinimum;
     self.maxHistorySizeStepper.maxValue = RCMaxHistorySizeMaximum;
@@ -183,10 +227,10 @@ static const NSInteger RCShowStatusItemDefault = 1;
     self.autoExpiryValueStepper.valueWraps = NO;
 
     [self.autoExpiryUnitPopUpButton removeAllItems];
-    [self.autoExpiryUnitPopUpButton addItemsWithTitles:@[NSLocalizedString(@"Days", nil), NSLocalizedString(@"Hours", nil), NSLocalizedString(@"Minutes", nil)]];
+    [self.autoExpiryUnitPopUpButton addItemsWithTitles:@[RCLocalizedString(@"Days", nil), RCLocalizedString(@"Hours", nil), RCLocalizedString(@"Minutes", nil)]];
 
     [self.showStatusItemPopUpButton removeAllItems];
-    [self.showStatusItemPopUpButton addItemsWithTitles:@[NSLocalizedString(@"Hide", nil), NSLocalizedString(@"Show", nil)]];
+    [self.showStatusItemPopUpButton addItemsWithTitles:@[RCLocalizedString(@"Hide", nil), RCLocalizedString(@"Show", nil)]];
 }
 
 - (void)applyPreferenceValues {

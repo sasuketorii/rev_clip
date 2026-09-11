@@ -1,3 +1,4 @@
+#import "RCLocalization.h"
 //
 //  RCUpdatesPreferencesViewController.m
 //  Revclip
@@ -33,6 +34,7 @@ static const NSInteger kRCDefaultUpdateCheckInterval = 86400;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    [RCLocalization localizeView:self.view table:@"RCUpdatesPreferencesView"];
 
     NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
     [notificationCenter addObserver:self
@@ -66,19 +68,19 @@ static const NSInteger kRCDefaultUpdateCheckInterval = 86400;
     NSString *buildVersion = [infoDictionary[@"CFBundleVersion"] isKindOfClass:NSString.class] ? infoDictionary[@"CFBundleVersion"] : @"";
 
     if (shortVersion.length > 0 && buildVersion.length > 0) {
-        self.versionInfoLabel.stringValue = [NSString stringWithFormat:NSLocalizedString(@"Version %@ (%@)", nil), shortVersion, buildVersion];
+        self.versionInfoLabel.stringValue = [NSString stringWithFormat:RCLocalizedString(@"Version %@ (%@)", nil), shortVersion, buildVersion];
         return;
     }
     if (shortVersion.length > 0) {
-        self.versionInfoLabel.stringValue = [NSString stringWithFormat:NSLocalizedString(@"Version %@", nil), shortVersion];
+        self.versionInfoLabel.stringValue = [NSString stringWithFormat:RCLocalizedString(@"Version %@", nil), shortVersion];
         return;
     }
     if (buildVersion.length > 0) {
-        self.versionInfoLabel.stringValue = [NSString stringWithFormat:NSLocalizedString(@"Build %@", nil), buildVersion];
+        self.versionInfoLabel.stringValue = [NSString stringWithFormat:RCLocalizedString(@"Build %@", nil), buildVersion];
         return;
     }
 
-    self.versionInfoLabel.stringValue = NSLocalizedString(@"Version -", nil);
+    self.versionInfoLabel.stringValue = RCLocalizedString(@"Version -", nil);
 }
 
 - (void)updateIntervalControlState {
@@ -191,9 +193,9 @@ static const NSInteger kRCDefaultUpdateCheckInterval = 86400;
 
     NSAlert *alert = [[NSAlert alloc] init];
     alert.alertStyle = NSAlertStyleWarning;
-    alert.messageText = NSLocalizedString(@"アップデートの確認に失敗しました", nil);
-    alert.informativeText = NSLocalizedString(@"アップデートの確認中に問題が発生しました。しばらくしてからもう一度お試しください。", nil);
-    [alert addButtonWithTitle:NSLocalizedString(@"OK", nil)];
+    alert.messageText = RCLocalizedString(@"アップデートの確認に失敗しました", nil);
+    alert.informativeText = RCLocalizedString(@"アップデートの確認中に問題が発生しました。しばらくしてからもう一度お試しください。", nil);
+    [alert addButtonWithTitle:RCLocalizedString(@"OK", nil)];
 
     NSWindow *window = self.view.window;
     if (window != nil) {

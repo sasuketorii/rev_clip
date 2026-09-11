@@ -1,3 +1,4 @@
+#import "RCLocalization.h"
 //
 //  RCShortcutsPreferencesViewController.m
 //  Revclip
@@ -37,6 +38,7 @@ static UInt32 const kRCDefaultKeyCodeB = 11;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    [RCLocalization localizeView:self.view table:@"RCShortcutsPreferencesView"];
 
     self.mainMenuRecorderView.delegate = self;
     self.historyMenuRecorderView.delegate = self;
@@ -53,10 +55,10 @@ static UInt32 const kRCDefaultKeyCodeB = 11;
 
     NSAlert *alert = [[NSAlert alloc] init];
     alert.alertStyle = NSAlertStyleWarning;
-    alert.messageText = NSLocalizedString(@"Reset all shortcuts to defaults?", nil);
-    alert.informativeText = NSLocalizedString(@"Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed.", nil);
-    [alert addButtonWithTitle:NSLocalizedString(@"Reset", nil)];
-    [alert addButtonWithTitle:NSLocalizedString(@"Cancel", nil)];
+    alert.messageText = RCLocalizedString(@"Reset all shortcuts to defaults?", nil);
+    alert.informativeText = RCLocalizedString(@"Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed.", nil);
+    [alert addButtonWithTitle:RCLocalizedString(@"Reset", nil)];
+    [alert addButtonWithTitle:RCLocalizedString(@"Cancel", nil)];
 
     NSWindow *window = self.view.window;
     if (window != nil) {

@@ -28,7 +28,7 @@
             <rect key="frame" x="0.0" y="0.0" width="700" height="360"/>
             <autoresizingMask key="autoresizingMask"/>
             <subviews>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Yf1-hq-3UA">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Yf1-hq-3UA" identifier="Q2q-8V-jS4">
                     <rect key="frame" x="20" y="262" width="145" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="履歴の最大保存数" id="Q2q-8V-jS4">
                         <font key="font" metaFont="message"/>
@@ -36,7 +36,7 @@
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="s8n-LC-H7r">
+                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="s8n-LC-H7r" identifier="f2P-M8-F1K">
                     <rect key="frame" x="357" y="259" width="80" height="19"/>
                     <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="30" drawsBackground="YES" id="f2P-M8-F1K">
                         <font key="font" metaFont="smallSystem"/>
@@ -57,7 +57,7 @@
                 <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="kF7-rd-Mx2">
                     <rect key="frame" x="20" y="249" width="440" height="1"/>
                 </box>
-                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="uD1-sQ-9nT">
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="uD1-sQ-9nT" identifier="nK7-cV-2pR">
                     <rect key="frame" x="20" y="225" width="131" height="18"/>
                     <buttonCell key="cell" controlSize="small" type="check" title="古い履歴を自動削除" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="nK7-cV-2pR">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -67,7 +67,7 @@
                         <action selector="autoExpiryEnabledChanged:" target="-2" id="D6s-Jn-5qR"/>
                     </connections>
                 </button>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="vP4-aH-8mL">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="vP4-aH-8mL" identifier="xT6-fB-3qW">
                     <rect key="frame" x="20" y="194" width="30" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="期限" id="xT6-fB-3qW">
                         <font key="font" metaFont="message"/>
@@ -75,7 +75,7 @@
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="mC2-eR-7kJ">
+                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="mC2-eR-7kJ" identifier="pL5-zN-4dS">
                     <rect key="frame" x="272" y="191" width="80" height="19"/>
                     <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="30" drawsBackground="YES" id="pL5-zN-4dS">
                         <font key="font" metaFont="smallSystem"/>
@@ -93,16 +93,16 @@
                         <action selector="autoExpiryValueStepperChanged:" target="-2" id="G9p-Lk-4bN"/>
                     </connections>
                 </stepper>
-                <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="sF9-bT-5yU">
+                <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="sF9-bT-5yU" identifier="tV4-dX-8oI">
                     <rect key="frame" x="383" y="189" width="77" height="26"/>
                     <popUpButtonCell key="cell" controlSize="small" type="push" title="日" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" inset="2" selectedItem="aE7-rL-2mQ" id="tV4-dX-8oI">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="smallSystem"/>
                         <menu key="menu" title="期限" id="uK2-jP-3fN">
                             <items>
-                                <menuItem title="日" state="on" id="aE7-rL-2mQ"/>
-                                <menuItem title="時間" id="bN6-hS-4pD"/>
-                                <menuItem title="分" id="cW1-zG-9xV"/>
+                                <menuItem title="日" state="on" id="aE7-rL-2mQ" identifier="aE7-rL-2mQ"/>
+                                <menuItem title="時間" id="bN6-hS-4pD" identifier="bN6-hS-4pD"/>
+                                <menuItem title="分" id="cW1-zG-9xV" identifier="cW1-zG-9xV"/>
                             </items>
                         </menu>
                     </popUpButtonCell>
@@ -110,7 +110,7 @@
                         <action selector="autoExpiryUnitChanged:" target="-2" id="H3w-Td-7fJ"/>
                     </connections>
                 </popUpButton>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="hQ3-rp-SiL">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="hQ3-rp-SiL" identifier="bW2-vC-N0z">
                     <rect key="frame" x="20" y="226" width="104" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="ログイン時に起動" id="bW2-vC-N0z">
                         <font key="font" metaFont="message"/>
@@ -118,7 +118,7 @@
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gA8-Bm-9Qd">
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gA8-Bm-9Qd" identifier="vX1-RY-rM9">
                     <rect key="frame" x="442" y="225" width="18" height="18"/>
                     <buttonCell key="cell" type="check" title="" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="vX1-RY-rM9">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -128,7 +128,7 @@
                         <action selector="loginAtStartupChanged:" target="-2" id="eR5-fP-wm2"/>
                     </connections>
                 </button>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="pV6-kg-MoF">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="pV6-kg-MoF" identifier="dT8-AL-f4P">
                     <rect key="frame" x="20" y="194" width="111" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="ステータス項目の表示" id="dT8-AL-f4P">
                         <font key="font" metaFont="message"/>
@@ -136,15 +136,15 @@
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nJ5-Tm-2bR">
+                <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nJ5-Tm-2bR" identifier="cG4-Um-zX8">
                     <rect key="frame" x="340" y="189" width="120" height="26"/>
                     <popUpButtonCell key="cell" type="push" title="表示" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" inset="2" selectedItem="sL2-Qn-Vd4" id="cG4-Um-zX8">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" title="ステータス項目の表示" id="mE6-uS-7yQ">
                             <items>
-                                <menuItem title="非表示" id="wK3-Sc-hH7"/>
-                                <menuItem title="表示" state="on" id="sL2-Qn-Vd4"/>
+                                <menuItem title="非表示" id="wK3-Sc-hH7" identifier="wK3-Sc-hH7"/>
+                                <menuItem title="表示" state="on" id="sL2-Qn-Vd4" identifier="sL2-Qn-Vd4"/>
                             </items>
                         </menu>
                     </popUpButtonCell>
@@ -155,7 +155,7 @@
                 <box verticalHuggingPriority="750" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="tR9-df-Cu5">
                     <rect key="frame" x="20" y="181" width="440" height="1"/>
                 </box>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="uB1-pk-Vq9">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="uB1-pk-Vq9" identifier="mK4-wT-Lc8">
                     <rect key="frame" x="20" y="158" width="200" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="ペーストコマンド" id="mK4-wT-Lc8">
                         <font key="font" metaFont="message"/>
@@ -163,7 +163,7 @@
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="rD7-zn-Pa2">
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="rD7-zn-Pa2" identifier="hN5-Fx-rD6">
                     <rect key="frame" x="442" y="157" width="18" height="18"/>
                     <buttonCell key="cell" type="check" title="" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="hN5-Fx-rD6">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -173,7 +173,7 @@
                         <action selector="pasteCommandChanged:" target="-2" id="R8r-wv-ff4"/>
                     </connections>
                 </button>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="qM3-vb-Kt1">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="qM3-vb-Kt1" identifier="gR4-Ye-nN2">
                     <rect key="frame" x="20" y="132" width="220" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="ペースト後に並び替え" id="gR4-Ye-nN2">
                         <font key="font" metaFont="message"/>
@@ -181,7 +181,7 @@
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="vL8-wd-Cy6">
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="vL8-wd-Cy6" identifier="jH2-pB-zS5">
                     <rect key="frame" x="442" y="131" width="18" height="18"/>
                     <buttonCell key="cell" type="check" title="" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="jH2-pB-zS5">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -191,7 +191,7 @@
                         <action selector="reorderAfterPastingChanged:" target="-2" id="uZ3-xp-RN7"/>
                     </connections>
                 </button>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xP6-fm-Jd3">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xP6-fm-Jd3" identifier="rQ7-nU-mA1">
                     <rect key="frame" x="20" y="106" width="220" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="同一履歴を上書き" id="rQ7-nU-mA1">
                         <font key="font" metaFont="message"/>
@@ -199,7 +199,7 @@
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="oC5-ls-Hg8">
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="oC5-ls-Hg8" identifier="pT9-dW-kR4">
                     <rect key="frame" x="442" y="105" width="18" height="18"/>
                     <buttonCell key="cell" type="check" title="" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="pT9-dW-kR4">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -209,7 +209,7 @@
                         <action selector="overwriteSameHistoryChanged:" target="-2" id="ub1-Rf-yB3"/>
                     </connections>
                 </button>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="iN2-bx-Qe7">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="iN2-bx-Qe7" identifier="sD3-vL-fM6">
                     <rect key="frame" x="20" y="80" width="200" height="16"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="同一履歴をコピー" id="sD3-vL-fM6">
                         <font key="font" metaFont="message"/>
@@ -217,7 +217,7 @@
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="eF4-jc-Zp1">
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="eF4-jc-Zp1" identifier="uY8-rN-gB2">
                     <rect key="frame" x="442" y="79" width="18" height="18"/>
                     <buttonCell key="cell" type="check" title="" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="uY8-rN-gB2">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>

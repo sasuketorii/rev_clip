@@ -1,3 +1,4 @@
+#import "RCLocalization.h"
 //
 //  RCHotKeyRecorderView.m
 //  Revclip
@@ -283,23 +284,23 @@ static NSEventModifierFlags RCRecorderRelevantModifiers(NSEventModifierFlags mod
 
     NSAlert *alert = [[NSAlert alloc] init];
     alert.alertStyle = NSAlertStyleWarning;
-    alert.messageText = NSLocalizedString(@"This shortcut may not work", nil);
-    alert.informativeText = NSLocalizedString(@"On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control.", nil);
-    [alert addButtonWithTitle:NSLocalizedString(@"OK", nil)];
+    alert.messageText = RCLocalizedString(@"This shortcut may not work", nil);
+    alert.informativeText = RCLocalizedString(@"On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control.", nil);
+    [alert addButtonWithTitle:RCLocalizedString(@"OK", nil)];
     [alert beginSheetModalForWindow:window completionHandler:nil];
 }
 
 - (NSString *)rc_displayText {
     if (self.isRecording) {
         NSString *modifierText = [self rc_symbolStringFromModifiers:self.recordingModifierFlags];
-        return (modifierText.length > 0) ? modifierText : NSLocalizedString(@"Type shortcut", nil);
+        return (modifierText.length > 0) ? modifierText : RCLocalizedString(@"Type shortcut", nil);
     }
 
     if (RCIsValidKeyCombo(self.keyCombo)) {
         return [self rc_stringFromKeyCombo:self.keyCombo];
     }
 
-    return NSLocalizedString(@"Click to record", nil);
+    return RCLocalizedString(@"Click to record", nil);
 }
 
 - (NSString *)rc_stringFromKeyCombo:(RCKeyCombo)keyCombo {

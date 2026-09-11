@@ -1,3 +1,4 @@
+#import "RCLocalization.h"
 //
 //  RCPreferencesWindowController.m
 //  Revclip
@@ -62,9 +63,29 @@ static const CGFloat RCPreferencesMinimumContentWidth = 700.0;
 - (void)windowDidLoad {
     [super windowDidLoad];
 
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(languageDidChange:) name:RCLanguageDidChangeNotification object:nil];
     [self configureWindow];
     [self configureToolbar];
     [self showTab:RCPreferencesTabGeneral];
+}
+
+- (void)languageDidChange:(NSNotification *)notification {
+    // Defer replacement until the popup action returns; no template editor state is replaced.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *tab = self.window.toolbar.selectedItemIdentifier;
+        self.generalViewController = nil;
+        self.menuViewController = nil;
+        self.typeViewController = nil;
+        self.excludeViewController = nil;
+        self.shortcutsViewController = nil;
+        self.updatesViewController = nil;
+        self.betaViewController = nil;
+        self.panicViewController = nil;
+        self.appearanceViewController = nil;
+        self.window.title = RCLocalizedString(@"Preferences", nil);
+        [self configureToolbar];
+        [self showTab:tab];
+    });
 }
 
 - (void)showWindow:(id)sender {
@@ -192,7 +213,7 @@ static const CGFloat RCPreferencesMinimumContentWidth = 700.0;
 
 - (void)configureWindow {
     NSWindow *window = self.window;
-    window.title = NSLocalizedString(@"Preferences", nil);
+    window.title = RCLocalizedString(@"Preferences", nil);
     window.toolbarStyle = NSWindowToolbarStyleExpanded;
     window.styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable;
     window.collectionBehavior = NSWindowCollectionBehaviorMoveToActiveSpace;
@@ -290,30 +311,30 @@ static const CGFloat RCPreferencesMinimumContentWidth = 700.0;
 }
 
 - (NSString *)titleForTabIdentifier:(NSString *)tabIdentifier {
-    if ([tabIdentifier isEqualToString:RCPreferencesTabAppearance]) return NSLocalizedString(@"Appearance", nil);
+    if ([tabIdentifier isEqualToString:RCPreferencesTabAppearance]) return RCLocalizedString(@"Appearance", nil);
     if ([tabIdentifier isEqualToString:RCPreferencesTabGeneral]) {
-        return NSLocalizedString(@"General", nil);
+        return RCLocalizedString(@"General", nil);
     }
     if ([tabIdentifier isEqualToString:RCPreferencesTabMenu]) {
-        return NSLocalizedString(@"Menu", nil);
+        return RCLocalizedString(@"Menu", nil);
     }
     if ([tabIdentifier isEqualToString:RCPreferencesTabType]) {
-        return NSLocalizedString(@"Type", nil);
+        return RCLocalizedString(@"Type", nil);
     }
     if ([tabIdentifier isEqualToString:RCPreferencesTabExclude]) {
-        return NSLocalizedString(@"Excluded Apps", nil);
+        return RCLocalizedString(@"Excluded Apps", nil);
     }
     if ([tabIdentifier isEqualToString:RCPreferencesTabShortcuts]) {
-        return NSLocalizedString(@"Shortcuts", nil);
+        return RCLocalizedString(@"Shortcuts", nil);
     }
     if ([tabIdentifier isEqualToString:RCPreferencesTabUpdates]) {
-        return NSLocalizedString(@"Updates", nil);
+        return RCLocalizedString(@"Updates", nil);
     }
     if ([tabIdentifier isEqualToString:RCPreferencesTabBeta]) {
-        return NSLocalizedString(@"Beta", nil);
+        return RCLocalizedString(@"Beta", nil);
     }
     if ([tabIdentifier isEqualToString:RCPreferencesTabPanic]) {
-        return NSLocalizedString(@"Panic", nil);
+        return RCLocalizedString(@"Panic", nil);
     }
     return @"";
 }

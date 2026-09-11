@@ -1,3 +1,4 @@
+#import "RCLocalization.h"
 //
 //  RCMoveToApplicationsService.m
 //  Revclip
@@ -57,10 +58,10 @@ static NSString * const kRCMoveToApplicationsErrorDomain = @"com.revclip.movetoa
 
     NSAlert *alert = [[NSAlert alloc] init];
     alert.alertStyle = NSAlertStyleWarning;
-    alert.messageText = NSLocalizedString(@"Move to Applications folder?", nil);
-    alert.informativeText = NSLocalizedString(@"Revclip needs to be in the Applications folder to work properly. Would you like to move it there?", nil);
-    [alert addButtonWithTitle:NSLocalizedString(@"Move to Applications", nil)];
-    [alert addButtonWithTitle:NSLocalizedString(@"Do Not Move", nil)];
+    alert.messageText = RCLocalizedString(@"Move to Applications folder?", nil);
+    alert.informativeText = RCLocalizedString(@"Revclip needs to be in the Applications folder to work properly. Would you like to move it there?", nil);
+    [alert addButtonWithTitle:RCLocalizedString(@"Move to Applications", nil)];
+    [alert addButtonWithTitle:RCLocalizedString(@"Do Not Move", nil)];
 
     NSModalResponse response = [alert runModal];
     if (response != NSAlertFirstButtonReturn) {
@@ -161,7 +162,7 @@ static NSString * const kRCMoveToApplicationsErrorDomain = @"com.revclip.movetoa
             NSError *terminationError = [NSError errorWithDomain:kRCMoveToApplicationsErrorDomain
                                                              code:(NSInteger)task.terminationStatus
                                                          userInfo:@{
-                                                             NSLocalizedDescriptionKey: NSLocalizedString(@"Failed to relaunch the app from Applications.", nil),
+                                                             NSLocalizedDescriptionKey: RCLocalizedString(@"Failed to relaunch the app from Applications.", nil),
                                                              NSLocalizedFailureReasonErrorKey: [NSString stringWithFormat:@"open exited with status %d", task.terminationStatus],
                                                          }];
             [self showMoveFailedAlertWithError:terminationError];
@@ -186,9 +187,9 @@ static NSString * const kRCMoveToApplicationsErrorDomain = @"com.revclip.movetoa
 
     NSAlert *alert = [[NSAlert alloc] init];
     alert.alertStyle = NSAlertStyleCritical;
-    alert.messageText = NSLocalizedString(@"Could not move Revclip to Applications folder", nil);
-    alert.informativeText = error.localizedDescription ?: NSLocalizedString(@"An unknown error occurred while moving Revclip.", nil);
-    [alert addButtonWithTitle:NSLocalizedString(@"OK", nil)];
+    alert.messageText = RCLocalizedString(@"Could not move Revclip to Applications folder", nil);
+    alert.informativeText = error.localizedDescription ?: RCLocalizedString(@"An unknown error occurred while moving Revclip.", nil);
+    [alert addButtonWithTitle:RCLocalizedString(@"OK", nil)];
     [alert runModal];
 }
 
@@ -242,11 +243,11 @@ static NSString * const kRCMoveToApplicationsErrorDomain = @"com.revclip.movetoa
 
     NSAlert *alert = [[NSAlert alloc] init];
     alert.alertStyle = NSAlertStyleWarning;
-    alert.messageText = NSLocalizedString(@"A newer version is already installed in Applications.", nil);
-    alert.informativeText = [NSString stringWithFormat:NSLocalizedString(@"Installed version (%@) is newer than this app (%@). Move was canceled to prevent a downgrade.", nil),
+    alert.messageText = RCLocalizedString(@"A newer version is already installed in Applications.", nil);
+    alert.informativeText = [NSString stringWithFormat:RCLocalizedString(@"Installed version (%@) is newer than this app (%@). Move was canceled to prevent a downgrade.", nil),
                               installedVersion.length > 0 ? installedVersion : @"-",
                               candidateVersion.length > 0 ? candidateVersion : @"-"];
-    [alert addButtonWithTitle:NSLocalizedString(@"OK", nil)];
+    [alert addButtonWithTitle:RCLocalizedString(@"OK", nil)];
     [alert runModal];
 }
 

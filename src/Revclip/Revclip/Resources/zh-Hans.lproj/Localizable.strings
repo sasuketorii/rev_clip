@@ -253,3 +253,8 @@
 "ログインアイテムの設定に失敗しました" = "无法设置登录项目";
 "システム環境設定の「ログイン項目」で手動で設定してください。" = "请在系统设置 > 通用 > 登录项中手动设置。";
 "今後表示しない" = "不再显示";
+
+/* Application language preference */
+"App Language" = "应用语言";
+"Follow System" = "跟随系统";
+"Language changes apply immediately to Revclip." = "所选语言会立即应用于 Revclip。";

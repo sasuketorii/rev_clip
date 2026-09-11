@@ -24,6 +24,7 @@ final class RCAppearanceController: NSObject {
 }
 
 struct AppearancePreferencesView: View {
+    @State private var languageRevision = 0
     @AppStorage(RCAppearanceController.preferenceKey) private var selection = "system"
 
     private let choices = [
@@ -33,10 +34,11 @@ struct AppearancePreferencesView: View {
     ]
 
     var body: some View {
+        let _ = languageRevision
         VStack(alignment: .leading, spacing: 22) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Appearance").font(.title2.weight(.semibold))
-                Text("Theme Description").foregroundStyle(.secondary)
+                Text(RCLocalizedString("Appearance", comment: "")).font(.title2.weight(.semibold))
+                Text(RCLocalizedString("Theme Description", comment: "")).foregroundStyle(.secondary)
             }
             HStack(spacing: 16) {
                 ForEach(choices, id: \.0) { choice in
@@ -48,7 +50,7 @@ struct AppearancePreferencesView: View {
                             Image(systemName: choice.2)
                                 .font(.system(size: 28, weight: .light))
                                 .foregroundStyle(selection == choice.0 ? Color.accentColor : .secondary)
-                            Text(LocalizedStringKey(choice.1)).font(.body.weight(.medium))
+                            Text(RCLocalizedString(choice.1, comment: "")).font(.body.weight(.medium))
                             Image(systemName: selection == choice.0 ? "checkmark.circle.fill" : "circle")
                                 .foregroundStyle(selection == choice.0 ? Color.accentColor : .secondary)
                         }
@@ -62,11 +64,12 @@ struct AppearancePreferencesView: View {
                         .contentShape(RoundedRectangle(cornerRadius: 18))
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(Text(LocalizedStringKey(choice.1)))
+                    .accessibilityLabel(Text(RCLocalizedString(choice.1, comment: "")))
                     .accessibilityAddTraits(selection == choice.0 ? .isSelected : [])
                 }
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .RCLanguageDidChange)) { _ in languageRevision += 1 }
         .padding(30)
         .frame(width: 700, height: 340, alignment: .topLeading)
         .background(.ultraThinMaterial)

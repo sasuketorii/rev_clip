@@ -23,7 +23,7 @@
             <rect key="frame" x="0.0" y="0.0" width="700" height="380"/>
             <autoresizingMask key="autoresizingMask"/>
             <subviews>
-                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="9nI-bh-dPc" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="9nI-bh-dPc" identifier="Y4f-JL-Lso" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
                     <rect key="frame" x="20" y="344" width="120" height="22"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="ベータ機能" id="Y4f-JL-Lso">
                         <font key="font" metaFont="message"/>
@@ -31,7 +31,7 @@
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="wot-nR-fhg" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="wot-nR-fhg" identifier="AHB-eC-r0g" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
                     <rect key="frame" x="20" y="323" width="300" height="17"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="これらの機能は実験的であり、変更される可能性があります。" id="AHB-eC-r0g">
                         <font key="font" metaFont="smallSystem"/>
@@ -39,7 +39,7 @@
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="FSX-2G-0Ui">
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="FSX-2G-0Ui" identifier="mQr-OB-E2r">
                     <rect key="frame" x="20" y="286" width="205" height="18"/>
                     <buttonCell key="cell" type="check" title="プレーンテキストでペースト" bezelStyle="regularSquare" imagePosition="left" inset="2" id="mQr-OB-E2r">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -49,7 +49,7 @@
                         <action selector="handleEnableCheckboxChanged:" target="-2" id="qfN-Wx-Iam"/>
                     </connections>
                 </button>
-                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="o2K-Dj-lY5" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="o2K-Dj-lY5" identifier="2ri-Q0-Ih8" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
                     <rect key="frame" x="248" y="287" width="56" height="17"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="修飾キー" id="2ri-Q0-Ih8">
                         <font key="font" metaFont="system"/>
@@ -57,17 +57,17 @@
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="5GE-Lw-Oz2">
+                <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="5GE-Lw-Oz2" identifier="Kvp-lx-86m">
                     <rect key="frame" x="312" y="282" width="148" height="26"/>
                     <popUpButtonCell key="cell" type="square" title="Command" bezelStyle="rounded" alignment="left" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="rTa-rY-VMk" id="Kvp-lx-86m">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" id="jMa-QB-RfY">
                             <items>
-                                <menuItem title="Command" id="rTa-rY-VMk"/>
-                                <menuItem title="Shift" id="xt2-7I-sL4"/>
-                                <menuItem title="Control" id="jhn-Kh-LmR"/>
-                                <menuItem title="Option" id="M87-Z0-LgE"/>
+                                <menuItem title="Command" id="rTa-rY-VMk" identifier="rTa-rY-VMk"/>
+                                <menuItem title="Shift" id="xt2-7I-sL4" identifier="xt2-7I-sL4"/>
+                                <menuItem title="Control" id="jhn-Kh-LmR" identifier="jhn-Kh-LmR"/>
+                                <menuItem title="Option" id="M87-Z0-LgE" identifier="M87-Z0-LgE"/>
                             </items>
                         </menu>
                     </popUpButtonCell>
@@ -78,7 +78,7 @@
                 <box borderType="none" boxType="separator" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="Nwr-Xn-vS8">
                     <rect key="frame" x="20" y="268" width="440" height="1"/>
                 </box>
-                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="FZ8-bX-1UA">
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="FZ8-bX-1UA" identifier="aqo-h4-zJ4">
                     <rect key="frame" x="20" y="238" width="205" height="18"/>
                     <buttonCell key="cell" type="check" title="履歴を削除" bezelStyle="regularSquare" imagePosition="left" inset="2" id="aqo-h4-zJ4">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -88,7 +88,7 @@
                         <action selector="handleEnableCheckboxChanged:" target="-2" id="OkL-H2-90d"/>
                     </connections>
                 </button>
-                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="PU0-RM-OwU" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="PU0-RM-OwU" identifier="rVA-zc-uQx" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
                     <rect key="frame" x="248" y="239" width="56" height="17"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="修飾キー" id="rVA-zc-uQx">
                         <font key="font" metaFont="system"/>
@@ -96,17 +96,17 @@
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="fr8-z2-n6P">
+                <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="fr8-z2-n6P" identifier="vU6-08-ysn">
                     <rect key="frame" x="312" y="234" width="148" height="26"/>
                     <popUpButtonCell key="cell" type="square" title="Command" bezelStyle="rounded" alignment="left" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="Jbl-fQ-Z6s" id="vU6-08-ysn">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" id="gQP-IE-Szu">
                             <items>
-                                <menuItem title="Command" id="Jbl-fQ-Z6s"/>
-                                <menuItem title="Shift" id="NrS-dR-HfV"/>
-                                <menuItem title="Control" id="5rA-z6-5Ux"/>
-                                <menuItem title="Option" id="eyz-h1-nv3"/>
+                                <menuItem title="Command" id="Jbl-fQ-Z6s" identifier="Jbl-fQ-Z6s"/>
+                                <menuItem title="Shift" id="NrS-dR-HfV" identifier="NrS-dR-HfV"/>
+                                <menuItem title="Control" id="5rA-z6-5Ux" identifier="5rA-z6-5Ux"/>
+                                <menuItem title="Option" id="eyz-h1-nv3" identifier="eyz-h1-nv3"/>
                             </items>
                         </menu>
                     </popUpButtonCell>
@@ -117,7 +117,7 @@
                 <box borderType="none" boxType="separator" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="RR2-yA-0Ie">
                     <rect key="frame" x="20" y="220" width="440" height="1"/>
                 </box>
-                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="rKJ-GR-7M4">
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="rKJ-GR-7M4" identifier="5zc-lE-FSH">
                     <rect key="frame" x="20" y="190" width="220" height="18"/>
                     <buttonCell key="cell" type="check" title="ペーストして履歴を削除" bezelStyle="regularSquare" imagePosition="left" inset="2" id="5zc-lE-FSH">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -127,7 +127,7 @@
                         <action selector="handleEnableCheckboxChanged:" target="-2" id="a9w-9x-emM"/>
                     </connections>
                 </button>
-                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="UVC-Lp-R0f" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
+                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="UVC-Lp-R0f" identifier="0FQ-R4-fzo" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
                     <rect key="frame" x="248" y="191" width="56" height="17"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="修飾キー" id="0FQ-R4-fzo">
                         <font key="font" metaFont="system"/>
@@ -135,17 +135,17 @@
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="psL-E8-GU2">
+                <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="psL-E8-GU2" identifier="w4q-Q0-9rR">
                     <rect key="frame" x="312" y="186" width="148" height="26"/>
                     <popUpButtonCell key="cell" type="square" title="Command" bezelStyle="rounded" alignment="left" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="zSV-5j-YNH" id="w4q-Q0-9rR">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" id="VwI-zK-zia">
                             <items>
-                                <menuItem title="Command" id="zSV-5j-YNH"/>
-                                <menuItem title="Shift" id="JRI-aB-kjN"/>
-                                <menuItem title="Control" id="x7R-eS-8Ai"/>
-                                <menuItem title="Option" id="iQN-Ro-t5S"/>
+                                <menuItem title="Command" id="zSV-5j-YNH" identifier="zSV-5j-YNH"/>
+                                <menuItem title="Shift" id="JRI-aB-kjN" identifier="JRI-aB-kjN"/>
+                                <menuItem title="Control" id="x7R-eS-8Ai" identifier="x7R-eS-8Ai"/>
+                                <menuItem title="Option" id="iQN-Ro-t5S" identifier="iQN-Ro-t5S"/>
                             </items>
                         </menu>
                     </popUpButtonCell>
@@ -156,7 +156,7 @@
                 <box borderType="none" boxType="separator" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="1Qz-em-hgu">
                     <rect key="frame" x="20" y="172" width="440" height="1"/>
                 </box>
-                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ziL-7m-zNH">
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ziL-7m-zNH" identifier="N3G-jY-bhg">
                     <rect key="frame" x="20" y="142" width="250" height="18"/>
                     <buttonCell key="cell" type="check" title="スクリーンショット監視" bezelStyle="regularSquare" imagePosition="left" inset="2" id="N3G-jY-bhg">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>

@@ -253,3 +253,8 @@
 "ログインアイテムの設定に失敗しました" = "로그인 항목을 설정하지 못했습니다";
 "システム環境設定の「ログイン項目」で手動で設定してください。" = "시스템 설정 > 일반 > 로그인 항목에서 직접 설정하십시오.";
 "今後表示しない" = "다시 표시하지 않음";
+
+/* Application language preference */
+"App Language" = "앱 언어";
+"Follow System" = "시스템 설정 따르기";
+"Language changes apply immediately to Revclip." = "선택한 언어가 Revclip에 즉시 적용됩니다.";
