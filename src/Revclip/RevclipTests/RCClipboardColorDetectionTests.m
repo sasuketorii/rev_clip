@@ -19,16 +19,30 @@
 - (void)prefetchClipDataFallbackForClipItems:(NSArray<RCClipItem *> *)clipItems
                                   completion:(nullable dispatch_block_t)completion;
 - (nullable RCClipData *)clipDataForPath:(NSString *)dataPath;
+- (NSMenu *)buildStandaloneMenu;
+- (void)menuWillOpen:(NSMenu *)menu;
+- (void)menu:(NSMenu *)menu willHighlightItem:(NSMenuItem *)item;
+- (nullable NSImage *)resizedThumbnailImageAtPath:(NSString *)path targetSize:(NSSize)size;
 @end
 
 @interface RCTestMenuManager : RCMenuManager
 @property (atomic, assign) NSInteger clipDataLoadCallCount;
+@property (atomic, assign) NSInteger thumbnailLoadCallCount;
+@property (nonatomic, copy) dispatch_block_t willLoadClip;
+@property (nonatomic, strong) dispatch_semaphore_t loadRelease;
 @end
 
 @implementation RCTestMenuManager
 
+- (nullable NSImage *)resizedThumbnailImageAtPath:(NSString *)path targetSize:(NSSize)size {
+    self.thumbnailLoadCallCount += 1;
+    return [[NSImage alloc] initWithSize:size];
+}
+
 - (nullable RCClipData *)clipDataForPath:(NSString *)dataPath {
     self.clipDataLoadCallCount += 1;
+    if (self.willLoadClip) self.willLoadClip();
+    if (self.loadRelease) dispatch_semaphore_wait(self.loadRelease, dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
     return [super clipDataForPath:dataPath];
 }
 
@@ -294,6 +308,111 @@
     XCTAssertLessThanOrEqual(menuItem.accessibilityHelp.length, 12);
 
     [self removeFileIfExistsAtPath:dataPath];
+}
+
+// Drain real queues, then their main-queue completions. No sleep-based timing assertion.
+- (void)drainMenuWork:(RCTestMenuManager *)manager {
+    XCTestExpectation *done = [self expectationWithDescription:@"menu work drained"];
+    dispatch_queue_t payloadQueue = [manager valueForKey:@"clipDataFallbackQueue"];
+    dispatch_queue_t thumbnailQueue = [manager valueForKey:@"thumbnailGenerationQueue"];
+    dispatch_async(payloadQueue, ^{
+        dispatch_barrier_async(thumbnailQueue, ^{
+            dispatch_async(dispatch_get_main_queue(), ^{ [done fulfill]; });
+        });
+    });
+    [self waitForExpectations:@[done] timeout:5.0];
+}
+
+- (void)testBuildingHistoryDoesNotReadPayloadsAndHoverLoadsOnlySelectedText {
+    RCDatabaseManager *database = [RCDatabaseManager shared];
+    XCTAssertTrue([database setupDatabase]);
+    RCClipData *data = [RCClipData new];
+    data.stringValue = @"rgba(12, 34, 56, 0.7)";
+    data.primaryType = NSPasteboardTypeString;
+    NSString *path = [self newClipDataPathWithIdentifier:NSUUID.UUID.UUIDString];
+    XCTAssertTrue([data saveToPath:path]);
+    NSString *hash = NSUUID.UUID.UUIDString;
+    XCTAssertTrue(([database insertClipItem:@{@"data_path":path, @"data_hash":hash,
+        @"title":@"", @"primary_type":NSPasteboardTypeString, @"update_time":@2147483647}]));
+    RCTestMenuManager *manager = [RCTestMenuManager new];
+    NSMenu *built = [manager buildStandaloneMenu];
+    XCTAssertNotNil(built);
+    [self drainMenuWork:manager];
+    XCTAssertEqual(manager.clipDataLoadCallCount, 0);
+    XCTAssertEqual(manager.thumbnailLoadCallCount, 0);
+
+    RCClipItem *clip = [[RCClipItem alloc] initWithDictionary:[database clipItemWithDataHash:hash]];
+    NSMenuItem *item = [manager clipMenuItemForClipItem:clip globalIndex:0];
+    NSMenu *menu = [NSMenu new];
+    [menu addItem:item];
+    [manager menuWillOpen:menu];
+    [self drainMenuWork:manager];
+    XCTAssertEqual(manager.clipDataLoadCallCount, 0);
+    [manager menu:menu willHighlightItem:item];
+    [self drainMenuWork:manager];
+    XCTAssertEqual(manager.clipDataLoadCallCount, 1);
+    XCTAssertEqualObjects(item.accessibilityHelp, data.stringValue);
+    XCTAssertNotNil(item.image);
+    [manager menu:menu willHighlightItem:item];
+    [self drainMenuWork:manager];
+    XCTAssertEqual(manager.clipDataLoadCallCount, 1);
+    [database deleteClipItemWithDataHash:hash];
+    [self removeFileIfExistsAtPath:path];
+}
+
+- (void)testImageHoverDoesNotRestorePayloadAndClosedFoldersDoNotLoadThumbnails {
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kRCShowImageInTheMenuKey];
+    RCTestMenuManager *manager = [RCTestMenuManager new];
+    RCClipItem *clip = [[RCClipItem alloc] initWithDictionary:@{
+        @"id":@101, @"data_path":@"image.rcclip", @"data_hash":@"image-fixture",
+        @"thumbnail_path":@"image.thumb", @"primary_type":NSPasteboardTypeTIFF}];
+    NSMenuItem *item = [manager clipMenuItemForClipItem:clip globalIndex:0];
+    NSMenu *child = [NSMenu new];
+    [child addItem:item];
+    NSMenuItem *folder = [NSMenuItem new];
+    folder.submenu = child;
+    NSMenu *root = [NSMenu new];
+    [root addItem:folder];
+    [manager menuWillOpen:root];
+    [self drainMenuWork:manager];
+    XCTAssertEqual(manager.thumbnailLoadCallCount, 0);
+    [manager menuWillOpen:child];
+    [manager menuWillOpen:child];
+    [manager menu:child willHighlightItem:item];
+    [self drainMenuWork:manager];
+    XCTAssertEqual(manager.clipDataLoadCallCount, 0);
+    XCTAssertEqual(manager.thumbnailLoadCallCount, 1);
+    XCTAssertNotNil(item.image);
+}
+
+- (void)testReplacementMenuItemWaitsForInFlightPayload {
+    RCTestMenuManager *manager = [RCTestMenuManager new];
+    RCClipData *data = [RCClipData new];
+    data.stringValue = @"full tooltip after rebuild";
+    data.primaryType = NSPasteboardTypeString;
+    NSString *path = [self newClipDataPathWithIdentifier:NSUUID.UUID.UUIDString];
+    XCTAssertTrue([data saveToPath:path]);
+    RCClipItem *clip = [[RCClipItem alloc] initWithDictionary:@{
+        @"id":@201, @"data_path":path, @"data_hash":@"replacement-fixture",
+        @"title":@"short", @"primary_type":NSPasteboardTypeString}];
+    XCTestExpectation *entered = [self expectationWithDescription:@"payload read entered"];
+    manager.willLoadClip = ^{ [entered fulfill]; };
+    manager.loadRelease = dispatch_semaphore_create(0);
+    NSMenuItem *oldItem = [manager clipMenuItemForClipItem:clip globalIndex:0];
+    NSMenu *menu = [NSMenu new];
+    [manager menu:menu willHighlightItem:oldItem];
+    [self waitForExpectations:@[entered] timeout:2.0];
+    NSMenuItem *replacement = [manager clipMenuItemForClipItem:clip globalIndex:0];
+    [manager menu:menu willHighlightItem:replacement];
+    // Let any incorrectly early main-queue completion run before releasing I/O.
+    XCTestExpectation *mainTurn = [self expectationWithDescription:@"main turn"];
+    dispatch_async(dispatch_get_main_queue(), ^{ [mainTurn fulfill]; });
+    [self waitForExpectations:@[mainTurn] timeout:2.0];
+    dispatch_semaphore_signal(manager.loadRelease);
+    [self drainMenuWork:manager];
+    XCTAssertEqual(manager.clipDataLoadCallCount, 1);
+    XCTAssertEqualObjects(replacement.accessibilityHelp, data.stringValue);
+    [self removeFileIfExistsAtPath:path];
 }
 
 @end

@@ -51,6 +51,7 @@ static os_log_t RCMenuManagerLog(void) {
 @property (nonatomic, strong, nullable) NSStatusItem *statusItem;
 @property (nonatomic, strong) NSMenu *statusMenu;
 @property (nonatomic, strong) NSMapTable<NSMenuItem *, NSString *> *previewTexts;
+@property (nonatomic, strong) NSMapTable<NSMenuItem *, RCClipItem *> *clipItemsByMenuItem;
 @property (nonatomic, strong) RCFastPreviewController *previewController;
 @property (nonatomic, strong, nullable) dispatch_block_t defaultsChangeDebounceBlock;
 @property (nonatomic, strong) NSCache<NSString *, NSImage *> *thumbnailCache;
@@ -62,7 +63,6 @@ static os_log_t RCMenuManagerLog(void) {
 @property (nonatomic, strong) dispatch_queue_t clipDataFallbackQueue;
 @property (nonatomic, strong, nullable) NSRunningApplication *pasteTargetApplication;
 
-- (void)prefetchThumbnailsForClipItems:(NSArray<RCClipItem *> *)clipItems;
 - (NSString *)thumbnailCacheKeyForClipItem:(RCClipItem *)clipItem;
 - (void)loadThumbnailForClipItem:(RCClipItem *)clipItem
                         cacheKey:(NSString *)cacheKey
@@ -73,7 +73,6 @@ static os_log_t RCMenuManagerLog(void) {
 - (NSString *)colorPreviewCacheKeyForClipItem:(RCClipItem *)clipItem;
 - (BOOL)shouldTreatClipItemAsColorCandidate:(RCClipItem *)clipItem;
 - (void)cacheColorPreviewEligibility:(BOOL)isEligible forClipItem:(RCClipItem *)clipItem;
-- (void)prefetchClipDataFallbackForClipItems:(NSArray<RCClipItem *> *)clipItems;
 - (void)prefetchClipDataFallbackForClipItems:(NSArray<RCClipItem *> *)clipItems
                                   completion:(nullable dispatch_block_t)completion;
 - (nullable NSString *)cachedTooltipForClipItem:(RCClipItem *)clipItem;
@@ -105,6 +104,7 @@ static os_log_t RCMenuManagerLog(void) {
                 submenuChevron:(BOOL)submenuChevron;
 - (void)setToolTip:(nullable NSString *)toolTip onMenuItem:(NSMenuItem *)item;
 - (void)capturePasteTargetApplication;
+- (void)configureClipMenuItem:(NSMenuItem *)item clipItem:(RCClipItem *)clipItem loadThumbnail:(BOOL)loadThumbnail;
 - (nullable NSImage *)templateSymbolNamed:(NSString *)symbolName;
 
 @end
@@ -124,6 +124,7 @@ static os_log_t RCMenuManagerLog(void) {
     self = [super init];
     if (self) {
         _previewTexts = [NSMapTable weakToStrongObjectsMapTable];
+        _clipItemsByMenuItem = [NSMapTable weakToStrongObjectsMapTable];
         _previewController = [RCFastPreviewController new];
         _statusMenu = [self menuWithTitle:@"Revclip"];
         _thumbnailCache = [[NSCache alloc] init];
@@ -131,8 +132,8 @@ static os_log_t RCMenuManagerLog(void) {
         _clipDataColorStringCache = [[NSCache alloc] init];
         _clipDataTooltipCache = [[NSCache alloc] init];
         _clipDataFallbackPrefetchStateCache = [[NSCache alloc] init];
-        _thumbnailGenerationQueue = dispatch_queue_create("com.revclip.menu.thumbnail", DISPATCH_QUEUE_CONCURRENT);
-        _clipDataFallbackQueue = dispatch_queue_create("com.revclip.menu.clipdata-fallback", DISPATCH_QUEUE_SERIAL);
+        _thumbnailGenerationQueue = dispatch_queue_create("com.revclip.menu.thumbnail", dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_UTILITY, 0));
+        _clipDataFallbackQueue = dispatch_queue_create("com.revclip.menu.clipdata-fallback", dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_UTILITY, 0));
 
         NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
         [notificationCenter addObserver:self
@@ -496,8 +497,6 @@ static os_log_t RCMenuManagerLog(void) {
     for (NSDictionary *row in clipRows) {
         [clipItems addObject:[[RCClipItem alloc] initWithDictionary:row]];
     }
-    [self prefetchThumbnailsForClipItems:clipItems];
-    [self prefetchClipDataFallbackForClipItems:clipItems];
     [self appendClipItems:clipItems toMenu:menu];
 }
 
@@ -708,6 +707,22 @@ static os_log_t RCMenuManagerLog(void) {
 
 - (void)menu:(NSMenu *)menu willHighlightItem:(NSMenuItem *)item {
     [self.previewController highlightItem:item text:[self previewTextForMenuItem:item]];
+    RCClipItem *clipItem = item ? [self.clipItemsByMenuItem objectForKey:item] : nil;
+    if (clipItem == nil) return;
+
+    // A tooltip needs the payload only for the item the user is inspecting.
+    // Never restore every image/archive just to construct an unopened menu.
+    __weak typeof(self) weakSelf = self;
+    __weak NSMenuItem *weakItem = item;
+    [self prefetchClipDataFallbackForClipItems:@[clipItem] completion:^{
+        RCMenuManager *strongSelf = weakSelf;
+        NSMenuItem *strongItem = weakItem;
+        if (strongSelf == nil || strongItem == nil) return;
+        [strongSelf configureClipMenuItem:strongItem clipItem:clipItem loadThumbnail:NO];
+        if (strongItem.menu.highlightedItem == strongItem) {
+            [strongSelf.previewController highlightItem:strongItem text:[strongSelf previewTextForMenuItem:strongItem]];
+        }
+    }];
 }
 
 - (void)menuDidClose:(NSMenu *)menu {
@@ -724,6 +739,14 @@ static os_log_t RCMenuManagerLog(void) {
         [self capturePasteTargetApplication];
     }
     [self configureMenuForSimpleTransparentBackground:menu];
+    // Only the opened menu's direct children need thumbnails. Closed history
+    // folders and startup menu construction perform no payload/thumbnail I/O.
+    for (NSMenuItem *item in menu.itemArray) {
+        RCClipItem *clipItem = [self.clipItemsByMenuItem objectForKey:item];
+        if (clipItem != nil) {
+            [self configureClipMenuItem:item clipItem:clipItem loadThumbnail:YES];
+        }
+    }
 }
 
 - (void)capturePasteTargetApplication {
@@ -760,6 +783,24 @@ static os_log_t RCMenuManagerLog(void) {
                             image:nil
                   submenuChevron:NO];
 
+    item.tag = (NSInteger)globalIndex;
+    [self.clipItemsByMenuItem setObject:clipItem forKey:item];
+    [self configureClipMenuItem:item clipItem:clipItem loadThumbnail:NO];
+
+    if ([self boolPreferenceForKey:kRCAddNumericKeyEquivalentsKey defaultValue:NO]) {
+        NSString *numericKey = [self numericKeyEquivalentForGlobalIndex:globalIndex];
+        if (numericKey.length > 0) {
+            item.keyEquivalent = numericKey;
+            item.keyEquivalentModifierMask = 0;
+        }
+    }
+
+    return item;
+}
+
+- (void)configureClipMenuItem:(NSMenuItem *)item clipItem:(RCClipItem *)clipItem loadThumbnail:(BOOL)loadThumbnail {
+    NSString *baseTitle = [self menuBaseTitleForClipItem:clipItem];
+    NSString *numberPrefix = [self menuNumberPrefixForGlobalIndex:(NSUInteger)item.tag];
     BOOL needsTooltip = [self boolPreferenceForKey:kRCShowToolTipOnMenuItemKey defaultValue:YES];
     BOOL showImagePreview = [self boolPreferenceForKey:kRCShowImageInTheMenuKey defaultValue:YES];
     BOOL showColorPreview = [self boolPreferenceForKey:kRCPrefShowColorPreviewInTheMenu defaultValue:YES];
@@ -803,7 +844,7 @@ static os_log_t RCMenuManagerLog(void) {
                     }
                 }
 
-                [self loadThumbnailForClipItem:clipItem
+                if (loadThumbnail) [self loadThumbnailForClipItem:clipItem
                                       cacheKey:thumbnailCacheKey
                               updatingMenuItem:item
                                   numberPrefix:numberPrefix
@@ -820,15 +861,6 @@ static os_log_t RCMenuManagerLog(void) {
         }
     }
 
-    if ([self boolPreferenceForKey:kRCAddNumericKeyEquivalentsKey defaultValue:NO]) {
-        NSString *numericKey = [self numericKeyEquivalentForGlobalIndex:globalIndex];
-        if (numericKey.length > 0) {
-            item.keyEquivalent = numericKey;
-            item.keyEquivalentModifierMask = 0;
-        }
-    }
-
-    return item;
 }
 
 - (NSString *)menuTitleForClipItem:(RCClipItem *)clipItem globalIndex:(NSUInteger)globalIndex {
@@ -1031,10 +1063,6 @@ static os_log_t RCMenuManagerLog(void) {
     return nil;
 }
 
-- (void)prefetchClipDataFallbackForClipItems:(NSArray<RCClipItem *> *)clipItems {
-    [self prefetchClipDataFallbackForClipItems:clipItems completion:nil];
-}
-
 - (nullable RCClipData *)clipDataForPath:(NSString *)dataPath {
     if (dataPath.length == 0) {
         return nil;
@@ -1063,6 +1091,11 @@ static os_log_t RCMenuManagerLog(void) {
     NSInteger maxTooltipLength = MAX(1, [self integerPreferenceForKey:kRCMaxLengthOfToolTipKey defaultValue:10000]);
     NSMutableArray<RCClipItem *> *pendingItems = [NSMutableArray arrayWithCapacity:clipItems.count];
     for (RCClipItem *clipItem in clipItems) {
+        NSString *type = clipItem.primaryType;
+        if (![type isEqualToString:NSPasteboardTypeString] &&
+            ![type isEqualToString:NSPasteboardTypeURL] &&
+            ![type isEqualToString:NSPasteboardTypeRTF] &&
+            ![type isEqualToString:NSPasteboardTypeRTFD]) continue;
         NSString *cacheKey = [self colorPreviewCacheKeyForClipItem:clipItem];
         if (cacheKey.length == 0) {
             continue;
@@ -1079,7 +1112,11 @@ static os_log_t RCMenuManagerLog(void) {
 
     if (pendingItems.count == 0) {
         if (completion != nil) {
-            dispatch_async(dispatch_get_main_queue(), completion);
+            // The same clip may still be loading for an older menu item.
+            // Queue behind that work before updating the new hovered item.
+            dispatch_async(self.clipDataFallbackQueue, ^{
+                dispatch_async(dispatch_get_main_queue(), completion);
+            });
         }
         return;
     }
@@ -1096,48 +1133,50 @@ static os_log_t RCMenuManagerLog(void) {
         }
 
         for (RCClipItem *clipItem in itemsToPrefetch) {
-            NSString *cacheKey = [strongSelf colorPreviewCacheKeyForClipItem:clipItem];
-            if (cacheKey.length == 0) {
-                continue;
-            }
-            if (clipItem.dataPath.length == 0) {
-                [strongSelf.clipDataFallbackPrefetchStateCache setObject:@(kRCClipDataFallbackPrefetchStateDone) forKey:cacheKey];
-                continue;
-            }
-
-            RCClipData *clipData = [strongSelf clipDataForPath:clipItem.dataPath];
-            if (clipData == nil) {
-                [strongSelf.clipDataFallbackPrefetchStateCache setObject:@(kRCClipDataFallbackPrefetchStateDone) forKey:cacheKey];
-                continue;
-            }
-
-            if (needsTooltipFallback) {
-                NSString *tooltip = nil;
-                if (clipData.stringValue.length > 0) {
-                    tooltip = clipData.stringValue;
-                } else if (clipData.URLString.length > 0) {
-                    tooltip = clipData.URLString;
+            @autoreleasepool {
+                NSString *cacheKey = [strongSelf colorPreviewCacheKeyForClipItem:clipItem];
+                if (cacheKey.length == 0) {
+                    continue;
                 }
-                if (tooltip.length > 0) {
-                    NSString *truncatedTooltip = [strongSelf truncatedString:tooltip maxLength:maxTooltipLength];
-                    [strongSelf.clipDataTooltipCache setObject:truncatedTooltip forKey:cacheKey];
+                if (clipItem.dataPath.length == 0) {
+                    [strongSelf.clipDataFallbackPrefetchStateCache setObject:@(kRCClipDataFallbackPrefetchStateDone) forKey:cacheKey];
+                    continue;
                 }
-            }
 
-            if (needsColorFallback && clipData.stringValue.length > 0) {
-                NSColor *payloadColor = [NSColor colorWithColorString:clipData.stringValue];
-                if (payloadColor != nil) {
-                    [strongSelf.clipDataColorStringCache setObject:clipData.stringValue forKey:cacheKey];
-                    [strongSelf cacheColorPreviewEligibility:YES forClipItem:clipItem];
-                } else if (!clipItem.isColorCode) {
-                    BOOL titleLooksLikeColor = [NSColor isPotentialColorStringCandidate:(clipItem.title ?: @"")];
-                    if (!titleLooksLikeColor) {
-                        [strongSelf cacheColorPreviewEligibility:NO forClipItem:clipItem];
+                RCClipData *clipData = [strongSelf clipDataForPath:clipItem.dataPath];
+                if (clipData == nil) {
+                    [strongSelf.clipDataFallbackPrefetchStateCache setObject:@(kRCClipDataFallbackPrefetchStateDone) forKey:cacheKey];
+                    continue;
+                }
+
+                if (needsTooltipFallback) {
+                    NSString *tooltip = nil;
+                    if (clipData.stringValue.length > 0) {
+                        tooltip = clipData.stringValue;
+                    } else if (clipData.URLString.length > 0) {
+                        tooltip = clipData.URLString;
+                    }
+                    if (tooltip.length > 0) {
+                        NSString *truncatedTooltip = [strongSelf truncatedString:tooltip maxLength:maxTooltipLength];
+                        [strongSelf.clipDataTooltipCache setObject:truncatedTooltip forKey:cacheKey];
                     }
                 }
-            }
 
-            [strongSelf.clipDataFallbackPrefetchStateCache setObject:@(kRCClipDataFallbackPrefetchStateDone) forKey:cacheKey];
+                if (needsColorFallback && clipData.stringValue.length > 0) {
+                    NSColor *payloadColor = [NSColor colorWithColorString:clipData.stringValue];
+                    if (payloadColor != nil) {
+                        [strongSelf.clipDataColorStringCache setObject:clipData.stringValue forKey:cacheKey];
+                        [strongSelf cacheColorPreviewEligibility:YES forClipItem:clipItem];
+                    } else if (!clipItem.isColorCode) {
+                        BOOL titleLooksLikeColor = [NSColor isPotentialColorStringCandidate:(clipItem.title ?: @"")];
+                        if (!titleLooksLikeColor) {
+                            [strongSelf cacheColorPreviewEligibility:NO forClipItem:clipItem];
+                        }
+                    }
+                }
+
+                [strongSelf.clipDataFallbackPrefetchStateCache setObject:@(kRCClipDataFallbackPrefetchStateDone) forKey:cacheKey];
+            }
         }
 
         if (completion != nil) {
@@ -1152,44 +1191,6 @@ static os_log_t RCMenuManagerLog(void) {
         return @"";
     }
     return [NSString stringWithFormat:@"%ld|%@", (long)clipItem.itemId, dataPath];
-}
-
-- (void)prefetchThumbnailsForClipItems:(NSArray<RCClipItem *> *)clipItems {
-    if (clipItems.count == 0) {
-        return;
-    }
-
-    BOOL showImagePreview = [self boolPreferenceForKey:kRCShowImageInTheMenuKey defaultValue:YES];
-    if (!showImagePreview) {
-        return;
-    }
-
-    NSArray<RCClipItem *> *itemsToPrefetch = [clipItems copy];
-    NSSize thumbnailSize = [self thumbnailPreviewSize];
-    __weak typeof(self) weakSelf = self;
-    dispatch_async(self.thumbnailGenerationQueue, ^{
-        __strong typeof(weakSelf) strongSelf = weakSelf;
-        if (strongSelf == nil) {
-            return;
-        }
-
-        for (RCClipItem *clipItem in itemsToPrefetch) {
-            if (clipItem.isColorCode || clipItem.thumbnailPath.length == 0) {
-                continue;
-            }
-
-            NSString *cacheKey = [strongSelf thumbnailCacheKeyForClipItem:clipItem];
-            if (cacheKey.length == 0 || [strongSelf.thumbnailCache objectForKey:cacheKey] != nil) {
-                continue;
-            }
-
-            NSImage *resizedImage = [strongSelf resizedThumbnailImageAtPath:clipItem.thumbnailPath
-                                                                  targetSize:thumbnailSize];
-            if (resizedImage != nil) {
-                [strongSelf.thumbnailCache setObject:resizedImage forKey:cacheKey];
-            }
-        }
-    });
 }
 
 - (void)loadThumbnailForClipItem:(RCClipItem *)clipItem

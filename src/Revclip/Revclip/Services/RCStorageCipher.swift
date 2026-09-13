@@ -63,7 +63,7 @@ final class RCStorageCipher: NSObject, @unchecked Sendable {
 #if DEBUG
     @objc(initWithKeyData:)
     init(keyData: NSData) {
-        self.injectedRootKey = Data(keyData)
+        self.injectedRootKey = (keyData as Data)
         super.init()
     }
 #endif
@@ -82,7 +82,7 @@ final class RCStorageCipher: NSObject, @unchecked Sendable {
     class func installEphemeralSharedKeyForTesting(_ keyData: NSData) {
         let cipher = sharedInstance
         cipher.keyLock.lock()
-        cipher.injectedRootKey = Data(keyData)
+        cipher.injectedRootKey = (keyData as Data)
         cipher.cachedRootKey = nil
         cipher.cachedFileKey = nil
         cipher.cachedDatabaseKeyRepresentation = nil
@@ -146,11 +146,11 @@ final class RCStorageCipher: NSObject, @unchecked Sendable {
 
     @objc(encryptData:error:)
     func encrypt(data: NSData, error: NSErrorPointer) -> NSData? {
-        let plaintext = Data(data)
-        guard plaintext.count <= Self.maximumPlaintextLength else {
+        guard data.length <= Self.maximumPlaintextLength else {
             setError(error, code: .tooLarge, message: "The data exceeds the storage size limit.")
             return nil
         }
+        let plaintext = data as Data
         guard let fileKey = fileKey(error: error) else {
             return nil
         }
@@ -182,11 +182,13 @@ final class RCStorageCipher: NSObject, @unchecked Sendable {
 
     @objc(decryptData:error:)
     func decrypt(data: NSData, error: NSErrorPointer) -> NSData? {
-        let envelope = Data(data)
-        guard envelope.count <= Self.maximumEnvelopeLength else {
+        guard data.length <= Self.maximumEnvelopeLength else {
             setError(error, code: .tooLarge, message: "The encrypted data exceeds the storage size limit.")
             return nil
         }
+        // Bridge the contiguous buffer. Data(data) selects Sequence<UInt8>
+        // and performs an expensive NSData subscript operation for every byte.
+        let envelope = data as Data
         guard Self.hasValidEnvelopeHeader(envelope) else {
             setError(error, code: .invalidEnvelope, message: "The storage envelope header is invalid.")
             return nil
@@ -228,7 +230,12 @@ final class RCStorageCipher: NSObject, @unchecked Sendable {
         // Classify by the stable magic prefix only. Decryption still requires
         // the supported versioned header, so a future/unknown version cannot
         // be mistaken for legacy plaintext during migration.
-        hasEnvelopeMagicPrefix(Data(data))
+        guard data.length >= envelopeMagicPrefix.count else { return false }
+        var prefix = Data(count: envelopeMagicPrefix.count)
+        prefix.withUnsafeMutableBytes { bytes in
+            data.getBytes(bytes.baseAddress!, range: NSRange(location: 0, length: bytes.count))
+        }
+        return prefix == envelopeMagicPrefix
     }
 
     @objc(readDataAtPath:allowPlaintext:error:)
@@ -260,7 +267,7 @@ final class RCStorageCipher: NSObject, @unchecked Sendable {
         guard let encrypted = encrypt(data: data, error: error) else {
             return false
         }
-        guard let verified = decrypt(data: encrypted, error: error), verified as Data == Data(data) else {
+        guard let verified = decrypt(data: encrypted, error: error), verified as Data == (data as Data) else {
             if error?.pointee == nil {
                 setError(error, code: .authenticationFailed, message: "The encrypted payload failed verification.")
             }

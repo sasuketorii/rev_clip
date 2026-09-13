@@ -3,6 +3,25 @@ import XCTest
 
 @testable import Revclip
 
+final class RCCountingData: NSData {
+    let backing: NSData
+    var enumerations = 0
+    var requestedBytes = 0
+    init(_ data: Data) { backing = data as NSData; super.init() }
+    required init?(coder: NSCoder) { fatalError() }
+    override var length: Int { backing.length }
+    override var bytes: UnsafeRawPointer { backing.bytes }
+    override func copy(with zone: NSZone? = nil) -> Any { self }
+    override func getBytes(_ buffer: UnsafeMutableRawPointer, range: NSRange) {
+        requestedBytes += range.length
+        backing.getBytes(buffer, range: range)
+    }
+    override func enumerateBytes(_ block: (UnsafeRawPointer, NSRange, UnsafeMutablePointer<ObjCBool>) -> Void) {
+        enumerations += 1
+        backing.enumerateBytes(block)
+    }
+}
+
 final class RCStorageCipherTests: XCTestCase {
     private var cipher: RCStorageCipher!
     private var directoryURL: URL!
@@ -52,6 +71,25 @@ final class RCStorageCipherTests: XCTestCase {
         error = nil
         XCTAssertNil(wrongCipher.decrypt(data: encrypted as NSData, error: &error))
         XCTAssertNotNil(error)
+    }
+
+    func testLargePayloadUsesBulkBytesAndHeaderClassificationIsBounded() throws {
+        let plaintext = Data(repeating: 0x42, count: 1024 * 1024)
+        let input = RCCountingData(plaintext)
+        var error: NSError?
+        let encrypted = try XCTUnwrap(cipher.encrypt(data: input, error: &error) as Data?)
+        XCTAssertNil(error)
+        // Detect the per-byte NSData Sequence path without a timing threshold.
+        XCTAssertLessThanOrEqual(input.enumerations, 1)
+
+        let envelope = RCCountingData(encrypted)
+        XCTAssertTrue(RCStorageCipher.isEncryptedData(envelope))
+        XCTAssertEqual(envelope.requestedBytes, 5)
+        XCTAssertEqual(envelope.enumerations, 0)
+        let decrypted = try XCTUnwrap(cipher.decrypt(data: envelope, error: &error) as Data?)
+        XCTAssertEqual(decrypted, plaintext)
+        XCTAssertNil(error)
+        XCTAssertLessThanOrEqual(envelope.enumerations, 1)
     }
 
     func testEnvelopeHeaderAndTruncationAreRejected() throws {
