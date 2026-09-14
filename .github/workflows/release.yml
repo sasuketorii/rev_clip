@@ -229,6 +229,20 @@ jobs:
           # Verify
           codesign --verify --deep --strict "${APP_PATH}"
 
+      - name: Install pinned Rilmazafone
+        run: |
+          set -euo pipefail
+          INSTALLER="${RUNNER_TEMP}/Rilmazafone-2.6.dmg"
+          MOUNT="${RUNNER_TEMP}/rilmazafone-mount"
+          curl -fsSL "https://github.com/kageroumado/rilmazafone/releases/download/v2.6/Rilmazafone-2.6.dmg" -o "${INSTALLER}"
+          echo "adcc38f60149256df5194b7619295246f9fe85bebe919dd9896e0c1fd999daaa  ${INSTALLER}" | shasum -a 256 -c -
+          hdiutil attach -readonly -nobrowse -mountpoint "${MOUNT}" "${INSTALLER}"
+          trap 'hdiutil detach "${MOUNT}" -quiet' EXIT
+          codesign --verify --deep --strict "${MOUNT}/Rilmazafone.app"
+          spctl --assess --type execute "${MOUNT}/Rilmazafone.app"
+          ditto "${MOUNT}/Rilmazafone.app" "${RUNNER_TEMP}/Rilmazafone.app"
+          echo "RILMAZAFONE_APP=${RUNNER_TEMP}/Rilmazafone.app" >> "${GITHUB_ENV}"
+
       - name: Package DMG
         run: |
           set -euo pipefail
@@ -238,18 +252,7 @@ jobs:
           fi
 
           DMG_PATH="${RELEASE_DIR}/Revclip-${GITHUB_REF_NAME}.dmg"
-          STAGING_DIR="${RUNNER_TEMP}/dmg-staging"
-          rm -rf "${STAGING_DIR}"
-          mkdir -p "${STAGING_DIR}"
-          ditto "${APP_PATH}" "${STAGING_DIR}/Revclip.app"
-          ln -s /Applications "${STAGING_DIR}/Applications"
-
-          hdiutil create \
-            -volname "Revclip" \
-            -srcfolder "${STAGING_DIR}" \
-            -format UDZO \
-            -ov \
-            "${DMG_PATH}"
+          bash "${PROJECT_DIR}/Scripts/create_dmg.sh" "${APP_PATH}" "${DMG_PATH}"
 
           echo "DMG_PATH=${DMG_PATH}" >> "${GITHUB_ENV}"
 

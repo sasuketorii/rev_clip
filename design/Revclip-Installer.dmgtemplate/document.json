@@ -1,0 +1,209 @@
+{
+  "background": {
+    "color": {
+      "blue": 0.40511250495910645,
+      "green": 0.350658118724823,
+      "red": 0.9933544993400574
+    },
+    "gradient": {
+      "angle": 180,
+      "centerX": 0.5,
+      "centerY": 0.5,
+      "endRadius": 0.5,
+      "startRadius": 0,
+      "stops": [
+        {
+          "color": {
+            "blue": 0.9,
+            "green": 0.5,
+            "red": 0.3
+          },
+          "id": "DB69255E-342D-4040-BD82-53ADFB744672",
+          "location": 0
+        },
+        {
+          "color": {
+            "blue": 0.6,
+            "green": 0.4,
+            "red": 0.9
+          },
+          "id": "7E07E03E-E4A3-4153-98C2-94FF0009287F",
+          "location": 1
+        }
+      ],
+      "type": "linear"
+    },
+    "grain": {
+      "amount": 0.05326412671232877,
+      "enabled": true,
+      "isColored": false,
+      "size": 0.5
+    },
+    "layers": [
+      {
+        "blurRadius": 0,
+        "id": "2328A77A-1405-4E2D-9A46-9FDC0B4010FD",
+        "imageName": "bg-2328A77A-1405-4E2D-9A46-9FDC0B4010FD.png",
+        "label": "revclip_install_white.png",
+        "position": [
+          330,
+          200
+        ],
+        "scale": 1
+      },
+      {
+        "blurRadius": 0,
+        "id": "E0109564-D42D-4097-B23F-40723B175EF6",
+        "imageName": "bg-E0109564-D42D-4097-B23F-40723B175EF6.png",
+        "label": "_white.png",
+        "position": [
+          330,
+          200
+        ],
+        "scale": 1
+      },
+      {
+        "blurRadius": 0,
+        "id": "B87D4624-7243-40F5-9E08-0572754B3B8C",
+        "imageName": "bg-B87D4624-7243-40F5-9E08-0572754B3B8C.png",
+        "label": "revclip_install_white.png",
+        "position": [
+          330,
+          200
+        ],
+        "scale": 1
+      }
+    ],
+    "mesh": {
+      "columns": 3,
+      "points": [
+        {
+          "color": {
+            "blue": 0.44,
+            "green": 0.11,
+            "red": 0.24
+          },
+          "id": "22FD6454-80D2-45FD-9100-09C501E9D640"
+        },
+        {
+          "color": {
+            "blue": 0.6,
+            "green": 0.16,
+            "red": 0.42
+          },
+          "id": "0E641028-EFC7-41AC-8E44-512A6718A761"
+        },
+        {
+          "color": {
+            "blue": 0.62,
+            "green": 0.22,
+            "red": 0.62
+          },
+          "id": "E3DC0780-95B0-4A7D-B1A1-5E7D649E7AE0"
+        },
+        {
+          "color": {
+            "blue": 0.66,
+            "green": 0.2,
+            "red": 0.44
+          },
+          "id": "F9811D1E-9B34-47D3-8C0C-FCDAFD6E37D8"
+        },
+        {
+          "color": {
+            "blue": 0.62,
+            "green": 0.35,
+            "red": 0.79
+          },
+          "id": "89B93DA2-4530-4339-ADB6-613A3A171DD3"
+        },
+        {
+          "color": {
+            "blue": 0.52,
+            "green": 0.48,
+            "red": 0.95
+          },
+          "id": "B4C5F746-A11C-4990-AA30-3FBED252DC0D"
+        },
+        {
+          "color": {
+            "blue": 0.6,
+            "green": 0.3,
+            "red": 0.7
+          },
+          "id": "155297A9-22F9-4F6D-88FE-ABDCCAA41A78"
+        },
+        {
+          "color": {
+            "blue": 0.45,
+            "green": 0.55,
+            "red": 0.96
+          },
+          "id": "CED6DC00-75C2-472D-9C2D-089E35F0A4D0"
+        },
+        {
+          "color": {
+            "blue": 0.44,
+            "green": 0.76,
+            "red": 0.99
+          },
+          "id": "DDEB85E5-B58A-4EF0-8DFA-D1ACD66D7CF0"
+        }
+      ],
+      "rows": 3,
+      "smoothsColors": true
+    },
+    "type": "image"
+  },
+  "codeSign": {
+    "enabled": true,
+    "identity": "Developer ID Application"
+  },
+  "dmgFormat": "ULFO",
+  "filesystem": "APFS",
+  "gridSpacing": 100,
+  "hideExtensions": true,
+  "iconSize": 96,
+  "isGridSpacingAuto": true,
+  "items": [
+    {
+      "id": "00CA6166-FCAD-47D0-86CB-B7089C485D3D",
+      "isPlaceholder": false,
+      "kind": "app",
+      "label": "Revclip.app",
+      "linkType": "copy",
+      "position": [
+        197,
+        188
+      ],
+      "sourcePath": ""
+    },
+    {
+      "id": "A2981C97-779A-47F7-A17F-D33797E759CF",
+      "isPlaceholder": false,
+      "kind": "applicationsSymlink",
+      "label": "Applications",
+      "linkType": "copy",
+      "position": [
+        463,
+        188
+      ]
+    }
+  ],
+  "sfSymbolLayers": [],
+  "textLayers": [],
+  "textSize": 13,
+  "version": 1,
+  "volumeIcon": {
+    "type": "composed"
+  },
+  "volumeName": "Revclip",
+  "window": {
+    "height": 400,
+    "width": 660
+  },
+  "windowPosition": {
+    "x": 200,
+    "y": 120
+  }
+}

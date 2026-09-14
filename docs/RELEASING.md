@@ -53,6 +53,12 @@ gh run watch RUN_ID --exit-status
 
 成功後、GitHub ReleasesのDMGをダウンロードし、アプリの更新確認まで検証します。証明書・Appleの認証情報を失効または更新した場合は対応するSecretsも更新してください。Sparkle鍵の変更は既存ユーザーの更新検証に影響するため、通常のリリースで作り直さないでください。
 
+## インストーラのデザイン
+
+0.0.31から `design/Revclip-Installer.dmgtemplate` を使用します。Rilmazafone 2.6で編集し、背景・位置・粒子感をまとめて保存します。詳細は `design/README.md` を参照してください。
+
+ローカルとReleaseワークフローは同じ `src/Revclip/Scripts/create_dmg.sh` を使います。アプリは引数で渡し、テンプレートの一時コピーへ設定されます。CIはSHA-256を固定したRilmazafoneを取得し、Apple署名を検証します。
+
 ## 旧版からの移行
 
 旧版が参照する公開gistには、v0.0.25の署名付きappcastを残しています。旧版はこのDMGで新しい更新先へ移り、以後はこのリポジトリのFeedを使用します。この互換用gistとv0.0.25のリリース資産は削除しないでください。今後の通常リリースで旧リポジトリを更新する必要はありません。
