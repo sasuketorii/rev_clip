@@ -7,3 +7,5 @@ Open the template in Rilmazafone to edit it. The tracked template deliberately l
 The release workflow downloads the pinned GitHub edition and verifies its SHA-256 and Apple signature. Both local and CI packaging use this template. Background assets are embedded; keep the complete package when saving or copying it.
 
 Finder users who enable hidden files can see the background folder and volume icon below the design. This is expected Finder behavior; the approved design is preserved.
+
+The generated thumbnail is not tracked because it can retain an older application icon. Rilmazafone regenerates it when the template is saved with a selected app. App and volume icons are obtained from the app being packaged.
