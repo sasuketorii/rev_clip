@@ -351,7 +351,7 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
     [NSLayoutConstraint activateConstraints:@[
         [self.brandFooter.leadingAnchor constraintEqualToAnchor:sidebarBackground.leadingAnchor constant:20],
         [self.brandFooter.bottomAnchor constraintEqualToAnchor:sidebarBackground.bottomAnchor constant:-20],
-        [self.brandFooter.widthAnchor constraintLessThanOrEqualToAnchor:sidebarBackground.widthAnchor constant:-40],
+        [self.brandFooter.widthAnchor constraintLessThanOrEqualToAnchor:sidebarBackground.widthAnchor multiplier:2.0 / 3.0 constant:-40.0 * 2.0 / 3.0],
         [self.brandFooter.heightAnchor constraintLessThanOrEqualToConstant:20.0 * 2.0 / 3.0],
         [self.brandFooter.widthAnchor constraintEqualToAnchor:self.brandFooter.heightAnchor multiplier:footerAspect],
         footerWidth,

@@ -390,7 +390,7 @@
         XCTAssertEqualWithAccuracy(NSMinY(footer.frame), 20, 0.5);
         XCTAssertGreaterThan(NSHeight(footer.frame), 0);
         XCTAssertLessThanOrEqual(NSHeight(footer.frame), 20.0 * 2.0 / 3.0 + 0.5);
-        XCTAssertLessThanOrEqual(NSWidth(footer.frame), NSWidth(footer.superview.bounds) - 39.5);
+        XCTAssertLessThanOrEqual(NSWidth(footer.frame), (NSWidth(footer.superview.bounds) - 40) * 2.0 / 3.0 + 0.5);
         XCTAssertEqual(footer.imageScaling, NSImageScaleProportionallyUpOrDown);
         XCTAssertEqualWithAccuracy(footer.image.size.width / footer.image.size.height, 2089.0 / 200.0, 0.001);
         // The view frame is pixel-aligned; proportional image scaling preserves artwork aspect.
