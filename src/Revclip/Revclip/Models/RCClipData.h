@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // クリップボードのタイプ別データ
 @property (nonatomic, copy, nullable) NSString *stringValue;            // NSPasteboardTypeString
+@property (nonatomic, copy, nullable) NSData *HTMLData;
 @property (nonatomic, copy, nullable) NSData *RTFData;                   // NSPasteboardTypeRTF
 @property (nonatomic, copy, nullable) NSData *RTFDData;                  // NSPasteboardTypeRTFD
 @property (nonatomic, copy, nullable) NSData *PDFData;                   // NSPasteboardTypePDF

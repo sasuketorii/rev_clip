@@ -53,3 +53,15 @@ In `revclip-demo`, **Add Media…** beneath the template content attaches a stil
 Each image is limited to 10 MB, 16 megapixels, and 8192 pixels per side. Animated images are not supported. Image exports use snippet format version 2 and include the image bytes; text-only exports retain version 1. Imports accept both versions. The total import/export file limit remains 50 MB.
 
 Image templates also show an aspect-preserving hover preview directly beneath the submenu. Its panel stays within the submenu width and is capped at 360 points high. Demo builds use `DEMO_CODE_SIGN_IDENTITY` (default `Apple Development`) so normal rebuilds retain a stable signing identity for macOS Accessibility permissions.
+
+### HTML clipboard history
+
+The Types settings include HTML (formatting and design clipboard data). HTML is
+saved verbatim in the encrypted history archive and restored with the other
+representations, including after an intervening copy. This retains embedded
+design payloads without parsing or rendering HTML. Capture is capped at 32 MiB
+and remains subject to the configured archive size limit and excluded-app /
+concealed-clipboard protections. Disabling HTML removes that representation
+from newly captured entries. Existing history is unchanged; entries captured
+before HTML support must be copied again. Browser-internal source tokens are
+not persisted, and this does not promise support for arbitrary private formats.

@@ -7,3 +7,5 @@
 "k8p-Pw-N0g.title" = "File Names (NSFilenamesPboardType)";
 "z3J-YL-9kD.title" = "URL (NSPasteboardTypeURL)";
 "fY2-kC-G4L.title" = "Images (TIFF) (NSPasteboardTypeTIFF)";
+
+"html-cell.title" = "HTML (formatting and design clipboard data)";

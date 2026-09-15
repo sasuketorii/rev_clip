@@ -317,6 +317,8 @@ static os_log_t RCClipboardServiceLog(void) {
         if ([blockedTypes containsObject:type]) { return nil; }
     }
     RCClipData *clip = [RCClipData clipDataFromPasteboard:pasteboard];
+    NSDictionary *types = [[NSUserDefaults standardUserDefaults] dictionaryForKey:kRCPrefStoreTypesKey];
+    if (![self isStoreTypeEnabledForKey:@"HTML" inStoreTypes:types]) { clip.HTMLData = nil; }
     // Another application may change the pasteboard while a data provider is fulfilling a read.
     return pasteboard.changeCount == changeCount ? clip : nil;
 }
@@ -441,7 +443,8 @@ static os_log_t RCClipboardServiceLog(void) {
 #pragma mark - Private: Filtering
 
 - (BOOL)hasClipContent:(RCClipData *)clipData {
-    return (clipData.stringValue.length > 0
+    return (clipData.HTMLData.length > 0
+            || clipData.stringValue.length > 0
             || clipData.RTFData.length > 0
             || clipData.RTFDData.length > 0
             || clipData.PDFData.length > 0
@@ -460,6 +463,10 @@ static os_log_t RCClipboardServiceLog(void) {
     BOOL hasSupportedType = NO;
     BOOL hasEnabledType = NO;
 
+    if (clipData.HTMLData.length > 0) {
+        hasSupportedType = YES;
+        hasEnabledType = [self isStoreTypeEnabledForKey:@"HTML" inStoreTypes:storeTypes];
+    }
     BOOL hasString = (clipData.stringValue.length > 0);
     if (hasString) {
         hasSupportedType = YES;

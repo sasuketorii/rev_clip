@@ -7,3 +7,5 @@
 "k8p-Pw-N0g.title" = "ファイル名 (NSFilenamesPboardType)";
 "z3J-YL-9kD.title" = "URL (NSPasteboardTypeURL)";
 "fY2-kC-G4L.title" = "画像 (TIFF) (NSPasteboardTypeTIFF)";
+
+"html-cell.title" = "HTML（書式・デザインのコピー情報）";

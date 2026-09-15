@@ -76,6 +76,13 @@ static os_log_t RCClipDataLog(void) {
         setPrimaryTypeIfNeeded(NSPasteboardTypeString);
     }
 
+    NSData *HTMLData = [pasteboard dataForType:NSPasteboardTypeHTML];
+    // Retain markup verbatim; application payloads may be embedded in HTML comments.
+    if (HTMLData.length > 0 && HTMLData.length <= 32 * 1024 * 1024) {
+        clipData.HTMLData = HTMLData;
+        setPrimaryTypeIfNeeded(NSPasteboardTypeHTML);
+    }
+
     NSData *RTFData = [pasteboard dataForType:NSPasteboardTypeRTF];
     if (RTFData != nil) {
         clipData.RTFData = RTFData;
@@ -165,6 +172,10 @@ static os_log_t RCClipDataLog(void) {
     // Include primaryType in hash to differentiate items with identical data but different primary types
     didUpdate = [[self class] updateHashContext:&context withString:self.primaryType] || didUpdate;
 
+    if (self.HTMLData.length > 0) {
+        [[self class] updateHashContext:&context withString:@"public.html"];
+        didUpdate = [[self class] updateHashContext:&context withData:self.HTMLData] || didUpdate;
+    }
     if (!didUpdate) {
         return @"";
     }
@@ -205,7 +216,7 @@ static os_log_t RCClipDataLog(void) {
         return RCLocalizedString(@"(Image)", @"Title for image-only clipboard data");
     }
 
-    return @"";
+    return self.HTMLData.length > 0 ? @"(HTML)" : @"";
 }
 
 #pragma mark - Equality
@@ -249,6 +260,10 @@ static os_log_t RCClipDataLog(void) {
     if (self.stringValue != nil) {
         didAttemptWrite = YES;
         didWriteAny = [pasteboard setString:self.stringValue forType:NSPasteboardTypeString] || didWriteAny;
+    }
+    if (self.HTMLData != nil) {
+        didAttemptWrite = YES;
+        didWriteAny = [pasteboard setData:self.HTMLData forType:NSPasteboardTypeHTML] || didWriteAny;
     }
     if (self.RTFData != nil) {
         didAttemptWrite = YES;
@@ -297,6 +312,7 @@ static os_log_t RCClipDataLog(void) {
 }
 
 - (void)encodeWithCoder:(NSCoder *)coder {
+    [coder encodeObject:self.HTMLData forKey:@"HTMLData"];
     [coder encodeObject:self.stringValue forKey:kRCClipDataStringValueKey];
     [coder encodeObject:self.RTFData forKey:kRCClipDataRTFDataKey];
     [coder encodeObject:self.RTFDData forKey:kRCClipDataRTFDDataKey];
@@ -314,6 +330,10 @@ static os_log_t RCClipDataLog(void) {
         NSSet<Class> *stringArrayClasses = [NSSet setWithArray:@[[NSArray class], [NSString class]]];
         NSSet<Class> *urlArrayClasses = [NSSet setWithArray:@[[NSArray class], [NSURL class]]];
 
+        if ([coder containsValueForKey:@"HTMLData"]) {
+            self.HTMLData = [coder decodeObjectOfClass:[NSData class] forKey:@"HTMLData"];
+            if (self.HTMLData.length > 32 * 1024 * 1024) { return nil; }
+        }
         self.stringValue = [coder decodeObjectOfClass:[NSString class] forKey:kRCClipDataStringValueKey];
         self.RTFData = [coder decodeObjectOfClass:[NSData class] forKey:kRCClipDataRTFDataKey];
         self.RTFDData = [coder decodeObjectOfClass:[NSData class] forKey:kRCClipDataRTFDDataKey];

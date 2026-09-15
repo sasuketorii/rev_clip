@@ -20,6 +20,7 @@ static NSString * const kRCStoreTypeTIFF = @"TIFF";
 
 @interface RCTypePreferencesViewController ()
 
+@property (nonatomic, weak) IBOutlet NSButton *htmlCheckbox;
 @property (nonatomic, weak) IBOutlet NSButton *plainTextCheckbox;
 @property (nonatomic, weak) IBOutlet NSButton *richTextCheckbox;
 @property (nonatomic, weak) IBOutlet NSButton *richTextWithAttachmentsCheckbox;
@@ -37,6 +38,7 @@ static NSString * const kRCStoreTypeTIFF = @"TIFF";
     [RCLocalization localizeView:self.view table:@"RCTypePreferencesView"];
 
     NSDictionary<NSString *, id> *storeTypes = [[NSUserDefaults standardUserDefaults] dictionaryForKey:kRCPrefStoreTypesKey];
+    [self setCheckbox:self.htmlCheckbox enabled:[self isStoreTypeEnabledForKey:@"HTML" inStoreTypes:storeTypes]];
     [self setCheckbox:self.plainTextCheckbox enabled:[self isStoreTypeEnabledForKey:kRCStoreTypeString inStoreTypes:storeTypes]];
     [self setCheckbox:self.richTextCheckbox enabled:[self isStoreTypeEnabledForKey:kRCStoreTypeRTF inStoreTypes:storeTypes]];
     [self setCheckbox:self.richTextWithAttachmentsCheckbox enabled:[self isStoreTypeEnabledForKey:kRCStoreTypeRTFD inStoreTypes:storeTypes]];
@@ -50,6 +52,7 @@ static NSString * const kRCStoreTypeTIFF = @"TIFF";
     (void)sender;
 
     NSDictionary<NSString *, NSNumber *> *storeTypes = @{
+        @"HTML": @([self isCheckboxEnabled:self.htmlCheckbox]),
         kRCStoreTypeString: @([self isCheckboxEnabled:self.plainTextCheckbox]),
         kRCStoreTypeRTF: @([self isCheckboxEnabled:self.richTextCheckbox]),
         kRCStoreTypeRTFD: @([self isCheckboxEnabled:self.richTextWithAttachmentsCheckbox]),

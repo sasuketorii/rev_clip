@@ -15,12 +15,13 @@
                 <outlet property="pdfCheckbox" destination="gAq-6E-Z6f" id="a6j-8E-VXK"/>
                 <outlet property="filenamesCheckbox" destination="p7B-J5-AyW" id="V5Y-Jd-fWg"/>
                 <outlet property="urlCheckbox" destination="ZxV-hR-YSk" id="8wA-4g-vV1"/>
+                <outlet property="htmlCheckbox" destination="html-button" id="html-outlet"/>
                 <outlet property="imagesTiffCheckbox" destination="v1S-Qe-zWu" id="x6G-Wi-V0m"/>
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customView id="gM5-Ve-oPY">
-            <rect key="frame" x="0.0" y="0.0" width="700" height="280"/>
+            <rect key="frame" x="0.0" y="0.0" width="700" height="310"/>
             <autoresizingMask key="autoresizingMask"/>
             <subviews>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="sJ4-a6-YEq" identifier="7yw-t6-KP3" bezeled="NO" drawsBackground="NO" editable="NO" selectable="NO">
@@ -109,10 +110,20 @@
                         <action selector="storeTypeCheckboxDidChange:" target="-2" id="pM8-L2-BxQ"/>
                     </connections>
                 </button>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="html-button" identifier="html-cell">
+                    <rect key="frame" x="20" y="36" width="205" height="18"/>
+                    <buttonCell key="cell" type="check" title="HTML（書式・デザインのコピー情報）" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="html-cell">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="storeTypeCheckboxDidChange:" target="-2" id="html-action"/>
+                    </connections>
+                </button>
             </subviews>
             <constraints>
                 <constraint firstAttribute="width" constant="700" id="xKu-Ng-xmy"/>
-                <constraint firstAttribute="height" constant="280" id="SK8-QQ-GbM"/>
+                <constraint firstAttribute="height" constant="310" id="SK8-QQ-GbM"/>
                 <constraint firstItem="sJ4-a6-YEq" firstAttribute="top" secondItem="gM5-Ve-oPY" secondAttribute="top" constant="20" id="4b3-Vf-SnK"/>
                 <constraint firstItem="sJ4-a6-YEq" firstAttribute="leading" secondItem="gM5-Ve-oPY" secondAttribute="leading" constant="20" id="Pq9-zf-g5Q"/>
                 <constraint firstItem="g2N-9m-WPN" firstAttribute="top" secondItem="sJ4-a6-YEq" secondAttribute="bottom" constant="8" id="t9H-v6-TkB"/>
@@ -132,6 +143,8 @@
                 <constraint firstItem="ZxV-hR-YSk" firstAttribute="leading" secondItem="gM5-Ve-oPY" secondAttribute="leading" constant="20" id="1kJ-0M-NUr"/>
                 <constraint firstItem="v1S-Qe-zWu" firstAttribute="top" secondItem="ZxV-hR-YSk" secondAttribute="bottom" constant="8" id="mD5-rN-W0J"/>
                 <constraint firstItem="v1S-Qe-zWu" firstAttribute="leading" secondItem="gM5-Ve-oPY" secondAttribute="leading" constant="20" id="vY5-sB-v9X"/>
+                <constraint firstItem="html-button" firstAttribute="top" secondItem="v1S-Qe-zWu" secondAttribute="bottom" constant="8" id="html-top"/>
+                <constraint firstItem="html-button" firstAttribute="leading" secondItem="gM5-Ve-oPY" secondAttribute="leading" constant="20" id="html-leading"/>
             </constraints>
             <point key="canvasLocation" x="118" y="178"/>
         </customView>
