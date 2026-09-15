@@ -7,7 +7,7 @@
   <p>A native macOS clipboard manager. Local history. Reusable templates. Yours to customize.</p>
 
   <a href="https://github.com/sasuketorii/rev_clip_public/releases/latest"><img src="https://img.shields.io/github/v/release/sasuketorii/rev_clip?color=007aff" alt="Latest release" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-34c759" alt="MIT License" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Proprietary-555" alt="Private development license" /></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-111827?logo=apple&amp;logoColor=white" alt="macOS 14 or later" />
   <img src="https://img.shields.io/badge/UI-AppKit%20%2B%20SwiftUI-007aff" alt="AppKit and SwiftUI" />
   <img src="https://img.shields.io/badge/runtime_dependencies-3-5856d6" alt="3 direct third-party runtime dependencies" />
@@ -104,7 +104,7 @@ This count excludes macOS system frameworks, Sparkle's internal components, and 
 
 ## Make the UI yours
 
-Menu density, preview spacing, editor layout, icons—change the parts you use every day. The **MIT license** permits modification, redistribution, and commercial use. Keep the copyright and license notices.
+Menu density, preview spacing, editor layout, icons—change the parts you use every day. The public code through v0.0.32 remains MIT-licensed. See LICENSE for the current private development contributions.
 
 | What to change | Where to start |
 | --- | --- |

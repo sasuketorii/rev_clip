@@ -7,7 +7,7 @@
   <p>A native macOS clipboard manager. Local history. Reusable snippets. Yours to customize.</p>
 
   <a href="https://github.com/sasuketorii/rev_clip_public/releases/latest"><img src="https://img.shields.io/github/v/release/sasuketorii/rev_clip?color=007aff" alt="Latest release" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-34c759" alt="MIT License" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Proprietary-555" alt="Private development license" /></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-111827?logo=apple&amp;logoColor=white" alt="macOS 14 or later" />
   <img src="https://img.shields.io/badge/UI-AppKit%20%2B%20SwiftUI-007aff" alt="AppKit and SwiftUI" />
   <img src="https://img.shields.io/badge/runtime_dependencies-3-5856d6" alt="3 direct third-party runtime dependencies" />
@@ -108,7 +108,7 @@ open src/Revclip/Revclip.xcodeproj
 
 ## あなたのUIで使ってください
 
-メニューの情報量、プレビューの余白、エディタのレイアウト、アイコン。毎日使う道具だから、自分の好みに合わせて構いません。**MITライセンス**で、改変・再配布・商用利用ができます。著作権表示とライセンス文を保持してください。
+メニューの情報量、プレビューの余白、エディタのレイアウト、アイコン。毎日使う道具だから、自分の好みに合わせて構いません。公開版 v0.0.32 までのコードはMITライセンスです。現在の非公開開発部分については LICENSE を参照してください。
 
 | 変えたいところ | 入り口 |
 | --- | --- |
