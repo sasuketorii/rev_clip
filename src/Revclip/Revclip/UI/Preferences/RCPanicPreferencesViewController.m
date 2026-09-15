@@ -65,7 +65,14 @@
     self.eraseButton.translatesAutoresizingMaskIntoConstraints = NO;
     self.eraseButton.bezelStyle = NSBezelStyleRegularSquare;
     self.eraseButton.font = [NSFont systemFontOfSize:13.0 weight:NSFontWeightMedium];
-    self.eraseButton.contentTintColor = [NSColor systemRedColor];
+    self.eraseButton.bordered = NO;
+    self.eraseButton.wantsLayer = YES;
+    self.eraseButton.layer.backgroundColor = [NSColor colorWithSRGBRed:1.0 green:0.0 blue:94.0 / 255.0 alpha:1.0].CGColor;
+    self.eraseButton.layer.cornerRadius = 18.0;
+    self.eraseButton.contentTintColor = NSColor.whiteColor;
+    self.eraseButton.attributedTitle = [[NSAttributedString alloc] initWithString:self.eraseButton.title
+        attributes:@{NSForegroundColorAttributeName: NSColor.whiteColor,
+                     NSFontAttributeName: self.eraseButton.font}];
     self.eraseButton.controlSize = NSControlSizeRegular;
     [container addSubview:self.eraseButton];
 
@@ -105,7 +112,8 @@
         // Erase button
         [self.eraseButton.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:20.0],
         [self.eraseButton.topAnchor constraintEqualToAnchor:self.confirmationTextField.bottomAnchor constant:16.0],
-        [self.eraseButton.widthAnchor constraintGreaterThanOrEqualToConstant:120.0],
+        [self.eraseButton.widthAnchor constraintGreaterThanOrEqualToConstant:MAX(120.0, ceil(self.eraseButton.attributedTitle.size.width) + 32.0)],
+        [self.eraseButton.heightAnchor constraintEqualToConstant:36.0],
         [self.eraseButton.trailingAnchor constraintLessThanOrEqualToAnchor:container.trailingAnchor constant:-20.0],
         [self.eraseButton.bottomAnchor constraintLessThanOrEqualToAnchor:container.bottomAnchor constant:-20.0],
     ]];
