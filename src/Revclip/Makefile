@@ -31,7 +31,7 @@ release:
 		SYMROOT=$(BUILD_DIR) build
 
 demo:
-	xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration Demo \
+	xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration Demo -arch arm64 -arch x86_64 ONLY_ACTIVE_ARCH=NO \
 		SYMROOT=$(DEMO_BUILD_DIR) build
 	codesign --force --deep --timestamp=none --sign "$(DEMO_CODE_SIGN_IDENTITY)" "$(APP_DEMO)"
 	codesign --verify --deep --strict "$(APP_DEMO)"
