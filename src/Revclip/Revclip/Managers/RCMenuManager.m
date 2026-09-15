@@ -50,6 +50,9 @@ static os_log_t RCMenuManagerLog(void) {
 }
 
 @interface RCMenuManager () <NSMenuDelegate>
+@property (nonatomic, strong) NSHashTable<NSMenu *> *trackingMenus;
+@property BOOL pendingMenuRebuild;
+@property (nonatomic, copy) NSDictionary *menuPreferences;
 
 @property (nonatomic, strong, nullable) NSStatusItem *statusItem;
 @property (nonatomic, strong) NSMenu *statusMenu;
@@ -131,6 +134,8 @@ static os_log_t RCMenuManagerLog(void) {
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _trackingMenus = [NSHashTable weakObjectsHashTable];
+        _menuPreferences = [self menuPreferenceSnapshot];
         _previewImageData = [NSMapTable weakToStrongObjectsMapTable];
         _previewURLs = [NSMapTable weakToStrongObjectsMapTable];
         _cacheLock = [NSLock new];
@@ -197,6 +202,7 @@ static os_log_t RCMenuManagerLog(void) {
 
 - (void)setupStatusItem {
     [self performOnMainThread:^{
+        if (self.trackingMenus.count) { self.pendingMenuRebuild = YES; return; }
         [self applyStatusItemPreference];
         [self rebuildMenuInternal];
     }];
@@ -204,6 +210,7 @@ static os_log_t RCMenuManagerLog(void) {
 
 - (void)rebuildMenu {
     [self performOnMainThread:^{
+        if (self.trackingMenus.count) { self.pendingMenuRebuild = YES; return; }
         [self applyStatusItemPreference];
         [self rebuildMenuInternal];
     }];
@@ -216,9 +223,24 @@ static os_log_t RCMenuManagerLog(void) {
     [self rebuildMenu];
 }
 
+- (NSDictionary *)menuPreferenceSnapshot {
+    // Framework/user defaults notifications are not menu configuration changes.
+    NSArray *keys = @[@"RCAppAppearance",kRCAddNumericKeyEquivalentsKey,kRCMaxLengthOfToolTipKey,kRCMenuItemsAreMarkedWithNumbersKey,kRCPrefAddClearHistoryMenuItemKey,kRCPrefMaxHistorySizeKey,kRCPrefMaxMenuItemTitleLengthKey,kRCPrefMenuIconSizeKey,kRCPrefMenuItemsTitleStartWithZeroKey,kRCPrefNumberOfItemsPlaceInlineKey,kRCPrefNumberOfItemsPlaceInsideFolderKey,kRCPrefShowAlertBeforeClearHistoryKey,kRCPrefShowColorPreviewInTheMenu,kRCPrefShowIconInTheMenuKey,kRCPrefShowStatusItemKey,kRCShowImageInTheMenuKey,kRCShowToolTipOnMenuItemKey,kRCThumbnailHeightKey,kRCThumbnailWidthKey];
+    NSMutableDictionary *snapshot = [NSMutableDictionary dictionary];
+    for (NSString *key in keys) snapshot[key] = [NSUserDefaults.standardUserDefaults objectForKey:key] ?: NSNull.null;
+    return snapshot;
+}
+
 - (void)handleUserDefaultsDidChange:(NSNotification *)notification {
     (void)notification;
-
+    if (!NSThread.isMainThread) {
+        dispatch_async(dispatch_get_main_queue(), ^{ [self handleUserDefaultsDidChange:nil]; });
+        return;
+    }
+    NSDictionary *snapshot = [self menuPreferenceSnapshot];
+    os_log_debug(RCMenuManagerLog(), "defaults changed: relevant=%d tracking=%lu", ![snapshot isEqual:self.menuPreferences], (unsigned long)self.trackingMenus.count);
+    if ([snapshot isEqual:self.menuPreferences]) return;
+    self.menuPreferences = snapshot;
     [self clearMenuCaches];
 
     if (self.defaultsChangeDebounceBlock != nil) {
@@ -442,6 +464,7 @@ static os_log_t RCMenuManagerLog(void) {
 #pragma mark - Menu Build
 
 - (void)rebuildMenuInternal {
+    if (self.trackingMenus.count) { self.pendingMenuRebuild = YES; return; }
     [self.previewController hide];
     if (self.statusItem == nil) {
         return;
@@ -665,14 +688,11 @@ static os_log_t RCMenuManagerLog(void) {
             kRCSnippetMenuSnippetIdentifierKey: snippetIdentifier,
         };
         NSImage *snippetImage = [self templateSymbolNamed:@"doc.text"];
-#if RC_DEMO_BUILD
         NSURL *snippetURL = [RCLinkPreviewService URLForText:snippetContent];
         if (snippetURL) {
             [self.previewURLs setObject:snippetURL forKey:snippetItem];
             snippetImage = [[RCLinkPreviewService shared] cachedFaviconForURL:snippetURL] ?: [self templateSymbolNamed:@"link"];
         }
-#endif
-#if RC_DEMO_BUILD
         NSData *mediaData = snippet[@"media_data"];
         NSColor *snippetColor = [NSColor colorWithColorString:snippetContent];
         if (snippetColor != nil) {
@@ -690,7 +710,6 @@ static os_log_t RCMenuManagerLog(void) {
             }
             snippetImage = preview ?: snippetImage;
         }
-#endif
         [self applyNativeAppearanceToMenuItem:snippetItem
                                 title:snippetTitle
                                number:nil
@@ -816,7 +835,13 @@ static os_log_t RCMenuManagerLog(void) {
 }
 
 - (void)menuDidClose:(NSMenu *)menu {
+    [self.trackingMenus removeObject:menu];
+    os_log_debug(RCMenuManagerLog(), "menu closed; tracking=%lu pending=%d", (unsigned long)self.trackingMenus.count, self.pendingMenuRebuild);
     [self.previewController hide];
+    if (!self.trackingMenus.count && self.pendingMenuRebuild) {
+        self.pendingMenuRebuild = NO;
+        dispatch_async(dispatch_get_main_queue(), ^{ [self setupStatusItem]; });
+    }
 }
 
 - (NSString *)previewTextForMenuItem:(NSMenuItem *)item {
@@ -824,6 +849,8 @@ static os_log_t RCMenuManagerLog(void) {
 }
 
 - (void)menuWillOpen:(NSMenu *)menu {
+    [self.trackingMenus addObject:menu];
+    os_log_debug(RCMenuManagerLog(), "menu opened; tracking=%lu", (unsigned long)self.trackingMenus.count);
     [self.previewController hide];
     if (menu.supermenu == nil) {
         [self capturePasteTargetApplication];
@@ -832,9 +859,7 @@ static os_log_t RCMenuManagerLog(void) {
     // Only the opened menu's direct children need thumbnails. Closed history
     // folders and startup menu construction perform no payload/thumbnail I/O.
     for (NSMenuItem *item in menu.itemArray) {
-#if RC_DEMO_BUILD
         [self loadFaviconForMenuItem:item];
-#endif
         RCClipItem *clipItem = [self.clipItemsByMenuItem objectForKey:item];
         if (clipItem != nil) {
             [self configureClipMenuItem:item clipItem:clipItem loadThumbnail:YES];
@@ -1514,7 +1539,6 @@ static os_log_t RCMenuManagerLog(void) {
         return;
     }
 
-#if RC_DEMO_BUILD
     for (NSDictionary *snippet in [[RCDatabaseManager shared] fetchSnippetsForFolder:folderIdentifier]) {
         if ([snippet[@"identifier"] isEqual:snippetIdentifier] && [snippet[@"media_data"] length] > 0) {
             NSData *tiff = [RCSnippetMedia pasteboardTIFFForData:snippet[@"media_data"]];
@@ -1527,7 +1551,6 @@ static os_log_t RCMenuManagerLog(void) {
             return;
         }
     }
-#endif
     NSString *content = [self snippetContentForFolderIdentifier:folderIdentifier snippetIdentifier:snippetIdentifier];
     if (content.length == 0) {
         return;

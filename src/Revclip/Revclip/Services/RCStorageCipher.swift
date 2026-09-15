@@ -60,7 +60,7 @@ final class RCStorageCipher: NSObject, @unchecked Sendable {
 
     /// Test-only constructor. Production callers must use `shared` and the
     /// Keychain-backed preparation method.
-#if DEBUG
+#if DEBUG || RC_TESTING
     @objc(initWithKeyData:)
     init(keyData: NSData) {
         self.injectedRootKey = (keyData as Data)
@@ -77,7 +77,7 @@ final class RCStorageCipher: NSObject, @unchecked Sendable {
 
     /// Install an in-memory key for the existing XCTest host. This is compiled
     /// only for Debug builds and never reads or writes the user's Keychain.
-#if DEBUG
+#if DEBUG || RC_TESTING
     @objc(installEphemeralSharedKeyForTesting:)
     class func installEphemeralSharedKeyForTesting(_ keyData: NSData) {
         let cipher = sharedInstance

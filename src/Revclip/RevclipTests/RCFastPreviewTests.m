@@ -19,6 +19,8 @@
 @end
 @interface RCMenuManager (HistoryPreviewTesting)
 - (NSMenuItem *)clipMenuItemForClipItem:(RCClipItem *)clip globalIndex:(NSUInteger)index;
+- (void)menuWillOpen:(NSMenu *)menu;
+- (void)menuDidClose:(NSMenu *)menu;
 - (void)menu:(NSMenu *)menu willHighlightItem:(NSMenuItem *)item;
 @end
 @interface RCHistoryPreviewTestManager : RCMenuManager
@@ -51,7 +53,7 @@
 }
 - (void)testLeavingRowBeforeDelayCannotShowStalePreview {
     RCFastPreviewController *controller = [RCFastPreviewController new];
-    RCPreviewTestMenu *menu = [RCPreviewTestMenu new];
+    __attribute__((objc_precise_lifetime)) RCPreviewTestMenu *menu = [RCPreviewTestMenu new];
     menu.autoenablesItems = NO;
     NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"Test" action:nil keyEquivalent:@""];
     [menu addItem:item]; item.enabled = YES; menu.testHighlightedItem = item;
@@ -62,7 +64,7 @@
 }
 - (void)testPreviewCannotTakeFocusAndHideClosesIt {
     RCFastPreviewController *controller = [RCFastPreviewController new];
-    RCPreviewTestMenu *menu = [RCPreviewTestMenu new];
+    __attribute__((objc_precise_lifetime)) RCPreviewTestMenu *menu = [RCPreviewTestMenu new];
     menu.autoenablesItems = NO;
     NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"Test" action:nil keyEquivalent:@""];
     [menu addItem:item]; item.enabled = YES; menu.testHighlightedItem = item;
@@ -90,7 +92,7 @@
 }
 - (void)testImagePreviewFitsNarrowMenuAndCancelsOnLeave {
     RCFastPreviewController *controller = [RCFastPreviewController new];
-    RCPreviewTestMenu *menu = [RCPreviewTestMenu new];
+    __attribute__((objc_precise_lifetime)) RCPreviewTestMenu *menu = [RCPreviewTestMenu new];
     menu.autoenablesItems = NO;
     NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"Image" action:nil keyEquivalent:@""];
     [menu addItem:item]; item.enabled = YES; menu.testHighlightedItem = item;
@@ -127,7 +129,7 @@
 }
 - (void)testLinkPanelHasExactSixteenNineAspectAndKeepsMenuWidth {
     RCFastPreviewController *controller = [RCFastPreviewController new];
-    RCPreviewTestMenu *menu = [RCPreviewTestMenu new];
+    __attribute__((objc_precise_lifetime)) RCPreviewTestMenu *menu = [RCPreviewTestMenu new];
     NSRect screen = NSScreen.mainScreen.visibleFrame;
     menu.testFrame = NSMakeRect(NSMidX(screen),NSMidY(screen),320,80);
     [controller showText:@"https://company.rev-c.com/" image:nil menu:menu aspectRatio:16.0/9.0];
@@ -138,7 +140,7 @@
 }
 - (void)testHTTPCardShowsWarningTitleAndLinkBelowSixteenNineImage {
     RCFastPreviewController *controller = [RCFastPreviewController new];
-    RCPreviewTestMenu *menu = [RCPreviewTestMenu new];
+    __attribute__((objc_precise_lifetime)) RCPreviewTestMenu *menu = [RCPreviewTestMenu new];
     menu.testFrame = NSMakeRect(200,500,320,80);
     NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(640,360)];
     [controller showLinkURL:[NSURL URLWithString:@"http://rev-c.com/"] title:@"公式サイト" image:image menu:menu];
@@ -156,11 +158,16 @@
     RCHistoryPreviewTestManager *manager = [RCHistoryPreviewTestManager new];
     RCClipItem *clip = [[RCClipItem alloc] initWithDictionary:@{@"id":@101,@"data_path":@"fixture.rcclip",@"data_hash":@"history-image",@"thumbnail_path":@"fixture.thumb",@"primary_type":NSPasteboardTypeTIFF}];
     NSMenuItem *item = [manager clipMenuItemForClipItem:clip globalIndex:0];
-    RCPreviewTestMenu *menu = [RCPreviewTestMenu new]; menu.autoenablesItems = NO;
+    __attribute__((objc_precise_lifetime)) RCPreviewTestMenu *menu = [RCPreviewTestMenu new]; menu.autoenablesItems = NO;
+    [manager menuWillOpen:menu];
     menu.testFrame = NSMakeRect(200,500,300,90); [menu addItem:item]; item.enabled = YES; menu.testHighlightedItem = item;
     [manager menu:menu willHighlightItem:item];
-    [self waitForTrackingTimer]; [self waitForTrackingTimer];
     RCFastPreviewController *preview = [manager valueForKey:@"previewController"];
+    NSPredicate *visible = [NSPredicate predicateWithBlock:^BOOL(id object, NSDictionary *bindings) {
+        return preview.panel.visible && [preview.panel.contentView.subviews.firstObject isKindOfClass:NSImageView.class];
+    }];
+    XCTNSPredicateExpectation *loaded = [[XCTNSPredicateExpectation alloc] initWithPredicate:visible object:nil];
+    [self waitForExpectations:@[loaded] timeout:4];
     XCTAssertTrue(preview.panel.visible);
     XCTAssertTrue([preview.panel.contentView.subviews.firstObject isKindOfClass:NSImageView.class]);
     XCTAssertEqual(manager.archiveReads,1); XCTAssertEqual(manager.previewReads,0);
@@ -171,12 +178,13 @@
     [manager menu:menu willHighlightItem:item]; [self waitForTrackingTimer];
     XCTAssertEqual(manager.previewReads,0); XCTAssertEqual(manager.archiveReads,1);
     [manager clearThumbnailCache]; XCTAssertFalse(preview.panel.visible);
+    [manager menuDidClose:menu];
 }
 - (void)testLeavingHistoryImageBeforeDelayDoesNoImageIO {
     RCHistoryPreviewTestManager *manager = [RCHistoryPreviewTestManager new];
     RCClipItem *clip = [[RCClipItem alloc] initWithDictionary:@{@"id":@102,@"data_path":@"fixture.rcclip",@"data_hash":@"leave-image",@"thumbnail_path":@"fixture.thumb",@"primary_type":NSPasteboardTypeTIFF}];
     NSMenuItem *item = [manager clipMenuItemForClipItem:clip globalIndex:0];
-    RCPreviewTestMenu *menu = [RCPreviewTestMenu new]; [menu addItem:item]; menu.testHighlightedItem = item;
+    __attribute__((objc_precise_lifetime)) RCPreviewTestMenu *menu = [RCPreviewTestMenu new]; [menu addItem:item]; menu.testHighlightedItem = item;
     [manager menu:menu willHighlightItem:item]; menu.testHighlightedItem = nil;
     [manager menu:menu willHighlightItem:nil]; [self waitForTrackingTimer];
     XCTAssertEqual(manager.previewReads,0); XCTAssertEqual(manager.archiveReads,0);

@@ -17,8 +17,8 @@
 + (void)installEphemeralSharedKeyForTesting:(NSData *)keyData;
 @end
 
-#if !DEBUG
-#error "Revclip storage tests require a Debug test host with an isolated storage environment."
+#if !DEBUG && !RC_TESTING
+#error "Revclip storage tests require a Debug or RC_TESTING test host with an isolated storage environment."
 #else
 
 static NSString *gRCStorageTestRoot;

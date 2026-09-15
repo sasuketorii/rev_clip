@@ -180,7 +180,7 @@ struct SnippetEditorView: View {
                     .font(.system(size: 11))
                     .foregroundStyle(.tertiary)
                 Spacer()
-                if model.isEditingSnippet, Bundle.main.bundleIdentifier == "com.revclip.revclip-demo" {
+                if model.isEditingSnippet {
                     Button(RCLocalizedString(model.mediaDraft.isEmpty ? "Add Media…" : "Replace Image…", comment: ""), systemImage: "photo.badge.plus") {
                         chooseMedia(replacing: true)
                     }

@@ -17,10 +17,19 @@ jobs:
         run: sudo xcode-select -s /Applications/Xcode_26.6.app
       - name: Install XcodeGen
         run: command -v xcodegen || brew install xcodegen
+      - name: Audit demo feature parity
+        run: python3 scripts/check_demo_parity.py
       - name: Generate project
         run: make -C src/Revclip setup
       - name: Test
         run: make -C src/Revclip test
+      - name: Test optimized regular build
+        run: >-
+          xcodebuild -project src/Revclip/Revclip.xcodeproj -scheme Revclip
+          -configuration Release -destination 'platform=macOS'
+          ENABLE_TESTABILITY=YES SWIFT_ACTIVE_COMPILATION_CONDITIONS=RC_TESTING
+          'GCC_PREPROCESSOR_DEFINITIONS=$(inherited) RC_TESTING=1'
+          CODE_SIGNING_ALLOWED=NO test
       - name: Build universal app
         working-directory: src/Revclip
         run: >-

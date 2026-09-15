@@ -152,6 +152,6 @@
     self.panel.contentView = background;
     [self.panel setFrame:NSMakeRect(x, y, width, height) display:NO];
     // Never activate, attach as a child, or take focus from the native menu.
-    [self.panel orderFrontRegardless];
+    if (!self.panel.visible) [self.panel orderFrontRegardless];
 }
 @end
