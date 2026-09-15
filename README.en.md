@@ -1,10 +1,12 @@
+> **Private development**: ongoing development lives in this private repository. The public OSS snapshot ends at [v0.0.32 in rev_clip_public](https://github.com/sasuketorii/rev_clip_public/tree/v0.0.32). See [LICENSE](LICENSE) for new contributions and [LICENSE-MIT-LEGACY](LICENSE-MIT-LEGACY) for previously published code.
+
 <div align="center">
   <img src="revclip_icon_rounded.png" width="128" height="128" alt="Revclip icon" />
   <h1>Revclip</h1>
   <p><strong>Copy once. Find it again. Make your clipboard your own.</strong></p>
   <p>A native macOS clipboard manager. Local history. Reusable templates. Yours to customize.</p>
 
-  <a href="https://github.com/sasuketorii/rev_clip/releases/latest"><img src="https://img.shields.io/github/v/release/sasuketorii/rev_clip?color=007aff" alt="Latest release" /></a>
+  <a href="https://github.com/sasuketorii/rev_clip_public/releases/latest"><img src="https://img.shields.io/github/v/release/sasuketorii/rev_clip?color=007aff" alt="Latest release" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-34c759" alt="MIT License" /></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-111827?logo=apple&amp;logoColor=white" alt="macOS 14 or later" />
   <img src="https://img.shields.io/badge/UI-AppKit%20%2B%20SwiftUI-007aff" alt="AppKit and SwiftUI" />
@@ -59,7 +61,7 @@ Automatic paste requires macOS Accessibility permission. Keyboard shortcuts can 
 
 ## Get started
 
-**[Download the latest DMG](https://github.com/sasuketorii/rev_clip/releases/latest)** — Developer ID signed and notarized by Apple. The Universal app supports Apple Silicon and Intel. Open the DMG, drag Revclip into Applications, and launch it. Future updates can be checked from within the app.
+**[Download the latest DMG](https://github.com/sasuketorii/rev_clip_public/releases/latest)** — Developer ID signed and notarized by Apple. The Universal app supports Apple Silicon and Intel. Open the DMG, drag Revclip into Applications, and launch it. Future updates can be checked from within the app.
 
 To build and customize the source, you need **Xcode 26.6** and **XcodeGen**. The app targets **macOS 14 or later** on Apple Silicon and Intel. A paid Apple Developer membership is not required for a Debug build.
 
@@ -117,4 +119,4 @@ The [customization guide](docs/CUSTOMIZATION.md) covers data separation and upda
 
 ## License
 
-[MIT](LICENSE) © sasuke torii and Revclip contributors. Bundled libraries retain their respective licenses.
+[MIT (public v0.0.32 and earlier)](LICENSE-MIT-LEGACY) © sasuke torii and Revclip contributors. Bundled libraries retain their respective licenses.
