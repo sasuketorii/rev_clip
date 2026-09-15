@@ -274,3 +274,21 @@
 "Choose a still image up to 10 MB and 16 megapixels." = "Choose a still image up to 10 MB and 16 megapixels.";
 
 "Replace template text with an image?" = "Replace template text with an image?";
+
+"Customize Menu Colors" = "Customize menu colors";
+
+"Menu Colors Description" = "Applies to history and template menus. Changes appear the next time you open a menu. Blur is preserved.";
+
+"Menu Text Color" = "Text";
+
+"Menu Background Color" = "Background tint";
+
+"Menu Hover Text Color" = "Hover text";
+
+"Menu Hover Background Color" = "Hover background";
+
+"Reset Menu Colors" = "Reset menu colors";
+
+"Menu Primary Color" = "Primary / icons";
+
+"Enter Six Digit Hex" = "Enter a six-digit HEX color, for example #FF005E.";

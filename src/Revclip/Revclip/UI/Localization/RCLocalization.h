@@ -5,6 +5,7 @@ FOUNDATION_EXPORT NSNotificationName const RCLanguageDidChangeNotification;
 FOUNDATION_EXPORT NSString *RCLocalizedString(NSString *key, NSString * _Nullable comment) NS_SWIFT_NAME(RCLocalizedString(_:comment:));
 
 @interface RCLocalization : NSObject
++ (nullable NSString *)titleForIdentifier:(NSString *)identifier table:(NSString *)table;
 + (NSString *)selectedLanguage;
 + (void)setLanguage:(NSString *)language;
 + (NSBundle *)languageBundle;

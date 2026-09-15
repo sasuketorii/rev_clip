@@ -1,3 +1,4 @@
+#import "RCPreferencesPage.h"
 #import "RCLocalization.h"
 //
 //  RCTypePreferencesViewController.m
@@ -46,6 +47,7 @@ static NSString * const kRCStoreTypeTIFF = @"TIFF";
     [self setCheckbox:self.filenamesCheckbox enabled:[self isStoreTypeEnabledForKey:kRCStoreTypeFilenames inStoreTypes:storeTypes]];
     [self setCheckbox:self.urlCheckbox enabled:[self isStoreTypeEnabledForKey:kRCStoreTypeURL inStoreTypes:storeTypes]];
     [self setCheckbox:self.imagesTiffCheckbox enabled:[self isStoreTypeEnabledForKey:kRCStoreTypeTIFF inStoreTypes:storeTypes]];
+    [self arrangeSettingsPage];
 }
 
 - (IBAction)storeTypeCheckboxDidChange:(id)sender {
@@ -82,6 +84,19 @@ static NSString * const kRCStoreTypeTIFF = @"TIFF";
         return [((NSString *)value) boolValue];
     }
     return YES;
+}
+
+- (void)arrangeSettingsPage {
+    self.view = [RCPreferencesPage pageWithRows:@[
+        @[[[(NSButton *)[self valueForKey:@"plainTextCheckbox"] title] componentsSeparatedByString:@" (NS"].firstObject, [RCPreferencesPage switchForController:self key:@"plainTextCheckbox"]],
+        @[[[(NSButton *)[self valueForKey:@"richTextCheckbox"] title] componentsSeparatedByString:@" (NS"].firstObject, [RCPreferencesPage switchForController:self key:@"richTextCheckbox"]],
+        @[[[(NSButton *)[self valueForKey:@"richTextWithAttachmentsCheckbox"] title] componentsSeparatedByString:@" (NS"].firstObject, [RCPreferencesPage switchForController:self key:@"richTextWithAttachmentsCheckbox"]],
+        @[[[(NSButton *)[self valueForKey:@"htmlCheckbox"] title] componentsSeparatedByString:@" (NS"].firstObject, [RCPreferencesPage switchForController:self key:@"htmlCheckbox"]],
+        @[[[(NSButton *)[self valueForKey:@"pdfCheckbox"] title] componentsSeparatedByString:@" (NS"].firstObject, [RCPreferencesPage switchForController:self key:@"pdfCheckbox"]],
+        @[[[(NSButton *)[self valueForKey:@"filenamesCheckbox"] title] componentsSeparatedByString:@" (NS"].firstObject, [RCPreferencesPage switchForController:self key:@"filenamesCheckbox"]],
+        @[[[(NSButton *)[self valueForKey:@"urlCheckbox"] title] componentsSeparatedByString:@" (NS"].firstObject, [RCPreferencesPage switchForController:self key:@"urlCheckbox"]],
+        @[[[(NSButton *)[self valueForKey:@"imagesTiffCheckbox"] title] componentsSeparatedByString:@" (NS"].firstObject, [RCPreferencesPage switchForController:self key:@"imagesTiffCheckbox"]],
+    ]];
 }
 
 @end

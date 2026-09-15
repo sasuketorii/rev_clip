@@ -61,6 +61,7 @@
     [controller highlightItem:nil text:nil];
     [self waitForTrackingTimer];
     XCTAssertFalse(controller.panel.visible);
+    XCTAssertNil(controller.panel.contentView);
 }
 - (void)testPreviewCannotTakeFocusAndHideClosesIt {
     RCFastPreviewController *controller = [RCFastPreviewController new];
@@ -89,6 +90,7 @@
     XCTAssertEqualWithAccuracy(NSMinY(controller.panel.frame), NSMaxY(menu.testFrame)+8, 0.5);
     [controller hide];
     XCTAssertFalse(controller.panel.visible);
+    XCTAssertNil(controller.panel.contentView);
 }
 - (void)testImagePreviewFitsNarrowMenuAndCancelsOnLeave {
     RCFastPreviewController *controller = [RCFastPreviewController new];
@@ -115,6 +117,7 @@
     [controller hide];
     [self waitForTrackingTimer];
     XCTAssertFalse(controller.panel.visible);
+    XCTAssertNil(controller.panel.contentView);
 }
 - (void)testLinkDetectionRequiresOnlyURLAndExcludesTextAndEmail {
     XCTAssertEqualObjects([RCLinkPreviewService URLForText:@" https://company.rev-c.com/#top "].absoluteString,@"https://company.rev-c.com/");

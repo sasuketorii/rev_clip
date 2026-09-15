@@ -28,3 +28,28 @@ The default is demo for compatibility. Text/image create, read, update, delete, 
 stdin input, visibility updates, title-only media preservation, and nonempty-folder
 protection were exercised against the installed regular app; temporary test data was
 removed afterward.
+
+## Preferences
+
+Both distributions use one sidebar-based preferences window. Boolean settings use
+native switches; existing controller actions and Cocoa bindings still persist values
+and control dependent fields. Pages share a top-aligned, scrolling layout with
+subtle grouped surfaces and row separators. macOS 26 adds a clear native glass
+layer over the window backdrop; macOS 14–15 use the native visual-effect fallback.
+System transparency accessibility settings remain respected. No screen capture,
+wallpaper image, or timer is used to render the backdrop.
+
+The template editor uses the same glass backdrop as Preferences. Menu color
+customization is separate from both windows. Appearance preferences provide primary
+(icon), text, background tint, hover text and hover background colors. Each light/dark
+palette is stored separately; reset disables customization and clears both palettes.
+HEX input accepts six digits with an optional `#`, normalizes valid values, and never
+persists incomplete input. The independent native color panel is positioned within
+its screen, including when the triggering control is near the screen bottom.
+
+Default menu backgrounds retain the native material. Custom backgrounds add a fixed
+14% tint; hover backgrounds use 85% opacity. Only hover rows are rounded. Template
+symbols use the primary color, or hover text color while highlighted; media thumbnails,
+color swatches and favicons retain their original colors. Color changes apply when a
+menu next opens. Native submenu tracking and key equivalents remain in use, while
+custom leaf rows explicitly dispatch the existing action after menu tracking ends.

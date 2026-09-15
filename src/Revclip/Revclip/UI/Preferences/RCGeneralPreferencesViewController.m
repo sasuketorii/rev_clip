@@ -1,3 +1,4 @@
+#import "RCPreferencesPage.h"
 #import "RCLocalization.h"
 //
 //  RCGeneralPreferencesViewController.m
@@ -51,6 +52,7 @@ static const NSInteger RCShowStatusItemDefault = 1;
     [self configureControls];
     [self applyPreferenceValues];
     [self configureLanguageControls];
+    [self arrangeSettingsPage];
 }
 
 - (void)viewWillAppear {
@@ -180,7 +182,6 @@ static const NSInteger RCShowStatusItemDefault = 1;
 }
 
 - (void)configureLanguageControls {
-    NSTextField *label = [NSTextField labelWithString:RCLocalizedString(@"App Language", nil)];
     self.languagePopUpButton = [[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
     NSArray *codes = @[@"", @"ja", @"en", @"ko", @"zh-Hans", @"fr", @"de", @"pt-BR", @"it"];
     NSArray *titles = @[RCLocalizedString(@"Follow System", nil), @"日本語", @"English", @"한국어", @"简体中文", @"Français", @"Deutsch", @"Português (Brasil)", @"Italiano"];
@@ -193,24 +194,7 @@ static const NSInteger RCShowStatusItemDefault = 1;
     self.languagePopUpButton.target = self;
     self.languagePopUpButton.action = @selector(languageChanged:);
     [self.languagePopUpButton setAccessibilityLabel:RCLocalizedString(@"App Language", nil)];
-    NSTextField *hint = [NSTextField wrappingLabelWithString:RCLocalizedString(@"Language changes apply immediately to Revclip.", nil)];
-    hint.textColor = NSColor.secondaryLabelColor;
-    for (NSView *control in @[label, self.languagePopUpButton, hint]) {
-        control.translatesAutoresizingMaskIntoConstraints = NO;
-        [self.view addSubview:control];
-    }
-    [NSLayoutConstraint activateConstraints:@[
-        [label.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
-        [label.topAnchor constraintEqualToAnchor:self.sameHistoryCopyButton.bottomAnchor constant:20],
-        [self.languagePopUpButton.centerYAnchor constraintEqualToAnchor:label.centerYAnchor],
-        [self.languagePopUpButton.leadingAnchor constraintGreaterThanOrEqualToAnchor:label.trailingAnchor constant:16],
-        [self.languagePopUpButton.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
-        [self.languagePopUpButton.widthAnchor constraintGreaterThanOrEqualToConstant:200],
-        [hint.topAnchor constraintEqualToAnchor:self.languagePopUpButton.bottomAnchor constant:8],
-        [hint.leadingAnchor constraintEqualToAnchor:label.leadingAnchor],
-        [hint.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
-        [self.view.bottomAnchor constraintGreaterThanOrEqualToAnchor:hint.bottomAnchor constant:20],
-    ]];
+    self.languagePopUpButton.toolTip = RCLocalizedString(@"Language changes apply immediately to Revclip.", nil);
 }
 
 - (void)configureControls {
@@ -360,6 +344,21 @@ static const NSInteger RCShowStatusItemDefault = 1;
         return defaultValue;
     }
     return [defaults integerForKey:key];
+}
+
+- (void)arrangeSettingsPage {
+    self.view = [RCPreferencesPage pageWithRows:@[
+        @[([RCLocalization titleForIdentifier:@"Q2q-8V-jS4" table:@"RCGeneralPreferencesView"] ?: @"履歴の最大保存数"), self.maxHistorySizeTextField, self.maxHistorySizeStepper],
+        @[[(NSButton *)self.autoExpiryEnabledButton title], [RCPreferencesPage switchForController:self key:@"autoExpiryEnabledButton"]],
+        @[([RCLocalization titleForIdentifier:@"xT6-fB-3qW" table:@"RCGeneralPreferencesView"] ?: @"期限"), self.autoExpiryValueTextField, self.autoExpiryValueStepper, self.autoExpiryUnitPopUpButton],
+        @[([RCLocalization titleForIdentifier:@"bW2-vC-N0z" table:@"RCGeneralPreferencesView"] ?: @"ログイン時に起動"), [RCPreferencesPage switchForController:self key:@"loginAtStartupButton"]],
+        @[([RCLocalization titleForIdentifier:@"dT8-AL-f4P" table:@"RCGeneralPreferencesView"] ?: @"ステータス項目の表示"), self.showStatusItemPopUpButton],
+        @[([RCLocalization titleForIdentifier:@"mK4-wT-Lc8" table:@"RCGeneralPreferencesView"] ?: @"ペーストコマンド"), [RCPreferencesPage switchForController:self key:@"pasteCommandButton"]],
+        @[([RCLocalization titleForIdentifier:@"gR4-Ye-nN2" table:@"RCGeneralPreferencesView"] ?: @"ペースト後に並び替え"), [RCPreferencesPage switchForController:self key:@"reorderAfterPastingButton"]],
+        @[([RCLocalization titleForIdentifier:@"rQ7-nU-mA1" table:@"RCGeneralPreferencesView"] ?: @"同一履歴を上書き"), [RCPreferencesPage switchForController:self key:@"overwriteSameHistoryButton"]],
+        @[([RCLocalization titleForIdentifier:@"sD3-vL-fM6" table:@"RCGeneralPreferencesView"] ?: @"同一履歴をコピー"), [RCPreferencesPage switchForController:self key:@"sameHistoryCopyButton"]],
+        @[RCLocalizedString(@"App Language", nil), self.languagePopUpButton],
+    ]];
 }
 
 @end

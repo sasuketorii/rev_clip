@@ -10,6 +10,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct SnippetEditorView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @State private var languageRevision = 0
     @Bindable var model: SnippetEditorModel
     @State private var collapsedFolders: Set<String> = []
@@ -22,11 +23,16 @@ struct SnippetEditorView: View {
                     .frame(minWidth: 240, idealWidth: 280, maxWidth: 360)
                 editor
                     .frame(minWidth: 420)
+                    .background((colorScheme == .dark ? Color.black : Color.white).opacity(0.14), in: RoundedRectangle(cornerRadius: 24))
+                    .overlay(RoundedRectangle(cornerRadius: 24).strokeBorder(Color.primary.opacity(0.14), lineWidth: 1))
+                    .padding(.trailing, 12)
+                    .padding(.top, 12)
+                    .padding(.bottom, 8)
             }
             toolbar
         }
         .onReceive(NotificationCenter.default.publisher(for: .RCLanguageDidChange)) { _ in languageRevision += 1 }
-        .background(.ultraThinMaterial)
+        .background(.clear)
         .alert(
             RCLocalizedString("An unknown error occurred.", comment: ""),
             isPresented: Binding(
@@ -55,7 +61,7 @@ struct SnippetEditorView: View {
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
-            .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .background(Color(nsColor: .textBackgroundColor).opacity(0.35), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .strokeBorder(Color.primary.opacity(0.18), lineWidth: 1)
@@ -93,7 +99,7 @@ struct SnippetEditorView: View {
             .listStyle(.sidebar)
             .scrollContentBackground(.hidden)
         }
-        .background(.ultraThinMaterial)
+        .background(.clear)
     }
 
     private var editor: some View {
@@ -115,7 +121,7 @@ struct SnippetEditorView: View {
             .textFieldStyle(.plain)
             .font(.system(.title3, design: .default).weight(.semibold))
             .padding(10)
-            .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .background(Color(nsColor: .textBackgroundColor).opacity(0.35), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .strokeBorder(Color.primary.opacity(0.18), lineWidth: 1)
@@ -150,7 +156,7 @@ struct SnippetEditorView: View {
                     .font(.system(.body, design: .monospaced))
                     .scrollContentBackground(.hidden)
                     .padding(10)
-                    .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .background(Color(nsColor: .textBackgroundColor).opacity(0.35), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .overlay {
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
                             .strokeBorder(Color.primary.opacity(0.18), lineWidth: 1)
@@ -222,7 +228,7 @@ struct SnippetEditorView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(.bar)
+        .background(.clear)
     }
 
     private var selectionActions: some View {
@@ -236,7 +242,7 @@ struct SnippetEditorView: View {
                 get: { model.selectedItemEnabled },
                 set: { if $0 != model.selectedItemEnabled { model.toggleEnabled() } }
             ))
-            .toggleStyle(.checkbox)
+            .toggleStyle(.switch)
             .disabled(model.selection == nil)
         }
         .fixedSize(horizontal: true, vertical: false)
@@ -389,7 +395,10 @@ final class RCSnippetEditorHost: NSObject, NSWindowDelegate {
         let host = RCSnippetEditorHost()
         let hostingView = NSHostingView(rootView: SnippetEditorView(model: host.model))
         hostingView.wantsLayer = true
-        window.contentView = hostingView
+        hostingView.frame = NSRect(origin: .zero, size: window.contentLayoutRect.size)
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.contentView = RCGlassBackground.wrapContent(hostingView)
         window.delegate = host
         host.model.reload()
         return host

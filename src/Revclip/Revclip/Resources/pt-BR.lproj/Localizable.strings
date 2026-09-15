@@ -274,3 +274,21 @@
 "Choose a still image up to 10 MB and 16 megapixels." = "Escolha uma imagem estática de até 10 MB e 16 megapixels.";
 
 "Replace template text with an image?" = "Substituir o texto do modelo por uma imagem?";
+
+"Customize Menu Colors" = "Personalizar cores do menu";
+
+"Menu Colors Description" = "Aplicado aos menus de histórico e modelos na próxima abertura. O desfoque é mantido.";
+
+"Menu Text Color" = "Texto";
+
+"Menu Background Color" = "Cor de fundo";
+
+"Menu Hover Text Color" = "Texto ao passar o cursor";
+
+"Menu Hover Background Color" = "Fundo ao passar o cursor";
+
+"Reset Menu Colors" = "Redefinir cores do menu";
+
+"Menu Primary Color" = "Cor primária / ícones";
+
+"Enter Six Digit Hex" = "Digite uma cor HEX de seis dígitos, por exemplo #FF005E.";

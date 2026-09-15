@@ -274,3 +274,21 @@
 "Choose a still image up to 10 MB and 16 megapixels." = "Wähle ein Standbild mit höchstens 10 MB und 16 Megapixeln.";
 
 "Replace template text with an image?" = "Vorlagentext durch ein Bild ersetzen?";
+
+"Customize Menu Colors" = "Menüfarben anpassen";
+
+"Menu Colors Description" = "Gilt für Verlauf und Vorlagen. Änderungen erscheinen beim nächsten Öffnen. Der Unschärfeeffekt bleibt erhalten.";
+
+"Menu Text Color" = "Text";
+
+"Menu Background Color" = "Hintergrundfarbe";
+
+"Menu Hover Text Color" = "Text beim Zeigen";
+
+"Menu Hover Background Color" = "Hintergrund beim Zeigen";
+
+"Reset Menu Colors" = "Menüfarben zurücksetzen";
+
+"Menu Primary Color" = "Primärfarbe / Symbole";
+
+"Enter Six Digit Hex" = "Sechsstellige HEX-Farbe eingeben, zum Beispiel #FF005E.";

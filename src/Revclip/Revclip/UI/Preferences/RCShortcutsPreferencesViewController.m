@@ -1,3 +1,4 @@
+#import "RCPreferencesPage.h"
 #import "RCLocalization.h"
 //
 //  RCShortcutsPreferencesViewController.m
@@ -46,6 +47,7 @@ static UInt32 const kRCDefaultKeyCodeB = 11;
     self.clearHistoryRecorderView.delegate = self;
 
     [self reloadRecordersFromDefaults];
+    [self arrangeSettingsPage];
 }
 
 #pragma mark - Actions
@@ -208,6 +210,16 @@ static UInt32 const kRCDefaultKeyCodeB = 11;
     if ([self isUnsetKeyCombo:[RCHotKeyService keyComboFromUserDefaults:kRCClearHistoryKeyCombo]]) {
         [hotKeyService registerClearHistoryHotKey:invalidCombo];
     }
+}
+
+- (void)arrangeSettingsPage {
+    self.view = [RCPreferencesPage pageWithRows:@[
+        @[([RCLocalization titleForIdentifier:@"ZgK-s1-dYB" table:@"RCShortcutsPreferencesView"] ?: @"メインメニュー:"), self.mainMenuRecorderView],
+        @[([RCLocalization titleForIdentifier:@"xhM-yq-5Ef" table:@"RCShortcutsPreferencesView"] ?: @"履歴メニュー:"), self.historyMenuRecorderView],
+        @[([RCLocalization titleForIdentifier:@"MV8-qY-5rU" table:@"RCShortcutsPreferencesView"] ?: @"テンプレートメニュー:"), self.snippetMenuRecorderView],
+        @[([RCLocalization titleForIdentifier:@"W4b-7h-QK2" table:@"RCShortcutsPreferencesView"] ?: @"履歴消去:"), self.clearHistoryRecorderView],
+        @[ @"", [NSButton buttonWithTitle:([RCLocalization titleForIdentifier:@"D9f-HL-0Nb" table:@"RCShortcutsPreferencesView"] ?: RCLocalizedString(@"Reset to Defaults", nil)) target:self action:@selector(resetToDefaults:)] ],
+    ]];
 }
 
 @end

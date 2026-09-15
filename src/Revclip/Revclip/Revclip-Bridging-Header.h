@@ -13,3 +13,5 @@
 #import "RCLocalization.h"
 
 #import "RCSnippetMedia.h"
+
+#import "RCGlassBackground.h"

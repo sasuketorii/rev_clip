@@ -1,3 +1,5 @@
+#import "RCGlassBackground.h"
+#import "RCPreferencesPage.h"
 #import "RCLocalization.h"
 //
 //  RCPreferencesWindowController.m
@@ -27,9 +29,19 @@ NSString * const RCPreferencesTabUpdates = @"updates";
 NSString * const RCPreferencesTabBeta = @"beta";
 NSString * const RCPreferencesTabPanic = @"panic";
 static NSString * const RCPreferencesTabAppearance = @"appearance";
-static const CGFloat RCPreferencesMinimumContentWidth = 700.0;
 
-@interface RCPreferencesWindowController () <NSToolbarDelegate>
+
+@interface RCPreferencesSidebarRow : NSTableRowView
+@end
+@implementation RCPreferencesSidebarRow
+- (NSBackgroundStyle)interiorBackgroundStyle { return NSBackgroundStyleNormal; }
+- (void)drawSelectionInRect:(NSRect)dirtyRect {
+    [[NSColor.controlAccentColor colorWithAlphaComponent:self.emphasized ? 0.22 : 0.12] setFill];
+    [[NSBezierPath bezierPathWithRoundedRect:NSInsetRect(self.bounds, 4, 2) xRadius:10 yRadius:10] fill];
+}
+@end
+
+@interface RCPreferencesWindowController () <NSTableViewDataSource, NSTableViewDelegate>
 
 @property (nonatomic, strong, nullable) RCGeneralPreferencesViewController *generalViewController;
 @property (nonatomic, strong, nullable) RCMenuPreferencesViewController *menuViewController;
@@ -41,6 +53,12 @@ static const CGFloat RCPreferencesMinimumContentWidth = 700.0;
 @property (nonatomic, strong, nullable) RCPanicPreferencesViewController *panicViewController;
 @property (nonatomic, strong) NSViewController *appearanceViewController;
 @property (nonatomic, assign) BOOL centeredOnFirstShow;
+@property (nonatomic, copy) NSString *selectedTab;
+@property (nonatomic, strong) NSTableView *sidebar;
+@property (nonatomic, strong) NSScrollView *pageScrollView;
+@property (nonatomic, strong) NSTextField *pageTitle;
+@property (nonatomic, strong) NSArray<NSLayoutConstraint *> *documentConstraints;
+
 
 @end
 
@@ -65,14 +83,14 @@ static const CGFloat RCPreferencesMinimumContentWidth = 700.0;
 
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(languageDidChange:) name:RCLanguageDidChangeNotification object:nil];
     [self configureWindow];
-    [self configureToolbar];
+    [self configureSidebar];
     [self showTab:RCPreferencesTabGeneral];
 }
 
 - (void)languageDidChange:(NSNotification *)notification {
     // Defer replacement until the popup action returns; no template editor state is replaced.
     dispatch_async(dispatch_get_main_queue(), ^{
-        NSString *tab = self.window.toolbar.selectedItemIdentifier;
+        NSString *tab = self.selectedTab;
         self.generalViewController = nil;
         self.menuViewController = nil;
         self.typeViewController = nil;
@@ -83,7 +101,7 @@ static const CGFloat RCPreferencesMinimumContentWidth = 700.0;
         self.panicViewController = nil;
         self.appearanceViewController = nil;
         self.window.title = RCLocalizedString(@"Preferences", nil);
-        [self configureToolbar];
+        [self configureSidebar];
         [self showTab:tab];
     });
 }
@@ -115,98 +133,163 @@ static const CGFloat RCPreferencesMinimumContentWidth = 700.0;
     }
 
     [self switchToViewController:viewController];
-    self.window.toolbar.selectedItemIdentifier = resolvedTabIdentifier;
-}
-
-#pragma mark - Toolbar
-
-- (void)configureToolbar {
-    NSToolbar *toolbar = [[NSToolbar alloc] initWithIdentifier:@"RCPreferencesToolbar"];
-    toolbar.delegate = self;
-    toolbar.allowsUserCustomization = NO;
-    toolbar.autosavesConfiguration = NO;
-    toolbar.displayMode = NSToolbarDisplayModeIconAndLabel;
-
-    self.window.toolbar = toolbar;
-}
-
-- (NSArray<NSToolbarItemIdentifier> *)toolbarAllowedItemIdentifiers:(NSToolbar *)toolbar {
-    (void)toolbar;
-    return [self tabIdentifiers];
-}
-
-- (NSArray<NSToolbarItemIdentifier> *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar {
-    (void)toolbar;
-    return [self tabIdentifiers];
-}
-
-- (NSArray<NSToolbarItemIdentifier> *)toolbarSelectableItemIdentifiers:(NSToolbar *)toolbar {
-    (void)toolbar;
-    return [self tabIdentifiers];
-}
-
-- (nullable NSToolbarItem *)toolbar:(NSToolbar *)toolbar
-              itemForItemIdentifier:(NSToolbarItemIdentifier)itemIdentifier
-          willBeInsertedIntoToolbar:(BOOL)willBeInserted {
-    (void)toolbar;
-    (void)willBeInserted;
-
-    NSString *title = [self titleForTabIdentifier:itemIdentifier];
-    if (title.length == 0) {
-        return nil;
+    self.selectedTab = resolvedTabIdentifier;
+    self.pageTitle.stringValue = [self titleForTabIdentifier:resolvedTabIdentifier];
+    NSInteger row = [self.tabIdentifiers indexOfObject:resolvedTabIdentifier];
+    if (self.sidebar.selectedRow != row) {
+        [self.sidebar selectRowIndexes:[NSIndexSet indexSetWithIndex:row] byExtendingSelection:NO];
     }
-
-    NSToolbarItem *item = [[NSToolbarItem alloc] initWithItemIdentifier:itemIdentifier];
-    item.label = title;
-    item.paletteLabel = title;
-    item.toolTip = title;
-    item.target = self;
-    item.action = @selector(toolbarItemSelected:);
-
-    NSString *symbolName = [self symbolNameForTabIdentifier:itemIdentifier];
-    if (symbolName.length > 0) {
-        NSImage *symbolImage = [NSImage imageWithSystemSymbolName:symbolName accessibilityDescription:title];
-        if (symbolImage == nil) {
-            symbolImage = [NSImage imageWithSystemSymbolName:@"gearshape" accessibilityDescription:title];
-        }
-        item.image = symbolImage;
-    }
-
-    return item;
 }
 
-- (void)toolbarItemSelected:(NSToolbarItem *)sender {
-    [self showTab:sender.itemIdentifier];
+#pragma mark - Sidebar
+
+- (void)configureSidebar {
+    // A single shell is used by every distribution. Native materials follow accessibility settings.
+    self.window.toolbar = nil;
+    NSView *background = [[NSView alloc] initWithFrame:self.window.contentView.bounds];
+    NSView *shell = [RCGlassBackground wrapContent:background];
+    NSView *sidebarBackground = [[NSView alloc] initWithFrame:NSZeroRect];
+    sidebarBackground.translatesAutoresizingMaskIntoConstraints = NO;
+    [background addSubview:sidebarBackground];
+
+    NSImageView *brandIcon = [[NSImageView alloc] initWithFrame:NSZeroRect];
+    brandIcon.image = [NSImage imageNamed:NSImageNameApplicationIcon];
+    brandIcon.imageScaling = NSImageScaleProportionallyUpOrDown;
+    brandIcon.translatesAutoresizingMaskIntoConstraints = NO;
+    brandIcon.wantsLayer = YES;
+    brandIcon.layer.cornerRadius = 18;
+    brandIcon.layer.masksToBounds = YES;
+    [brandIcon setAccessibilityLabel:@"Revclip"];
+    [sidebarBackground addSubview:brandIcon];
+    [NSLayoutConstraint activateConstraints:@[
+        [brandIcon.leadingAnchor constraintEqualToAnchor:sidebarBackground.leadingAnchor constant:20],
+        [brandIcon.topAnchor constraintEqualToAnchor:sidebarBackground.topAnchor constant:40],
+        [brandIcon.widthAnchor constraintEqualToConstant:36],
+        [brandIcon.heightAnchor constraintEqualToConstant:36],
+    ]];
+
+    NSScrollView *navigation = [[NSScrollView alloc] initWithFrame:NSZeroRect];
+    navigation.drawsBackground = NO;
+    navigation.hasVerticalScroller = YES;
+    navigation.autohidesScrollers = YES;
+    navigation.translatesAutoresizingMaskIntoConstraints = NO;
+    self.sidebar = [[NSTableView alloc] initWithFrame:NSZeroRect];
+    self.sidebar.headerView = nil;
+    self.sidebar.backgroundColor = NSColor.clearColor;
+    self.sidebar.style = NSTableViewStylePlain;
+    self.sidebar.rowHeight = 40;
+    self.sidebar.intercellSpacing = NSMakeSize(0, 4);
+    [self.sidebar addTableColumn:[[NSTableColumn alloc] initWithIdentifier:@"section"]];
+    self.sidebar.delegate = self;
+    self.sidebar.dataSource = self;
+    self.sidebar.allowsEmptySelection = NO;
+    [self.sidebar setAccessibilityLabel:RCLocalizedString(@"Preferences", nil)];
+    navigation.documentView = self.sidebar;
+    [sidebarBackground addSubview:navigation];
+
+    RCPreferencesSurface *pane = [[RCPreferencesSurface alloc] initWithFrame:NSZeroRect];
+    pane.cornerRadius = 24;
+    pane.drawsBorder = YES;
+    pane.translatesAutoresizingMaskIntoConstraints = NO;
+    [background addSubview:pane];
+    [NSLayoutConstraint activateConstraints:@[
+        [pane.leadingAnchor constraintEqualToAnchor:sidebarBackground.trailingAnchor constant:8],
+        [pane.trailingAnchor constraintEqualToAnchor:background.trailingAnchor constant:-12],
+        [pane.topAnchor constraintEqualToAnchor:background.topAnchor constant:36],
+        [pane.bottomAnchor constraintEqualToAnchor:background.bottomAnchor constant:-12],
+    ]];
+    self.pageTitle = [NSTextField labelWithString:@""];
+    self.pageTitle.font = [NSFont systemFontOfSize:24 weight:NSFontWeightSemibold];
+    self.pageTitle.translatesAutoresizingMaskIntoConstraints = NO;
+    [background addSubview:self.pageTitle];
+    self.pageScrollView = [[NSScrollView alloc] initWithFrame:NSZeroRect];
+    self.pageScrollView.drawsBackground = NO;
+    self.pageScrollView.hasVerticalScroller = YES;
+    self.pageScrollView.scrollerStyle = NSScrollerStyleOverlay;
+    self.pageScrollView.autohidesScrollers = YES;
+    self.pageScrollView.translatesAutoresizingMaskIntoConstraints = NO;
+    [background addSubview:self.pageScrollView];
+    self.window.contentView = shell;
+    [NSLayoutConstraint activateConstraints:@[
+        [sidebarBackground.leadingAnchor constraintEqualToAnchor:background.leadingAnchor],
+        [sidebarBackground.topAnchor constraintEqualToAnchor:background.topAnchor],
+        [sidebarBackground.bottomAnchor constraintEqualToAnchor:background.bottomAnchor],
+        [sidebarBackground.widthAnchor constraintEqualToConstant:208],
+        [navigation.leadingAnchor constraintEqualToAnchor:sidebarBackground.leadingAnchor constant:8],
+        [navigation.trailingAnchor constraintEqualToAnchor:sidebarBackground.trailingAnchor constant:-8],
+        [navigation.topAnchor constraintEqualToAnchor:brandIcon.bottomAnchor constant:12],
+        [navigation.bottomAnchor constraintEqualToAnchor:background.bottomAnchor constant:-16],
+        [self.pageTitle.leadingAnchor constraintEqualToAnchor:pane.leadingAnchor constant:24],
+        [self.pageTitle.topAnchor constraintEqualToAnchor:pane.topAnchor constant:24],
+        [self.pageTitle.trailingAnchor constraintLessThanOrEqualToAnchor:background.trailingAnchor constant:-24],
+        [self.pageScrollView.topAnchor constraintEqualToAnchor:self.pageTitle.bottomAnchor constant:20],
+        [self.pageScrollView.leadingAnchor constraintEqualToAnchor:pane.leadingAnchor],
+        [self.pageScrollView.trailingAnchor constraintEqualToAnchor:pane.trailingAnchor],
+        [self.pageScrollView.bottomAnchor constraintEqualToAnchor:pane.bottomAnchor constant:-12],
+    ]];
+}
+
+- (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
+    return [[RCPreferencesSidebarRow alloc] initWithFrame:NSZeroRect];
+}
+
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView { return self.tabIdentifiers.count; }
+
+- (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)column row:(NSInteger)row {
+    NSString *identifier = self.tabIdentifiers[row];
+    NSTableCellView *cell = [[NSTableCellView alloc] initWithFrame:NSZeroRect];
+    NSTextField *label = [NSTextField labelWithString:[self titleForTabIdentifier:identifier]];
+    label.font = [NSFont systemFontOfSize:13 weight:NSFontWeightMedium];
+    label.translatesAutoresizingMaskIntoConstraints = NO;
+    NSImageView *icon = [[NSImageView alloc] initWithFrame:NSZeroRect];
+    icon.image = [NSImage imageWithSystemSymbolName:[self symbolNameForTabIdentifier:identifier] accessibilityDescription:nil];
+    icon.contentTintColor = NSColor.controlAccentColor;
+    icon.translatesAutoresizingMaskIntoConstraints = NO;
+    [cell addSubview:icon];
+    [cell addSubview:label];
+    cell.textField = label;
+    cell.imageView = icon;
+    [NSLayoutConstraint activateConstraints:@[
+        [icon.leadingAnchor constraintEqualToAnchor:cell.leadingAnchor constant:8],
+        [icon.centerYAnchor constraintEqualToAnchor:cell.centerYAnchor],
+        [icon.widthAnchor constraintEqualToConstant:20],
+        [icon.heightAnchor constraintEqualToConstant:20],
+        [label.leadingAnchor constraintEqualToAnchor:icon.trailingAnchor constant:10],
+        [label.trailingAnchor constraintEqualToAnchor:cell.trailingAnchor constant:-8],
+        [label.centerYAnchor constraintEqualToAnchor:cell.centerYAnchor],
+    ]];
+    return cell;
+}
+
+- (void)tableViewSelectionDidChange:(NSNotification *)notification {
+    NSInteger row = self.sidebar.selectedRow;
+    if (row >= 0) { [self showTab:self.tabIdentifiers[row]]; }
+}
+
+- (BOOL)selectionShouldChangeInTableView:(NSTableView *)tableView {
+    NSResponder *responder = self.window.firstResponder;
+    if ([responder isKindOfClass:NSTextView.class] && [(NSTextView *)responder isFieldEditor]) {
+        return [self.window makeFirstResponder:tableView];
+    }
+    return YES;
 }
 
 #pragma mark - View Controller Switch
 
 - (void)switchToViewController:(NSViewController *)viewController {
     NSView *newView = viewController.view;
-    NSSize newSize = newView.fittingSize;
-    if (newSize.width < 1.0 || newSize.height < 1.0) {
-        newSize = newView.frame.size;
-    }
-    newSize.width = MAX(newSize.width, RCPreferencesMinimumContentWidth);
-
-    NSRect windowFrame = self.window.frame;
-    CGFloat titleBarHeight = windowFrame.size.height - self.window.contentLayoutRect.size.height;
-    NSRect newFrame = NSMakeRect(
-        windowFrame.origin.x,
-        windowFrame.origin.y + windowFrame.size.height - newSize.height - titleBarHeight,
-        newSize.width,
-        newSize.height + titleBarHeight
-    );
-
-    [self.window setFrame:newFrame display:YES animate:YES];
-    NSVisualEffectView *background = [[NSVisualEffectView alloc] initWithFrame:NSMakeRect(0, 0, newSize.width, newSize.height)];
-    background.material = NSVisualEffectMaterialWindowBackground;
-    background.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-    background.state = NSVisualEffectStateFollowsWindowActiveState;
-    newView.frame = background.bounds;
-    newView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    [background addSubview:newView];
-    self.window.contentView = background;
+    if (self.pageScrollView.documentView == newView) { return; }
+    newView.translatesAutoresizingMaskIntoConstraints = NO;
+    [NSLayoutConstraint deactivateConstraints:self.documentConstraints ?: @[]];
+    self.pageScrollView.documentView = newView;
+    NSClipView *clip = self.pageScrollView.contentView;
+    self.documentConstraints = @[
+        [newView.widthAnchor constraintEqualToAnchor:clip.widthAnchor],
+        [newView.leadingAnchor constraintEqualToAnchor:clip.leadingAnchor],
+        [newView.topAnchor constraintEqualToAnchor:clip.topAnchor],
+    ];
+    [NSLayoutConstraint activateConstraints:self.documentConstraints];
+    [newView scrollPoint:NSZeroPoint];
 }
 
 #pragma mark - Private
@@ -214,20 +297,15 @@ static const CGFloat RCPreferencesMinimumContentWidth = 700.0;
 - (void)configureWindow {
     NSWindow *window = self.window;
     window.title = RCLocalizedString(@"Preferences", nil);
-    window.toolbarStyle = NSWindowToolbarStyleExpanded;
-    window.styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable;
+    window.titlebarAppearsTransparent = YES;
+    window.titleVisibility = NSWindowTitleHidden;
+    window.opaque = NO;
+    window.backgroundColor = NSColor.clearColor;
+    window.styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable | NSWindowStyleMaskFullSizeContentView;
     window.collectionBehavior = NSWindowCollectionBehaviorMoveToActiveSpace;
     window.releasedWhenClosed = NO;
-    window.contentMinSize = NSMakeSize(RCPreferencesMinimumContentWidth, 1.0);
-
-    NSRect currentFrame = window.frame;
-    NSRect currentContentRect = [window contentRectForFrameRect:currentFrame];
-    if (currentContentRect.size.width < RCPreferencesMinimumContentWidth) {
-        currentContentRect.size.width = RCPreferencesMinimumContentWidth;
-        NSRect targetFrame = [window frameRectForContentRect:currentContentRect];
-        targetFrame.origin.x = currentFrame.origin.x - (targetFrame.size.width - currentFrame.size.width) * 0.5;
-        [window setFrame:targetFrame display:NO];
-    }
+    window.contentMinSize = NSMakeSize(860, 520);
+    [window setContentSize:NSMakeSize(920, 680)];
 }
 
 - (NSArray<NSString *> *)tabIdentifiers {

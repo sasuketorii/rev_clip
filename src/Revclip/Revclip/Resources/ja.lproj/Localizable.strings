@@ -274,3 +274,21 @@
 "Choose a still image up to 10 MB and 16 megapixels." = "10 MB・1600万画素以内の静止画像を選択してください。";
 
 "Replace template text with an image?" = "テンプレートの本文を画像に置き換えますか？";
+
+"Customize Menu Colors" = "メニューの色をカスタマイズ";
+
+"Menu Colors Description" = "履歴・テンプレートメニューに適用します。次にメニューを開くと反映されます。ぼかしは維持します。";
+
+"Menu Text Color" = "テキスト";
+
+"Menu Background Color" = "背景の色";
+
+"Menu Hover Text Color" = "ホバーテキスト";
+
+"Menu Hover Background Color" = "ホバー背景";
+
+"Reset Menu Colors" = "メニューの色をリセット";
+
+"Menu Primary Color" = "プライマリ・アイコン";
+
+"Enter Six Digit Hex" = "#FF005E のような6桁のHEXを入力してください。";

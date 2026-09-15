@@ -274,3 +274,21 @@
 "Choose a still image up to 10 MB and 16 megapixels." = "10MB, 1,600만 화소 이하의 정지 이미지를 선택하세요.";
 
 "Replace template text with an image?" = "템플릿 텍스트를 이미지로 바꾸시겠습니까?";
+
+"Customize Menu Colors" = "메뉴 색상 사용자화";
+
+"Menu Colors Description" = "기록 및 템플릿 메뉴에 적용됩니다. 다음에 메뉴를 열면 반영됩니다. 흐림 효과는 유지됩니다.";
+
+"Menu Text Color" = "텍스트";
+
+"Menu Background Color" = "배경 색조";
+
+"Menu Hover Text Color" = "호버 텍스트";
+
+"Menu Hover Background Color" = "호버 배경";
+
+"Reset Menu Colors" = "메뉴 색상 재설정";
+
+"Menu Primary Color" = "기본 색상 / 아이콘";
+
+"Enter Six Digit Hex" = "#FF005E 같은 6자리 HEX 색상을 입력하세요.";

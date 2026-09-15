@@ -11,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface RCGeneralPreferencesViewController : NSViewController
 
-@property (nonatomic, weak) IBOutlet NSButton *autoExpiryEnabledButton;
+@property (nonatomic, weak) IBOutlet NSSwitch *autoExpiryEnabledButton;
 @property (nonatomic, weak) IBOutlet NSTextField *autoExpiryValueTextField;
 @property (nonatomic, weak) IBOutlet NSStepper *autoExpiryValueStepper;
 @property (nonatomic, weak) IBOutlet NSPopUpButton *autoExpiryUnitPopUpButton;

@@ -36,7 +36,7 @@
             (void)reopened.view;
             NSPopUpButton *restored = [reopened valueForKey:@"languagePopUpButton"];
             XCTAssertEqualObjects(restored.selectedItem.representedObject, popup.selectedItem.representedObject);
-            XCTAssertEqualObjects(reopened.autoExpiryEnabledButton.title, [expectedBundle localizedStringForKey:@"nK7-cV-2pR.title" value:nil table:@"RCGeneralPreferencesView"]);
+            XCTAssertEqualObjects(reopened.autoExpiryEnabledButton.accessibilityLabel, [expectedBundle localizedStringForKey:@"nK7-cV-2pR.title" value:nil table:@"RCGeneralPreferencesView"]);
         }
         [popup selectItemAtIndex:0];
         [controller languageChanged:popup];
@@ -53,7 +53,7 @@
     NSView *view = controller.view;
     NSString *expected = NSLocalizedStringFromTable(@"nK7-cV-2pR.title", @"RCGeneralPreferencesView", nil);
     XCTAssertNotEqualObjects(expected, @"nK7-cV-2pR.title");
-    XCTAssertEqualObjects(controller.autoExpiryEnabledButton.title, expected);
+    XCTAssertEqualObjects(controller.autoExpiryEnabledButton.accessibilityLabel, expected);
     XCTAssertEqualObjects(controller.autoExpiryUnitPopUpButton.itemTitles, (@[NSLocalizedString(@"Days", nil), NSLocalizedString(@"Hours", nil), NSLocalizedString(@"Minutes", nil)]));
     [self attachView:view name:@"General preferences"];
 }

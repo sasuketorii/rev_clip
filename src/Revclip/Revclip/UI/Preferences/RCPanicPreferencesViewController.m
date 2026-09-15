@@ -1,3 +1,4 @@
+#import "RCPreferencesPage.h"
 #import "RCLocalization.h"
 //
 //  RCPanicPreferencesViewController.m
@@ -53,10 +54,10 @@
     [container addSubview:inputLabel];
 
     // Confirmation text field
-    self.confirmationTextField = [[NSTextField alloc] init];
+    self.confirmationTextField = [[RCPreferencesTextField alloc] initWithFrame:NSZeroRect];
     self.confirmationTextField.translatesAutoresizingMaskIntoConstraints = NO;
     self.confirmationTextField.placeholderString = @"Panic";
-    self.confirmationTextField.bezelStyle = NSTextFieldRoundedBezel;
+    [self.confirmationTextField.heightAnchor constraintEqualToConstant:40].active = YES;
     self.confirmationTextField.font = [NSFont systemFontOfSize:13.0];
     [container addSubview:self.confirmationTextField];
 
@@ -76,47 +77,20 @@
     self.eraseButton.controlSize = NSControlSizeRegular;
     [container addSubview:self.eraseButton];
 
-    // Layout constraints
     [NSLayoutConstraint activateConstraints:@[
-        // Warning icon
-        [warningIcon.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:20.0],
-        [warningIcon.topAnchor constraintEqualToAnchor:container.topAnchor constant:20.0],
-        [warningIcon.widthAnchor constraintEqualToConstant:24.0],
-        [warningIcon.heightAnchor constraintEqualToConstant:24.0],
-
-        // Title label (next to icon)
-        [titleLabel.leadingAnchor constraintEqualToAnchor:warningIcon.trailingAnchor constant:8.0],
-        [titleLabel.centerYAnchor constraintEqualToAnchor:warningIcon.centerYAnchor],
-        [titleLabel.trailingAnchor constraintLessThanOrEqualToAnchor:container.trailingAnchor constant:-20.0],
-
-        // Description label
-        [descriptionLabel.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:20.0],
-        [descriptionLabel.topAnchor constraintEqualToAnchor:warningIcon.bottomAnchor constant:16.0],
-        [descriptionLabel.trailingAnchor constraintEqualToAnchor:container.trailingAnchor constant:-20.0],
-
-        // Separator
-        [separator.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:20.0],
-        [separator.trailingAnchor constraintEqualToAnchor:container.trailingAnchor constant:-20.0],
-        [separator.topAnchor constraintEqualToAnchor:descriptionLabel.bottomAnchor constant:16.0],
-
-        // Input label
-        [inputLabel.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:20.0],
-        [inputLabel.topAnchor constraintEqualToAnchor:separator.bottomAnchor constant:16.0],
-        [inputLabel.trailingAnchor constraintLessThanOrEqualToAnchor:container.trailingAnchor constant:-20.0],
-
-        // Confirmation text field
-        [self.confirmationTextField.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:20.0],
-        [self.confirmationTextField.topAnchor constraintEqualToAnchor:inputLabel.bottomAnchor constant:8.0],
-        [self.confirmationTextField.widthAnchor constraintEqualToConstant:200.0],
-
-        // Erase button
-        [self.eraseButton.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:20.0],
-        [self.eraseButton.topAnchor constraintEqualToAnchor:self.confirmationTextField.bottomAnchor constant:16.0],
-        [self.eraseButton.widthAnchor constraintGreaterThanOrEqualToConstant:MAX(120.0, ceil(self.eraseButton.attributedTitle.size.width) + 32.0)],
-        [self.eraseButton.heightAnchor constraintEqualToConstant:36.0],
-        [self.eraseButton.trailingAnchor constraintLessThanOrEqualToAnchor:container.trailingAnchor constant:-20.0],
-        [self.eraseButton.bottomAnchor constraintLessThanOrEqualToAnchor:container.bottomAnchor constant:-20.0],
+        [warningIcon.widthAnchor constraintEqualToConstant:24],
+        [warningIcon.heightAnchor constraintEqualToConstant:24],
+        [self.eraseButton.widthAnchor constraintEqualToConstant:MAX(120, ceil(self.eraseButton.attributedTitle.size.width) + 32)],
+        [self.eraseButton.heightAnchor constraintEqualToConstant:36],
     ]];
+    NSStackView *deleteActions = [NSStackView stackViewWithViews:@[self.eraseButton, [NSView new]]];
+    self.view = [RCPreferencesPage pageWithRows:@[
+        @[titleLabel.stringValue, warningIcon],
+        @[descriptionLabel.stringValue],
+        @[inputLabel.stringValue, self.confirmationTextField],
+        @[@"", deleteActions],
+    ]];
+
 }
 
 - (NSImageView *)createWarningIcon {

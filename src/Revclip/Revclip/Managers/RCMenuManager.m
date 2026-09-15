@@ -1,3 +1,4 @@
+#import "RCMenuStyle.h"
 #import "RCLinkPreviewService.h"
 #import "RCSnippetMedia.h"
 #import "RCLocalization.h"
@@ -776,6 +777,7 @@ static os_log_t RCMenuManagerLog(void) {
 }
 
 - (void)menu:(NSMenu *)menu willHighlightItem:(NSMenuItem *)item {
+    for (NSMenuItem *row in menu.itemArray) { row.view.needsDisplay = YES; }
     [self.previewController highlightItem:item text:[self previewTextForMenuItem:item] imageData:item ? [self.previewImageData objectForKey:item] : nil];
     RCClipItem *clipItem = item ? [self.clipItemsByMenuItem objectForKey:item] : nil;
     if (clipItem == nil) return;
@@ -856,6 +858,7 @@ static os_log_t RCMenuManagerLog(void) {
         [self capturePasteTargetApplication];
     }
     [self configureMenuForSimpleTransparentBackground:menu];
+    [RCMenuStyle refreshMenu:menu];
     // Only the opened menu's direct children need thumbnails. Closed history
     // folders and startup menu construction perform no payload/thumbnail I/O.
     for (NSMenuItem *item in menu.itemArray) {
@@ -1099,11 +1102,12 @@ static os_log_t RCMenuManagerLog(void) {
 
     // Keep image rendering native: template tint, accessibility, key equivalents,
     // hover help and activation all remain owned by AppKit.
-    item.view = nil;
+    if (![RCMenuStyle isEnabled]) { item.view = nil; }
     item.image = image;
     item.attributedTitle = [[NSAttributedString alloc] initWithString:displayTitle attributes:@{
         NSFontAttributeName: [NSFont menuFontOfSize:0]
     }];
+    [RCMenuStyle applyToItem:item];
 }
 
 - (NSString *)fallbackTitleForPrimaryType:(NSString *)primaryType {

@@ -22,6 +22,7 @@
     [self.timer invalidate];
     self.timer = nil;
     [self.panel orderOut:nil];
+    self.panel.contentView = nil;
 }
 - (void)highlightItem:(NSMenuItem *)item text:(NSString *)text {
     [self highlightItem:item text:text imageData:nil];
@@ -35,12 +36,13 @@
         NSRange range = [text rangeOfComposedCharacterSequencesForRange:NSMakeRange(0, 2000)];
         text = [[text substringWithRange:range] stringByAppendingString:@"…"];
     }
+    NSUInteger scheduledGeneration = self.generation;
     __weak typeof(self) weakSelf = self;
     __weak NSMenuItem *weakItem = item;
     self.timer = [NSTimer timerWithTimeInterval:0.15 repeats:NO block:^(NSTimer *timer) {
         RCFastPreviewController *strongSelf = weakSelf;
         NSMenuItem *selected = weakItem;
-        if (!strongSelf || !selected.menu || selected.menu.highlightedItem != selected) return;
+        if (!strongSelf || strongSelf.generation != scheduledGeneration || !selected.menu || selected.menu.highlightedItem != selected) return;
         NSImage *image = imageData.length ? [RCSnippetMedia thumbnailForData:imageData size:360] : nil;
         if (imageData.length && !image) return;
         NSURL *url = linkURL;
@@ -78,6 +80,7 @@
         self.panel.hidesOnDeactivate = NO;
         self.panel.releasedWhenClosed = NO;
         self.panel.hasShadow = YES;
+        self.panel.animationBehavior = NSWindowAnimationBehaviorNone;
         self.panel.opaque = NO;
         self.panel.backgroundColor = NSColor.clearColor;
         self.panel.level = NSPopUpMenuWindowLevel + 1;
@@ -151,6 +154,10 @@
     self.panel.appearance = menu.appearance;
     self.panel.contentView = background;
     [self.panel setFrame:NSMakeRect(x, y, width, height) display:NO];
+    // Paint the new content before ordering the reused panel front. Its backing
+    // store must not expose pixels from the previously highlighted image.
+    [self.panel.contentView layoutSubtreeIfNeeded];
+    [self.panel displayIfNeeded];
     // Never activate, attach as a child, or take focus from the native menu.
     if (!self.panel.visible) [self.panel orderFrontRegardless];
 }

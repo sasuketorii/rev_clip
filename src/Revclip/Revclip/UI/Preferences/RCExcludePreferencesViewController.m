@@ -1,3 +1,4 @@
+#import "RCPreferencesPage.h"
 #import "RCLocalization.h"
 //
 //  RCExcludePreferencesViewController.m
@@ -79,7 +80,11 @@ static NSString * const kRCExcludeColumnIdentifierName = @"name";
 
     NSScrollView *scrollView = [[NSScrollView alloc] initWithFrame:NSZeroRect];
     scrollView.translatesAutoresizingMaskIntoConstraints = NO;
-    scrollView.borderType = NSBezelBorder;
+    scrollView.borderType = NSNoBorder;
+    scrollView.drawsBackground = NO;
+    scrollView.wantsLayer = YES;
+    scrollView.layer.cornerRadius = 12;
+    scrollView.layer.masksToBounds = YES;
     scrollView.hasVerticalScroller = YES;
     scrollView.hasHorizontalScroller = NO;
     scrollView.autohidesScrollers = YES;
@@ -89,7 +94,10 @@ static NSString * const kRCExcludeColumnIdentifierName = @"name";
     self.tableView.allowsMultipleSelection = NO;
     self.tableView.allowsEmptySelection = YES;
     self.tableView.focusRingType = NSFocusRingTypeNone;
-    self.tableView.rowHeight = 24.0;
+    self.tableView.rowHeight = 40.0;
+    self.tableView.headerView = nil;
+    self.tableView.style = NSTableViewStylePlain;
+    self.tableView.backgroundColor = NSColor.clearColor;
     self.tableView.columnAutoresizingStyle = NSTableViewLastColumnOnlyAutoresizingStyle;
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
@@ -125,11 +133,11 @@ static NSString * const kRCExcludeColumnIdentifierName = @"name";
 
     scrollView.documentView = self.tableView;
 
-    NSButton *addButton = [NSButton buttonWithTitle:@"+" target:self action:@selector(addApplication:)];
+    NSButton *addButton = [NSButton buttonWithImage:[NSImage imageWithSystemSymbolName:@"plus" accessibilityDescription:RCLocalizedString(@"Add", nil)] target:self action:@selector(addApplication:)];
     addButton.translatesAutoresizingMaskIntoConstraints = NO;
     addButton.bezelStyle = NSBezelStyleRounded;
 
-    self.removeButton = [NSButton buttonWithTitle:@"-" target:self action:@selector(removeApplication:)];
+    self.removeButton = [NSButton buttonWithImage:[NSImage imageWithSystemSymbolName:@"minus" accessibilityDescription:RCLocalizedString(@"Remove", nil)] target:self action:@selector(removeApplication:)];
     self.removeButton.translatesAutoresizingMaskIntoConstraints = NO;
     self.removeButton.bezelStyle = NSBezelStyleRounded;
     self.removeButton.enabled = NO;
@@ -138,35 +146,23 @@ static NSString * const kRCExcludeColumnIdentifierName = @"name";
     addCurrentButton.translatesAutoresizingMaskIntoConstraints = NO;
     addCurrentButton.bezelStyle = NSBezelStyleRounded;
 
-    [self.view addSubview:headerLabel];
-    [self.view addSubview:scrollView];
-    [self.view addSubview:addButton];
-    [self.view addSubview:self.removeButton];
-    [self.view addSubview:addCurrentButton];
-
-    [NSLayoutConstraint activateConstraints:@[
-        [headerLabel.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:16.0],
-        [headerLabel.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20.0],
-
-        [scrollView.topAnchor constraintEqualToAnchor:headerLabel.bottomAnchor constant:10.0],
-        [scrollView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20.0],
-        [scrollView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20.0],
-        [scrollView.heightAnchor constraintEqualToConstant:250.0],
-
-        [addButton.topAnchor constraintEqualToAnchor:scrollView.bottomAnchor constant:12.0],
-        [addButton.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20.0],
-        [addButton.widthAnchor constraintEqualToConstant:30.0],
-
-        [self.removeButton.centerYAnchor constraintEqualToAnchor:addButton.centerYAnchor],
-        [self.removeButton.leadingAnchor constraintEqualToAnchor:addButton.trailingAnchor constant:8.0],
-        [self.removeButton.widthAnchor constraintEqualToConstant:30.0],
-
-        [addCurrentButton.centerYAnchor constraintEqualToAnchor:addButton.centerYAnchor],
-        [addCurrentButton.leadingAnchor constraintEqualToAnchor:self.removeButton.trailingAnchor constant:12.0],
-        [addCurrentButton.trailingAnchor constraintLessThanOrEqualToAnchor:self.view.trailingAnchor constant:-20.0],
-
-        [addButton.bottomAnchor constraintLessThanOrEqualToAnchor:self.view.bottomAnchor constant:-16.0],
+    NSStackView *actions = [NSStackView stackViewWithViews:@[addButton, self.removeButton, addCurrentButton]];
+    actions.orientation = NSUserInterfaceLayoutOrientationHorizontal;
+    actions.alignment = NSLayoutAttributeCenterY;
+    actions.spacing = 8;
+    for (NSButton *button in @[addButton, self.removeButton, addCurrentButton]) {
+        button.controlSize = NSControlSizeLarge;
+        [button.heightAnchor constraintEqualToConstant:32].active = YES;
+    }
+    [addButton.widthAnchor constraintEqualToConstant:32].active = YES;
+    [self.removeButton.widthAnchor constraintEqualToConstant:32].active = YES;
+    [scrollView.heightAnchor constraintEqualToConstant:280].active = YES;
+    self.view = [RCPreferencesPage pageWithRows:@[
+        @[headerLabel.stringValue],
+        @[@"", scrollView],
+        @[@"", actions],
     ]];
+
 }
 
 #pragma mark - Actions
@@ -277,6 +273,43 @@ static NSString * const kRCExcludeColumnIdentifierName = @"name";
 }
 
 #pragma mark - NSTableViewDelegate
+
+- (nullable NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(nullable NSTableColumn *)column row:(NSInteger)row {
+    if (row < 0 || row >= (NSInteger)self.excludedBundleIdentifiers.count) { return nil; }
+    NSTableCellView *cell = [tableView makeViewWithIdentifier:column.identifier owner:self];
+    BOOL isIcon = [column.identifier isEqualToString:kRCExcludeColumnIdentifierIcon];
+    if (!cell) {
+        cell = [[NSTableCellView alloc] initWithFrame:NSZeroRect];
+        cell.identifier = column.identifier;
+        NSView *content;
+        if (isIcon) {
+            NSImageView *image = [[NSImageView alloc] initWithFrame:NSZeroRect];
+            image.imageScaling = NSImageScaleProportionallyDown;
+            cell.imageView = image;
+            content = image;
+            [image.widthAnchor constraintEqualToConstant:20].active = YES;
+            [image.heightAnchor constraintEqualToConstant:20].active = YES;
+        } else {
+            NSTextField *label = [NSTextField labelWithString:@""];
+            label.lineBreakMode = NSLineBreakByTruncatingTail;
+            cell.textField = label;
+            content = label;
+        }
+        content.translatesAutoresizingMaskIntoConstraints = NO;
+        [cell addSubview:content];
+        [content.centerYAnchor constraintEqualToAnchor:cell.centerYAnchor].active = YES;
+        if (isIcon) {
+            [content.centerXAnchor constraintEqualToAnchor:cell.centerXAnchor].active = YES;
+        } else {
+            [content.leadingAnchor constraintEqualToAnchor:cell.leadingAnchor constant:8].active = YES;
+            [content.trailingAnchor constraintEqualToAnchor:cell.trailingAnchor constant:-8].active = YES;
+        }
+    }
+    NSString *identifier = self.excludedBundleIdentifiers[(NSUInteger)row];
+    if (isIcon) { cell.imageView.image = [self iconForBundleIdentifier:identifier]; }
+    else { cell.textField.stringValue = [self displayNameForBundleIdentifier:identifier]; }
+    return cell;
+}
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
     (void)notification;

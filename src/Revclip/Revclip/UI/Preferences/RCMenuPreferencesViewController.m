@@ -1,3 +1,4 @@
+#import "RCPreferencesPage.h"
 #import "RCLocalization.h"
 //
 //  RCMenuPreferencesViewController.m
@@ -9,10 +10,6 @@
 #import "RCMenuPreferencesViewController.h"
 #import "RCConstants.h"
 
-static CGFloat const kRCMenuPreferencesContentInset = 16.0;
-static CGFloat const kRCMenuPreferencesColumnSpacing = 12.0;
-static CGFloat const kRCMenuPreferencesRowSpacing = 10.0;
-static CGFloat const kRCMenuPreferencesRowLabelWidth = 200.0;
 static CGFloat const kRCMenuPreferencesValueFieldWidth = 50.0;
 
 @interface RCMenuPreferencesViewController ()
@@ -88,123 +85,35 @@ static CGFloat const kRCMenuPreferencesValueFieldWidth = 50.0;
     [self buildInterface];
     [self configureBindings];
     [self configureDependentBindings];
+    [self arrangeSettingsPage];
 }
 
 #pragma mark - Interface
 
 - (void)buildInterface {
-    NSTextField *titleLabel = [self sectionLabelWithText:RCLocalizedString(@"Menu Settings", nil)];
-    NSStackView *leftColumn = [self columnStackView];
-    NSStackView *rightColumn = [self columnStackView];
-
     self.numberOfItemsInlineTextField = [self numericTextFieldWithMinValue:0 maxValue:99];
     self.numberOfItemsInlineStepper = [self numericStepperWithMinValue:0 maxValue:99];
-    [leftColumn addArrangedSubview:[self numericRowWithTitle:RCLocalizedString(@"Number of items inline", nil)
-                                                   textField:self.numberOfItemsInlineTextField
-                                                     stepper:self.numberOfItemsInlineStepper]];
-
     self.numberOfItemsInFolderTextField = [self numericTextFieldWithMinValue:1 maxValue:99];
     self.numberOfItemsInFolderStepper = [self numericStepperWithMinValue:1 maxValue:99];
-    [leftColumn addArrangedSubview:[self numericRowWithTitle:RCLocalizedString(@"Number of items in folder", nil)
-                                                   textField:self.numberOfItemsInFolderTextField
-                                                     stepper:self.numberOfItemsInFolderStepper]];
-
     self.maxTitleLengthTextField = [self numericTextFieldWithMinValue:1 maxValue:200];
     self.maxTitleLengthStepper = [self numericStepperWithMinValue:1 maxValue:200];
-    [leftColumn addArrangedSubview:[self numericRowWithTitle:RCLocalizedString(@"Max title length", nil)
-                                                   textField:self.maxTitleLengthTextField
-                                                     stepper:self.maxTitleLengthStepper]];
-
     self.markWithNumbersButton = [self checkBoxWithTitle:RCLocalizedString(@"Mark with numbers", nil)];
-    [leftColumn addArrangedSubview:self.markWithNumbersButton];
-
     self.startNumberingFromZeroButton = [self checkBoxWithTitle:RCLocalizedString(@"Start numbering from 0", nil)];
-    [leftColumn addArrangedSubview:self.startNumberingFromZeroButton];
-
     self.addNumericKeyEquivalentsButton = [self checkBoxWithTitle:RCLocalizedString(@"Add numeric key equivalents", nil)];
-    [leftColumn addArrangedSubview:self.addNumericKeyEquivalentsButton];
-
     self.addClearHistoryItemButton = [self checkBoxWithTitle:RCLocalizedString(@"Add clear history item", nil)];
-    [leftColumn addArrangedSubview:self.addClearHistoryItemButton];
-
     self.showAlertBeforeClearButton = [self checkBoxWithTitle:RCLocalizedString(@"Show alert before clear", nil)];
-    [leftColumn addArrangedSubview:self.showAlertBeforeClearButton];
-
     self.showTooltipButton = [self checkBoxWithTitle:RCLocalizedString(@"Show tooltip", nil)];
-    [rightColumn addArrangedSubview:self.showTooltipButton];
-
     self.maxTooltipLengthTextField = [self numericTextFieldWithMinValue:1 maxValue:10000];
     self.maxTooltipLengthStepper = [self numericStepperWithMinValue:1 maxValue:10000];
-    [rightColumn addArrangedSubview:[self numericRowWithTitle:RCLocalizedString(@"Max tooltip length", nil)
-                                                    textField:self.maxTooltipLengthTextField
-                                                      stepper:self.maxTooltipLengthStepper]];
-
     self.showImagePreviewButton = [self checkBoxWithTitle:RCLocalizedString(@"Show image preview", nil)];
-    [rightColumn addArrangedSubview:self.showImagePreviewButton];
-
     self.thumbnailWidthTextField = [self numericTextFieldWithMinValue:16 maxValue:512];
     self.thumbnailWidthStepper = [self numericStepperWithMinValue:16 maxValue:512];
-    [rightColumn addArrangedSubview:[self numericRowWithTitle:RCLocalizedString(@"Thumbnail width", nil)
-                                                    textField:self.thumbnailWidthTextField
-                                                      stepper:self.thumbnailWidthStepper]];
-
     self.thumbnailHeightTextField = [self numericTextFieldWithMinValue:16 maxValue:512];
     self.thumbnailHeightStepper = [self numericStepperWithMinValue:16 maxValue:512];
-    [rightColumn addArrangedSubview:[self numericRowWithTitle:RCLocalizedString(@"Thumbnail height", nil)
-                                                    textField:self.thumbnailHeightTextField
-                                                      stepper:self.thumbnailHeightStepper]];
-
     self.showColorPreviewButton = [self checkBoxWithTitle:RCLocalizedString(@"Show color preview", nil)];
-    [rightColumn addArrangedSubview:self.showColorPreviewButton];
-
     self.showIconButton = [self checkBoxWithTitle:RCLocalizedString(@"Show icon", nil)];
-    [rightColumn addArrangedSubview:self.showIconButton];
-
     self.iconSizeTextField = [self numericTextFieldWithMinValue:8 maxValue:64];
     self.iconSizeStepper = [self numericStepperWithMinValue:8 maxValue:64];
-    [rightColumn addArrangedSubview:[self numericRowWithTitle:RCLocalizedString(@"Icon size", nil)
-                                                    textField:self.iconSizeTextField
-                                                      stepper:self.iconSizeStepper]];
-
-    NSStackView *columnsStack = [[NSStackView alloc] initWithFrame:NSZeroRect];
-    columnsStack.translatesAutoresizingMaskIntoConstraints = NO;
-    columnsStack.orientation = NSUserInterfaceLayoutOrientationHorizontal;
-    columnsStack.alignment = NSLayoutAttributeTop;
-    columnsStack.distribution = NSStackViewDistributionFillEqually;
-    columnsStack.spacing = kRCMenuPreferencesColumnSpacing;
-    [columnsStack addArrangedSubview:leftColumn];
-    [columnsStack addArrangedSubview:rightColumn];
-
-    [self.view addSubview:titleLabel];
-    [self.view addSubview:columnsStack];
-
-    [NSLayoutConstraint activateConstraints:@[
-        [titleLabel.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:kRCMenuPreferencesContentInset],
-        [titleLabel.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:kRCMenuPreferencesContentInset],
-
-        [columnsStack.topAnchor constraintEqualToAnchor:titleLabel.bottomAnchor constant:12.0],
-        [columnsStack.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:kRCMenuPreferencesContentInset],
-        [columnsStack.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-kRCMenuPreferencesContentInset],
-        [columnsStack.bottomAnchor constraintLessThanOrEqualToAnchor:self.view.bottomAnchor constant:-kRCMenuPreferencesContentInset],
-    ]];
-}
-
-- (NSTextField *)sectionLabelWithText:(NSString *)text {
-    NSTextField *label = [NSTextField labelWithString:text];
-    label.translatesAutoresizingMaskIntoConstraints = NO;
-    label.font = [NSFont boldSystemFontOfSize:13.0];
-    label.lineBreakMode = NSLineBreakByTruncatingTail;
-    return label;
-}
-
-- (NSStackView *)columnStackView {
-    NSStackView *stackView = [[NSStackView alloc] initWithFrame:NSZeroRect];
-    stackView.translatesAutoresizingMaskIntoConstraints = NO;
-    stackView.orientation = NSUserInterfaceLayoutOrientationVertical;
-    stackView.alignment = NSLayoutAttributeLeading;
-    stackView.distribution = NSStackViewDistributionFill;
-    stackView.spacing = kRCMenuPreferencesRowSpacing;
-    return stackView;
 }
 
 - (NSTextField *)numericTextFieldWithMinValue:(NSInteger)minValue maxValue:(NSInteger)maxValue {
@@ -235,33 +144,6 @@ static CGFloat const kRCMenuPreferencesValueFieldWidth = 50.0;
     button.controlSize = NSControlSizeSmall;
     button.allowsMixedState = NO;
     return button;
-}
-
-- (NSView *)numericRowWithTitle:(NSString *)title textField:(NSTextField *)textField stepper:(NSStepper *)stepper {
-    NSTextField *label = [NSTextField wrappingLabelWithString:title];
-    label.translatesAutoresizingMaskIntoConstraints = NO;
-    label.preferredMaxLayoutWidth = kRCMenuPreferencesRowLabelWidth;
-    [label.widthAnchor constraintEqualToConstant:kRCMenuPreferencesRowLabelWidth].active = YES;
-
-    NSStackView *controlStack = [[NSStackView alloc] initWithFrame:NSZeroRect];
-    controlStack.translatesAutoresizingMaskIntoConstraints = NO;
-    controlStack.orientation = NSUserInterfaceLayoutOrientationHorizontal;
-    controlStack.alignment = NSLayoutAttributeCenterY;
-    controlStack.distribution = NSStackViewDistributionFill;
-    controlStack.spacing = 6.0;
-    [controlStack addArrangedSubview:textField];
-    [controlStack addArrangedSubview:stepper];
-
-    NSStackView *row = [[NSStackView alloc] initWithFrame:NSZeroRect];
-    row.translatesAutoresizingMaskIntoConstraints = NO;
-    row.orientation = NSUserInterfaceLayoutOrientationHorizontal;
-    row.alignment = NSLayoutAttributeCenterY;
-    row.distribution = NSStackViewDistributionFill;
-    row.spacing = 8.0;
-    [row addArrangedSubview:label];
-    [row addArrangedSubview:controlStack];
-
-    return row;
 }
 
 - (NSNumberFormatter *)integerFormatterWithMinValue:(NSInteger)minValue maxValue:(NSInteger)maxValue {
@@ -365,6 +247,27 @@ static CGFloat const kRCMenuPreferencesValueFieldWidth = 50.0;
         toObject:[NSUserDefaultsController sharedUserDefaultsController]
      withKeyPath:keyPath
          options:nil];
+}
+
+- (void)arrangeSettingsPage {
+    self.view = [RCPreferencesPage pageWithRows:@[
+        @[RCLocalizedString(@"Number of items inline", nil), self.numberOfItemsInlineTextField, self.numberOfItemsInlineStepper],
+        @[RCLocalizedString(@"Number of items in folder", nil), self.numberOfItemsInFolderTextField, self.numberOfItemsInFolderStepper],
+        @[RCLocalizedString(@"Max title length", nil), self.maxTitleLengthTextField, self.maxTitleLengthStepper],
+        @[RCLocalizedString(@"Mark with numbers", nil), [RCPreferencesPage switchForController:self key:@"markWithNumbersButton"]],
+        @[RCLocalizedString(@"Start numbering from 0", nil), [RCPreferencesPage switchForController:self key:@"startNumberingFromZeroButton"]],
+        @[RCLocalizedString(@"Add numeric key equivalents", nil), [RCPreferencesPage switchForController:self key:@"addNumericKeyEquivalentsButton"]],
+        @[RCLocalizedString(@"Add clear history item", nil), [RCPreferencesPage switchForController:self key:@"addClearHistoryItemButton"]],
+        @[RCLocalizedString(@"Show alert before clear", nil), [RCPreferencesPage switchForController:self key:@"showAlertBeforeClearButton"]],
+        @[RCLocalizedString(@"Show tooltip", nil), [RCPreferencesPage switchForController:self key:@"showTooltipButton"]],
+        @[RCLocalizedString(@"Max tooltip length", nil), self.maxTooltipLengthTextField, self.maxTooltipLengthStepper],
+        @[RCLocalizedString(@"Show image preview", nil), [RCPreferencesPage switchForController:self key:@"showImagePreviewButton"]],
+        @[RCLocalizedString(@"Thumbnail width", nil), self.thumbnailWidthTextField, self.thumbnailWidthStepper],
+        @[RCLocalizedString(@"Thumbnail height", nil), self.thumbnailHeightTextField, self.thumbnailHeightStepper],
+        @[RCLocalizedString(@"Show color preview", nil), [RCPreferencesPage switchForController:self key:@"showColorPreviewButton"]],
+        @[RCLocalizedString(@"Show icon", nil), [RCPreferencesPage switchForController:self key:@"showIconButton"]],
+        @[RCLocalizedString(@"Icon size", nil), self.iconSizeTextField, self.iconSizeStepper],
+    ]];
 }
 
 @end

@@ -274,3 +274,21 @@
 "Choose a still image up to 10 MB and 16 megapixels." = "请选择不超过 10 MB 和 1600 万像素的静态图像。";
 
 "Replace template text with an image?" = "要用图像替换模板文本吗？";
+
+"Customize Menu Colors" = "自定义菜单颜色";
+
+"Menu Colors Description" = "应用于历史记录和模板菜单。下次打开菜单时生效，保留模糊效果。";
+
+"Menu Text Color" = "文本";
+
+"Menu Background Color" = "背景色调";
+
+"Menu Hover Text Color" = "悬停文本";
+
+"Menu Hover Background Color" = "悬停背景";
+
+"Reset Menu Colors" = "重置菜单颜色";
+
+"Menu Primary Color" = "主色 / 图标";
+
+"Enter Six Digit Hex" = "请输入六位HEX颜色，例如 #FF005E。";

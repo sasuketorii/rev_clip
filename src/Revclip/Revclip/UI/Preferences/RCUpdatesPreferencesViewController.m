@@ -1,3 +1,4 @@
+#import "RCPreferencesPage.h"
 #import "RCLocalization.h"
 //
 //  RCUpdatesPreferencesViewController.m
@@ -44,6 +45,7 @@ static const NSInteger kRCDefaultUpdateCheckInterval = 86400;
 
     [self loadUpdateSettings];
     [self updateVersionInfo];
+    [self arrangeSettingsPage];
 }
 
 - (void)loadUpdateSettings {
@@ -236,6 +238,15 @@ static const NSInteger kRCDefaultUpdateCheckInterval = 86400;
     [self.checkProgressIndicator stopAnimation:nil];
     self.checkProgressIndicator.hidden = YES;
     [self cancelCheckCompletionTimer];
+}
+
+- (void)arrangeSettingsPage {
+    if (!self.automaticCheckButton) { return; }
+    self.view = [RCPreferencesPage pageWithRows:@[
+        @[[(NSButton *)[self valueForKey:@"automaticCheckButton"] title], [RCPreferencesPage switchForController:self key:@"automaticCheckButton"]],
+        @[([RCLocalization titleForIdentifier:@"n0h-kP-D2h" table:@"RCUpdatesPreferencesView"] ?: @"確認間隔:"), self.checkIntervalPopUpButton],
+        @[RCLocalizedString(@"", nil), self.versionInfoLabel, self.checkNowButton, self.checkProgressIndicator],
+    ]];
 }
 
 @end

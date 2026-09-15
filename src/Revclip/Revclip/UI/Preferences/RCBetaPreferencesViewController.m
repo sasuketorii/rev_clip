@@ -1,3 +1,4 @@
+#import "RCPreferencesPage.h"
 #import "RCLocalization.h"
 //
 //  RCBetaPreferencesViewController.m
@@ -48,6 +49,7 @@ static NSInteger const kRCBetaModifierMaximumIndex = 3;
     [self configureModifierPopUpButtons];
     [self loadSettingsFromUserDefaults];
     [self configureUnavailableFeatureControls];
+    [self arrangeSettingsPage];
 }
 
 #pragma mark - Actions
@@ -188,6 +190,15 @@ static NSInteger const kRCBetaModifierMaximumIndex = 3;
         return [(NSString *)rawValue integerValue];
     }
     return defaultValue;
+}
+
+- (void)arrangeSettingsPage {
+    self.view = [RCPreferencesPage pageWithRows:@[
+        @[[(NSButton *)[self valueForKey:@"pastePlainTextEnableButton"] title], [RCPreferencesPage switchForController:self key:@"pastePlainTextEnableButton"], self.pastePlainTextModifierPopUpButton],
+        @[[(NSButton *)[self valueForKey:@"deleteHistoryEnableButton"] title], [RCPreferencesPage switchForController:self key:@"deleteHistoryEnableButton"], self.deleteHistoryModifierPopUpButton],
+        @[[(NSButton *)[self valueForKey:@"pasteAndDeleteHistoryEnableButton"] title], [RCPreferencesPage switchForController:self key:@"pasteAndDeleteHistoryEnableButton"], self.pasteAndDeleteHistoryModifierPopUpButton],
+        @[[(NSButton *)[self valueForKey:@"observeScreenshotEnableButton"] title], [RCPreferencesPage switchForController:self key:@"observeScreenshotEnableButton"]],
+    ]];
 }
 
 @end
