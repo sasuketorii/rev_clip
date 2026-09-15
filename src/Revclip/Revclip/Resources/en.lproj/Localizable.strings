@@ -292,3 +292,42 @@
 "Menu Primary Color" = "Primary / icons";
 
 "Enter Six Digit Hex" = "Enter a six-digit HEX color, for example #FF005E.";
+
+/* Agent preferences */
+"Agent Settings" = "Agent Settings";
+"Manage Revclip templates and settings with your coding agent." = "Manage Revclip templates and settings with your coding agent.";
+"Copy the prompt into Codex or Claude Code. Review the installation results, then reload your agent or start a new session." = "Copy the prompt into Codex or Claude Code. Review the installation results, then reload your agent or start a new session.";
+"Copy Prompt" = "Copy Prompt";
+"Installation prompt" = "Installation prompt";
+"Installed only for detected, supported tools. DeepSeek Harness (.dsh) is experimental (developer preview)." = "Installed only for detected, supported tools. DeepSeek Harness (.dsh) is experimental (developer preview).";
+"Prompt copied. Paste it into your agent." = "Prompt copied. Paste it into your agent.";
+"Could not copy the prompt. Select and copy the text below." = "Could not copy the prompt. Select and copy the text below.";
+"Install the Revclip skill in all detected supported agent roots using this bundled installer and providers.json. Run inspect, install with defaults, then inspect to verify. Stop on errors; never force or overwrite conflicts. Report installed paths, skips, and conflicts. Include experimental DeepSeek Harness (.dsh) only if detected and supported by the installer." = "Install the Revclip skill in all detected supported agent roots using this bundled installer and providers.json. Run inspect, install with defaults, then inspect to verify. Stop on errors; never force or overwrite conflicts. Report installed paths, skips, and conflicts. Include experimental DeepSeek Harness (.dsh) only if detected and supported by the installer.";
+"Explain any reload or new session needed. Then use the skill for template CRUD and supported settings; ask what I want to change first." = "Explain any reload or new session needed. Then use the skill for template CRUD and supported settings; ask what I want to change first.";
+
+/* Bug report preferences */
+"Bug Report" = "Bug Report";
+"Describe a problem with Revclip. Your report is sent to the support team via Telegram." = "Describe a problem with Revclip. Your report is sent to the support team via Telegram.";
+"Title (required, up to 120 characters)" = "Title (required, up to 120 characters)";
+"Description (required, up to 2,500 characters)" = "Description (required, up to 2,500 characters)";
+"Reply contact (optional, up to 200 characters)" = "Reply contact (optional, up to 200 characters)";
+"Send Report" = "Send Report";
+"Enter a title (1–120 characters), a description (1–2,500), and an optional contact (up to 200)." = "Enter a title (1–120 characters), a description (1–2,500), and an optional contact (up to 200).";
+"Bug reporting is unavailable in this build." = "Bug reporting is unavailable in this build.";
+"Could not send the report. Your text is preserved. Please try again when you are ready." = "Could not send the report. Your text is preserved. Please try again when you are ready.";
+"Sending report…" = "Sending report…";
+"Report sent. Thank you for helping improve Revclip." = "Report sent. Thank you for helping improve Revclip.";
+"I consent to the collection of source information." = "I consent to the collection of source information.";
+"With your consent, the server collects your source IP address, approximate location, and network provider (ASN). Your report also includes the app and macOS versions, language, and time zone. Clipboard contents, history, and logs are not collected." = "With your consent, the server collects your source IP address, approximate location, and network provider (ASN). Your report also includes the app and macOS versions, language, and time zone. Clipboard contents, history, and logs are not collected.";
+"App version: %@\nmacOS: %@\nLanguage: %@\nTime zone: %@" = "App version: %@\nmacOS: %@\nLanguage: %@\nTime zone: %@";
+"Consent to source information collection is required." = "Consent to source information collection is required.";
+"A report is already being sent. Please wait." = "A report is already being sent. Please wait.";
+
+/* Agent skill update status */
+"Checking installed skills…" = "Checking installed skills…";
+"Check skill updates" = "Check skill updates";
+"Could not check skills. Run the setup prompt to inspect them." = "Could not check skills. Run the setup prompt to inspect them.";
+"A skill has local changes. The setup prompt will report conflicts without overwriting them." = "A skill has local changes. The setup prompt will report conflicts without overwriting them.";
+"Skill updates are available. Copy and run the setup prompt to update them." = "Skill updates are available. Copy and run the setup prompt to update them.";
+"Installed skills are up to date. Python is not required." = "Installed skills are up to date. Python is not required.";
+"Run the setup prompt to install skills. Python is not required." = "Run the setup prompt to install skills. Python is not required.";

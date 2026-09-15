@@ -292,3 +292,42 @@
 "Menu Primary Color" = "Cor primária / ícones";
 
 "Enter Six Digit Hex" = "Digite uma cor HEX de seis dígitos, por exemplo #FF005E.";
+
+/* Agent preferences */
+"Agent Settings" = "Configurações de agentes";
+"Manage Revclip templates and settings with your coding agent." = "Gerencie modelos e configurações do Revclip com seu agente de programação.";
+"Copy the prompt into Codex or Claude Code. Review the installation results, then reload your agent or start a new session." = "Cole o prompt no Codex ou no Claude Code. Confira o resultado da instalação e recarregue o agente ou inicie uma nova sessão.";
+"Copy Prompt" = "Copiar prompt";
+"Installation prompt" = "Prompt de instalação";
+"Installed only for detected, supported tools. DeepSeek Harness (.dsh) is experimental (developer preview)." = "Instalação apenas para ferramentas detectadas e compatíveis. DeepSeek Harness (.dsh) é experimental (prévia para desenvolvedores).";
+"Prompt copied. Paste it into your agent." = "Prompt copiado. Cole-o no seu agente.";
+"Could not copy the prompt. Select and copy the text below." = "Não foi possível copiar o prompt. Selecione e copie o texto abaixo.";
+"Install the Revclip skill in all detected supported agent roots using this bundled installer and providers.json. Run inspect, install with defaults, then inspect to verify. Stop on errors; never force or overwrite conflicts. Report installed paths, skips, and conflicts. Include experimental DeepSeek Harness (.dsh) only if detected and supported by the installer." = "Instale a skill do Revclip em todos os diretórios raiz de agentes detectados e compatíveis usando este instalador incluído e providers.json. Execute inspect, install com as opções padrão e inspect novamente para verificar. Pare em caso de erro; nunca force a instalação nem sobrescreva arquivos em conflito. Informe caminhos de instalação, itens ignorados e conflitos. Inclua o DeepSeek Harness (.dsh) experimental apenas se ele for detectado e compatível com o instalador.";
+"Explain any reload or new session needed. Then use the skill for template CRUD and supported settings; ask what I want to change first." = "Explique se é necessário recarregar ou iniciar uma nova sessão. Depois use a skill para criar, ler, atualizar e excluir modelos e gerenciar as configurações compatíveis; primeiro pergunte o que quero alterar.";
+
+/* Bug report preferences */
+"Bug Report" = "Relatar problema";
+"Describe a problem with Revclip. Your report is sent to the support team via Telegram." = "Descreva um problema com o Revclip. Seu relato será enviado à equipe de suporte pelo Telegram.";
+"Title (required, up to 120 characters)" = "Título (obrigatório, até 120 caracteres)";
+"Description (required, up to 2,500 characters)" = "Descrição (obrigatória, até 2.500 caracteres)";
+"Reply contact (optional, up to 200 characters)" = "Contato para resposta (opcional, até 200 caracteres)";
+"Send Report" = "Enviar relato";
+"Enter a title (1–120 characters), a description (1–2,500), and an optional contact (up to 200)." = "Informe um título (1–120 caracteres), uma descrição (1–2.500) e um contato opcional (até 200).";
+"Bug reporting is unavailable in this build." = "O envio de relatos não está disponível nesta compilação.";
+"Could not send the report. Your text is preserved. Please try again when you are ready." = "Não foi possível enviar o relato. Seu texto foi preservado. Tente novamente quando quiser.";
+"Sending report…" = "Enviando relato…";
+"Report sent. Thank you for helping improve Revclip." = "Relato enviado. Obrigado por ajudar a melhorar o Revclip.";
+"I consent to the collection of source information." = "Concordo com a coleta de informações da origem do envio.";
+"With your consent, the server collects your source IP address, approximate location, and network provider (ASN). Your report also includes the app and macOS versions, language, and time zone. Clipboard contents, history, and logs are not collected." = "Com seu consentimento, o servidor coleta seu endereço IP de origem, localização aproximada e provedor de rede (ASN). O relato também inclui as versões do app e do macOS, o idioma e o fuso horário. O conteúdo da área de transferência, o histórico e os logs não são coletados.";
+"App version: %@\nmacOS: %@\nLanguage: %@\nTime zone: %@" = "Versão do app: %@\nmacOS: %@\nIdioma: %@\nFuso horário: %@";
+"Consent to source information collection is required." = "É necessário consentir com a coleta de informações da origem do envio.";
+"A report is already being sent. Please wait." = "Um relato já está sendo enviado. Aguarde.";
+
+/* Agent skill update status */
+"Checking installed skills…" = "Verificando skills instaladas…";
+"Check skill updates" = "Verificar atualizações de skills";
+"Could not check skills. Run the setup prompt to inspect them." = "Não foi possível verificar as skills. Execute o prompt de configuração para inspecioná-las.";
+"A skill has local changes. The setup prompt will report conflicts without overwriting them." = "Uma skill tem alterações locais. O prompt de configuração informará os conflitos sem sobrescrever as alterações.";
+"Skill updates are available. Copy and run the setup prompt to update them." = "Há atualizações de skills disponíveis. Copie e execute o prompt de configuração para atualizá-las.";
+"Installed skills are up to date. Python is not required." = "As skills instaladas estão atualizadas. Python não é necessário.";
+"Run the setup prompt to install skills. Python is not required." = "Execute o prompt de configuração para instalar as skills. Python não é necessário.";

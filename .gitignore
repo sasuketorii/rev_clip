@@ -10,6 +10,10 @@ xcuserdata/
 .DS_Store
 .env
 .env.*
+.dev.vars
+.dev.vars.*
+.wrangler/
+node_modules/
 !.env.example
 *.p12
 *.p8

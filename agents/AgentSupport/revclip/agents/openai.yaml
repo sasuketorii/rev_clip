@@ -1,0 +1,4 @@
+interface:
+  display_name: "Revclip"
+  short_description: "Manage local Revclip templates and preferences"
+  default_prompt: "Use $revclip to manage my Revclip templates or settings."

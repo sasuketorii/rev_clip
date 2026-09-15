@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/config-schema.json",
+  "name": "revclip-feedback",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-15",
+  "workers_dev": true,
+  "limits": {
+    "cpu_ms": 10
+  },
+  "vars": {
+    "FEEDBACK_DISABLED": "true"
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.1,
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": false
+    }
+  },
+  "ratelimits": [
+    {
+      "name": "REPORT_IP_LIMIT",
+      "namespace_id": "160901",
+      "simple": { "limit": 1, "period": 60 }
+    },
+    {
+      "name": "REPORT_GLOBAL_LIMIT",
+      "namespace_id": "160902",
+      "simple": { "limit": 20, "period": 60 }
+    }
+  ]
+}

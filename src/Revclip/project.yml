@@ -29,9 +29,11 @@ targets:
     type: application
     platform: macOS
     dependencies:
+      - target: RevclipCLI
       - sdk: ApplicationServices.framework
       - sdk: Carbon.framework
       - sdk: CoreFoundation.framework
+      - sdk: CoreText.framework
       - sdk: Security.framework
       - sdk: ServiceManagement.framework
       - framework: Revclip/Vendor/Sparkle/Sparkle.framework
@@ -43,8 +45,8 @@ targets:
         CFBundleName: "$(PRODUCT_NAME)"
         CFBundleDisplayName: "$(PRODUCT_NAME)"
         CFBundleIdentifier: "$(PRODUCT_BUNDLE_IDENTIFIER)"
-        CFBundleVersion: "38"
-        CFBundleShortVersionString: "0.1.5"
+        CFBundleVersion: "39"
+        CFBundleShortVersionString: "0.1.6"
         CFBundleExecutable: "$(EXECUTABLE_NAME)"
         CFBundlePackageType: "APPL"
         CFBundleSignature: "????"
@@ -58,6 +60,7 @@ targets:
         SUFeedURL: "$(RC_SU_FEED_URL)"
         SUPublicEDKey: "$(RC_SU_PUBLIC_ED_KEY)"
         RCStorageDirectoryName: "$(RC_STORAGE_DIRECTORY_NAME)"
+        RCBugReportURL: "https://revclip-feedback.sasuketorii-business.workers.dev/report"
         NSAccessibilityUsageDescription: "Revclip needs accessibility access to paste clipboard items into other applications."
     sources:
       - path: Revclip
@@ -69,6 +72,19 @@ targets:
       # NDEBUG/SQLITE_DEBUG mode; keep that mode consistent for this file.
       - path: Revclip/Vendor/SQLCipher/sqlite3.c
         compilerFlags: "-DNDEBUG"
+      - path: ../../agents/AgentSupport
+        type: folder
+        buildPhase: resources
+    postCompileScripts:
+      - name: Embed native CLI
+        script: |
+          set -eu
+          mkdir -p "$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Helpers"
+          cp "$BUILT_PRODUCTS_DIR/revclip" "$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Helpers/revclip"
+        inputFiles:
+          - "$(BUILT_PRODUCTS_DIR)/revclip"
+        outputFiles:
+          - "$(TARGET_BUILD_DIR)/$(CONTENTS_FOLDER_PATH)/Helpers/revclip"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.revclip.Revclip
@@ -132,6 +148,31 @@ targets:
           CODE_SIGNING_ALLOWED: NO
           CODE_SIGNING_REQUIRED: NO
           CODE_SIGN_ENTITLEMENTS: ""
+
+  RevclipCLI:
+    type: tool
+    platform: macOS
+    sources:
+      - path: RevclipCLI
+    settings:
+      base:
+        PRODUCT_NAME: revclip
+        PRODUCT_BUNDLE_IDENTIFIER: com.revclip.cli
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        ARCHS: "arm64 x86_64"
+        ONLY_ACTIVE_ARCH: false
+        CLANG_ENABLE_OBJC_ARC: true
+        OTHER_CFLAGS: "$(inherited) -fobjc-arc-exceptions"
+        SKIP_INSTALL: true
+        ENABLE_HARDENED_RUNTIME: true
+        CODE_SIGN_IDENTITY: ""
+      configs:
+        Release:
+          CODE_SIGN_IDENTITY: "Developer ID Application"
+        Debug:
+          CODE_SIGNING_ALLOWED: NO
+        Demo:
+          CODE_SIGNING_ALLOWED: NO
 
   RevclipTests:
     type: bundle.unit-test

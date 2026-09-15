@@ -19,10 +19,27 @@ jobs:
         run: command -v xcodegen || brew install xcodegen
       - name: Audit demo feature parity
         run: python3 scripts/check_demo_parity.py
+      - name: Test agent installer and CLI
+        run: |
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p test_agent_install.py -v
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p test_revclip_cli.py -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install feedback test dependencies
+        working-directory: services/feedback
+        run: npm ci
+      - name: Test feedback relay
+        working-directory: services/feedback
+        run: npm test
       - name: Generate project
         run: make -C src/Revclip setup
       - name: Test
         run: make -C src/Revclip test
+      - name: Test native CLI and skill installer
+        run: >-
+          REVCLIP_NATIVE_CLI="$PWD/src/Revclip/build/Debug/revclip"
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p 'test_native*.py' -v
       - name: Test optimized regular build
         run: >-
           xcodebuild -project src/Revclip/Revclip.xcodeproj -scheme Revclip

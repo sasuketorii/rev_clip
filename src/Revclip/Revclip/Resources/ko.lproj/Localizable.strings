@@ -292,3 +292,42 @@
 "Menu Primary Color" = "기본 색상 / 아이콘";
 
 "Enter Six Digit Hex" = "#FF005E 같은 6자리 HEX 색상을 입력하세요.";
+
+/* Agent preferences */
+"Agent Settings" = "에이전트 설정";
+"Manage Revclip templates and settings with your coding agent." = "코딩 에이전트로 Revclip 템플릿과 설정을 관리하세요.";
+"Copy the prompt into Codex or Claude Code. Review the installation results, then reload your agent or start a new session." = "프롬프트를 Codex 또는 Claude Code에 붙여넣으세요. 설치 결과를 확인한 뒤 에이전트를 다시 로드하거나 새 세션을 시작하세요.";
+"Copy Prompt" = "프롬프트 복사";
+"Installation prompt" = "설치 프롬프트";
+"Installed only for detected, supported tools. DeepSeek Harness (.dsh) is experimental (developer preview)." = "감지된 지원 도구에만 설치합니다. DeepSeek Harness(.dsh)는 실험적 지원(개발자 프리뷰)입니다.";
+"Prompt copied. Paste it into your agent." = "프롬프트를 복사했습니다. 에이전트에 붙여넣으세요.";
+"Could not copy the prompt. Select and copy the text below." = "프롬프트를 복사하지 못했습니다. 아래 텍스트를 선택하여 복사하세요.";
+"Install the Revclip skill in all detected supported agent roots using this bundled installer and providers.json. Run inspect, install with defaults, then inspect to verify. Stop on errors; never force or overwrite conflicts. Report installed paths, skips, and conflicts. Include experimental DeepSeek Harness (.dsh) only if detected and supported by the installer." = "이 번들 설치 프로그램과 providers.json을 사용하여 감지된 모든 지원 에이전트 루트에 Revclip 스킬을 설치해 주세요. inspect, 기본 설정으로 install, 검증을 위한 inspect 순서로 실행하세요. 오류가 발생하면 중지하고 강제 설치하거나 충돌하는 파일을 덮어쓰지 마세요. 설치 경로, 건너뛴 항목, 충돌을 보고하세요. 실험적으로 지원되는 DeepSeek Harness(.dsh)는 감지되고 설치 프로그램이 지원하는 경우에만 포함하세요.";
+"Explain any reload or new session needed. Then use the skill for template CRUD and supported settings; ask what I want to change first." = "다시 로드하거나 새 세션을 시작해야 하는지 설명하세요. 그런 다음 스킬로 템플릿 생성·조회·수정·삭제와 지원되는 설정 관리를 도와주세요. 먼저 무엇을 변경하고 싶은지 물어보세요.";
+
+/* Bug report preferences */
+"Bug Report" = "버그 신고";
+"Describe a problem with Revclip. Your report is sent to the support team via Telegram." = "Revclip에서 발생한 문제를 알려주세요. 신고 내용은 Telegram을 통해 지원팀으로 전송됩니다.";
+"Title (required, up to 120 characters)" = "제목 (필수, 최대 120자)";
+"Description (required, up to 2,500 characters)" = "설명 (필수, 최대 2,500자)";
+"Reply contact (optional, up to 200 characters)" = "답변 받을 연락처 (선택, 최대 200자)";
+"Send Report" = "신고 보내기";
+"Enter a title (1–120 characters), a description (1–2,500), and an optional contact (up to 200)." = "제목(1~120자), 설명(1~2,500자), 선택 사항인 연락처(최대 200자)를 입력하세요.";
+"Bug reporting is unavailable in this build." = "이 빌드에서는 버그 신고를 이용할 수 없습니다.";
+"Could not send the report. Your text is preserved. Please try again when you are ready." = "신고를 보내지 못했습니다. 입력 내용은 유지됩니다. 준비되면 다시 시도하세요.";
+"Sending report…" = "신고 전송 중…";
+"Report sent. Thank you for helping improve Revclip." = "신고를 보냈습니다. Revclip 개선에 도움을 주셔서 감사합니다.";
+"I consent to the collection of source information." = "발신 정보 수집에 동의합니다.";
+"With your consent, the server collects your source IP address, approximate location, and network provider (ASN). Your report also includes the app and macOS versions, language, and time zone. Clipboard contents, history, and logs are not collected." = "동의하면 서버에서 발신 IP 주소, 대략적인 위치, 네트워크 제공업체(ASN)를 수집합니다. 신고에는 앱 및 macOS 버전, 언어, 시간대도 포함됩니다. 클립보드 내용, 기록, 로그는 수집하지 않습니다.";
+"App version: %@\nmacOS: %@\nLanguage: %@\nTime zone: %@" = "앱 버전: %@\nmacOS: %@\n언어: %@\n시간대: %@";
+"Consent to source information collection is required." = "발신 정보 수집에 동의해야 합니다.";
+"A report is already being sent. Please wait." = "신고를 전송 중입니다. 잠시 기다려 주세요.";
+
+/* Agent skill update status */
+"Checking installed skills…" = "설치된 스킬 확인 중…";
+"Check skill updates" = "스킬 업데이트 확인";
+"Could not check skills. Run the setup prompt to inspect them." = "스킬을 확인하지 못했습니다. 설정 프롬프트를 실행하여 확인하세요.";
+"A skill has local changes. The setup prompt will report conflicts without overwriting them." = "로컬에서 변경된 스킬이 있습니다. 설정 프롬프트는 변경 사항을 덮어쓰지 않고 충돌을 보고합니다.";
+"Skill updates are available. Copy and run the setup prompt to update them." = "스킬 업데이트가 있습니다. 설정 프롬프트를 복사하고 실행하여 업데이트하세요.";
+"Installed skills are up to date. Python is not required." = "설치된 스킬이 최신 상태입니다. Python은 필요하지 않습니다.";
+"Run the setup prompt to install skills. Python is not required." = "설정 프롬프트를 실행하여 스킬을 설치하세요. Python은 필요하지 않습니다.";

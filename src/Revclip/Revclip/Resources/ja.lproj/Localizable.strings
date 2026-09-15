@@ -292,3 +292,42 @@
 "Menu Primary Color" = "プライマリ・アイコン";
 
 "Enter Six Digit Hex" = "#FF005E のような6桁のHEXを入力してください。";
+
+/* Agent preferences */
+"Agent Settings" = "エージェント設定";
+"Manage Revclip templates and settings with your coding agent." = "コーディングエージェントでRevclipのテンプレートや設定を管理できます。";
+"Copy the prompt into Codex or Claude Code. Review the installation results, then reload your agent or start a new session." = "プロンプトをCodexまたはClaude Codeに貼り付けてください。導入結果を確認し、エージェントを再読み込みするか、新しいセッションを開始します。";
+"Copy Prompt" = "プロンプトをコピー";
+"Installation prompt" = "インストール用プロンプト";
+"Installed only for detected, supported tools. DeepSeek Harness (.dsh) is experimental (developer preview)." = "検出された対応ツールにのみ導入します。DeepSeek Harness（.dsh）は実験的対応（開発者プレビュー）です。";
+"Prompt copied. Paste it into your agent." = "プロンプトをコピーしました。エージェントに貼り付けてください。";
+"Could not copy the prompt. Select and copy the text below." = "コピーできませんでした。下のテキストを選択してコピーしてください。";
+"Install the Revclip skill in all detected supported agent roots using this bundled installer and providers.json. Run inspect, install with defaults, then inspect to verify. Stop on errors; never force or overwrite conflicts. Report installed paths, skips, and conflicts. Include experimental DeepSeek Harness (.dsh) only if detected and supported by the installer." = "この同梱インストーラーとproviders.jsonを使い、検出されたすべての対応エージェントルートにRevclipスキルを導入してください。inspect、既定の設定でinstall、検証用のinspectの順に実行してください。エラー時は停止し、強制実行や競合ファイルの上書きはしないでください。導入先、スキップ、競合を報告してください。実験的対応のDeepSeek Harness（.dsh）は、検出され、インストーラーが対応している場合にのみ含めてください。";
+"Explain any reload or new session needed. Then use the skill for template CRUD and supported settings; ask what I want to change first." = "再読み込みや新しいセッションが必要か説明してください。その後、スキルを使ってテンプレートの作成・参照・更新・削除と対応する設定の管理を手伝ってください。まず何を変更したいか私に確認してください。";
+
+/* Bug report preferences */
+"Bug Report" = "不具合報告";
+"Describe a problem with Revclip. Your report is sent to the support team via Telegram." = "Revclipの不具合についてお知らせください。報告はTelegram経由でサポートチームに送信されます。";
+"Title (required, up to 120 characters)" = "タイトル（必須・120文字以内）";
+"Description (required, up to 2,500 characters)" = "詳細（必須・2,500文字以内）";
+"Reply contact (optional, up to 200 characters)" = "返信先（任意・200文字以内）";
+"Send Report" = "報告を送信";
+"Enter a title (1–120 characters), a description (1–2,500), and an optional contact (up to 200)." = "タイトル（1〜120文字）、詳細（1〜2,500文字）、任意の返信先（200文字以内）を入力してください。";
+"Bug reporting is unavailable in this build." = "このビルドでは不具合報告を利用できません。";
+"Could not send the report. Your text is preserved. Please try again when you are ready." = "送信できませんでした。入力内容は保持されています。準備ができたら再度お試しください。";
+"Sending report…" = "報告を送信中…";
+"Report sent. Thank you for helping improve Revclip." = "報告を送信しました。Revclipの改善にご協力いただきありがとうございます。";
+"I consent to the collection of source information." = "送信元情報の取得に同意します。";
+"With your consent, the server collects your source IP address, approximate location, and network provider (ASN). Your report also includes the app and macOS versions, language, and time zone. Clipboard contents, history, and logs are not collected." = "同意に基づき、サーバーが送信元IPアドレス、おおよその位置情報、ネットワーク事業者（ASN）を取得します。報告にはアプリとmacOSのバージョン、言語、タイムゾーンも含まれます。クリップボードの内容・履歴・ログは収集しません。";
+"App version: %@\nmacOS: %@\nLanguage: %@\nTime zone: %@" = "アプリのバージョン：%@\nmacOS：%@\n言語：%@\nタイムゾーン：%@";
+"Consent to source information collection is required." = "送信元情報の取得への同意が必要です。";
+"A report is already being sent. Please wait." = "報告を送信中です。しばらくお待ちください。";
+
+/* Agent skill update status */
+"Checking installed skills…" = "インストール済みスキルを確認中…";
+"Check skill updates" = "スキルの更新を確認";
+"Could not check skills. Run the setup prompt to inspect them." = "スキルを確認できませんでした。セットアップ用プロンプトを実行して確認してください。";
+"A skill has local changes. The setup prompt will report conflicts without overwriting them." = "ローカルで変更されたスキルがあります。セットアップ用プロンプトは変更を上書きせず、競合を報告します。";
+"Skill updates are available. Copy and run the setup prompt to update them." = "スキルの更新があります。セットアップ用プロンプトをコピーして実行し、更新してください。";
+"Installed skills are up to date. Python is not required." = "インストール済みのスキルは最新です。Pythonは不要です。";
+"Run the setup prompt to install skills. Python is not required." = "セットアップ用プロンプトを実行してスキルをインストールしてください。Pythonは不要です。";

@@ -1,6 +1,7 @@
 #import "RCMenuStyle.h"
 #import "RCLinkPreviewService.h"
 #import "RCSnippetMedia.h"
+#import "RCFileImagePreview.h"
 #import "RCLocalization.h"
 #import "RCFastPreviewController.h"
 //
@@ -781,7 +782,12 @@ static os_log_t RCMenuManagerLog(void) {
     [self.previewController highlightItem:item text:[self previewTextForMenuItem:item] imageData:item ? [self.previewImageData objectForKey:item] : nil];
     RCClipItem *clipItem = item ? [self.clipItemsByMenuItem objectForKey:item] : nil;
     if (clipItem == nil) return;
-    if (clipItem.thumbnailPath.length) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    BOOL hasFileType = [clipItem.primaryType isEqualToString:NSPasteboardTypeFileURL] ||
+        [clipItem.primaryType isEqualToString:NSFilenamesPboardType];
+#pragma clang diagnostic pop
+    if (clipItem.thumbnailPath.length > 0 || hasFileType) {
         [self loadHistoryImagePreviewForItem:item clip:clipItem];
     }
 
@@ -820,7 +826,12 @@ static os_log_t RCMenuManagerLog(void) {
             if (!image) {
                 @autoreleasepool {
                     RCClipData *data = [owner clipDataForPath:archivePath];
-                    image = [RCSnippetMedia historyThumbnailForData:data.TIFFData size:360];
+                    image = [RCFileImagePreview imageForClip:data size:360];
+                    // Legacy archives may contain Finder's icon TIFF. Prefer the
+                    // source file, then the saved snapshot if the file is gone.
+                    if (!image && [RCFileImagePreview hasFileReference:data])
+                        image = [owner resizedThumbnailImageAtPath:path targetSize:NSMakeSize(360,360)];
+                    if (!image) image = [RCSnippetMedia historyThumbnailForData:data.TIFFData size:360];
                     if (!image) image = [owner resizedThumbnailImageAtPath:path targetSize:NSMakeSize(360,360)];
                 }
             }
@@ -830,6 +841,11 @@ static os_log_t RCMenuManagerLog(void) {
                 if (owner.cacheGeneration != generation || !data || !current.menu || current.menu.highlightedItem != current || ![current.representedObject isEqual:hash]) return;
                 [owner.thumbnailCache setObject:image forKey:key cost:720*720*4];
                 [owner.previewImageData setObject:data forKey:current];
+                NSImage *rowImage = [image resizedImageToFitSize:[owner thumbnailPreviewSize]];
+                if (rowImage) {
+                    [owner.thumbnailCache setObject:rowImage forKey:[owner thumbnailCacheKeyForClipItem:clip]];
+                    [owner configureClipMenuItem:current clipItem:clip loadThumbnail:NO];
+                }
                 [owner.previewController highlightItem:current text:[owner previewTextForMenuItem:current] imageData:data];
             });
         });
@@ -965,7 +981,7 @@ static os_log_t RCMenuManagerLog(void) {
 
     if (!imageSatisfied && !shouldTreatAsColorForPreview) {
         NSString *thumbnailCacheKey = [self thumbnailCacheKeyForClipItem:clipItem];
-        if (showImagePreview && clipItem.thumbnailPath.length > 0 && thumbnailCacheKey.length > 0) {
+        if (showImagePreview && thumbnailCacheKey.length > 0) {
             NSImage *cachedThumbnail = [self.thumbnailCache objectForKey:thumbnailCacheKey];
             if (cachedThumbnail != nil) {
                 [self applyMenuItemTitleForItem:item numberPrefix:numberPrefix baseTitle:baseTitle image:cachedThumbnail];

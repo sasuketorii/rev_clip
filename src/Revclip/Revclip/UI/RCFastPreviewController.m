@@ -1,6 +1,8 @@
 #import "RCFastPreviewController.h"
 #import "RCSnippetMedia.h"
 #import "RCLinkPreviewService.h"
+#import "RCSVGPreview.h"
+#import "RCMenuStyle.h"
 
 @interface RCNonactivatingPreviewPanel : NSPanel
 @end
@@ -13,12 +15,20 @@
 @property NSPanel *panel;
 @property NSTimer *timer;
 @property NSUInteger generation;
+@property NSOperationQueue *svgQueue;
+@property NSBlockOperation *svgOperation;
+@property NSBlockOperation *pendingSVGOperation;
 @end
 
 @implementation RCFastPreviewController
-- (void)dealloc { [_timer invalidate]; [_panel orderOut:nil]; }
+- (void)dealloc {
+    [_timer invalidate]; [_svgQueue cancelAllOperations]; [_pendingSVGOperation cancel]; [_panel orderOut:nil];
+}
 - (void)hide {
     self.generation += 1;
+    [self.svgQueue cancelAllOperations];
+    [self.pendingSVGOperation cancel];
+    self.pendingSVGOperation = nil;
     [self.timer invalidate];
     self.timer = nil;
     [self.panel orderOut:nil];
@@ -30,7 +40,10 @@
 - (void)highlightItem:(NSMenuItem *)item text:(NSString *)text imageData:(NSData *)imageData {
     [self hide];
     if (!item || item.hasSubmenu || !item.enabled || (text.length == 0 && imageData.length == 0)) return;
-    NSURL *linkURL = imageData.length ? nil : [RCLinkPreviewService URLForText:text];
+    // Snapshot bounded standalone code before the display-only 2,000-character truncation.
+    NSString *svg = !imageData.length && [RCSVGPreview isCandidateString:text] ? [text copy] : nil;
+    if (svg) text = svg; // Keep fallback tied to the same immutable clipboard snapshot.
+    NSURL *linkURL = imageData.length || svg ? nil : [RCLinkPreviewService URLForText:text];
     // Bound layout work and avoid splitting emoji / composed characters.
     if (text.length > 2000) {
         NSRange range = [text rangeOfComposedCharacterSequencesForRange:NSMakeRange(0, 2000)];
@@ -43,6 +56,11 @@
         RCFastPreviewController *strongSelf = weakSelf;
         NSMenuItem *selected = weakItem;
         if (!strongSelf || strongSelf.generation != scheduledGeneration || !selected.menu || selected.menu.highlightedItem != selected) return;
+        strongSelf.timer = nil;
+        if (svg) {
+            [strongSelf enqueueSVG:svg fallbackText:text item:selected generation:scheduledGeneration];
+            return;
+        }
         NSImage *image = imageData.length ? [RCSnippetMedia thumbnailForData:imageData size:360] : nil;
         if (imageData.length && !image) return;
         NSURL *url = linkURL;
@@ -60,6 +78,75 @@
     // Menu tracking uses its own run-loop mode.
     [NSRunLoop.mainRunLoop addTimer:self.timer forMode:NSEventTrackingRunLoopMode];
     [NSRunLoop.mainRunLoop addTimer:self.timer forMode:NSRunLoopCommonModes];
+}
+// Call on main: custom normal text matches the existing row palette; dynamic fallback
+// resolves under the panel/menu appearance. Selected-row white is wrong on light menu material.
+- (NSColor *)SVGColorForMenu:(NSMenu *)menu {
+    NSAppearance *appearance = menu.appearance ?: NSApp.effectiveAppearance;
+    __block NSColor *resolved;
+    [appearance performAsCurrentDrawingAppearance:^{
+        NSColor *normal = [RCMenuStyle isEnabled] ? [RCMenuStyle colorForKey:@"text"] : nil;
+        resolved = [(normal ?: NSColor.labelColor) colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
+    }];
+    return resolved;
+}
+- (NSImage *)renderSVG:(NSString *)svg color:(NSColor *)color size:(CGFloat)size {
+    return [RCSVGPreview imageForString:svg color:color size:size];
+}
+- (void)enqueueSVG:(NSString *)svg fallbackText:(NSString *)text item:(NSMenuItem *)item generation:(NSUInteger)generation {
+    NSColor *color = [self SVGColorForMenu:item.menu];
+    if (!color) { [self showText:text image:nil menu:item.menu]; return; }
+    if (!self.svgQueue) {
+        self.svgQueue = [NSOperationQueue new];
+        self.svgQueue.name = @"com.revclip.svg-hover";
+        self.svgQueue.qualityOfService = NSQualityOfServiceUserInitiated;
+        self.svgQueue.maxConcurrentOperationCount = 1;
+    }
+    __weak typeof(self) weakSelf = self;
+    __weak NSMenuItem *weakItem = item;
+    __weak NSMenu *weakMenu = item.menu;
+    NSBlockOperation *operation = [NSBlockOperation new];
+    __weak NSBlockOperation *weakOperation = operation;
+    __block NSImage *image;
+    [operation addExecutionBlock:^{
+        @autoreleasepool {
+            if (weakOperation.cancelled) return;
+            image = [weakSelf renderSVG:svg color:color size:720];
+        }
+    }];
+    operation.completionBlock = ^{
+        NSBlockOperation *finished = weakOperation;
+        // Deliver on main in either normal or native tracking mode, then wake the run loop.
+        CFRunLoopPerformBlock(CFRunLoopGetMain(), (__bridge CFArrayRef)@[NSRunLoopCommonModes, NSEventTrackingRunLoopMode], ^{
+            RCFastPreviewController *owner = weakSelf;
+            if (!owner || owner.svgOperation != finished) return;
+            owner.svgOperation = nil;
+            NSMenuItem *selected = weakItem;
+            NSMenu *menu = weakMenu;
+            if (!finished.cancelled && owner.generation == generation && menu &&
+                selected.menu == menu && menu.highlightedItem == selected && selected.enabled) {
+                // If appearance/preferences changed during decode, use readable text until the next hover.
+                NSImage *currentImage = [color isEqual:[owner SVGColorForMenu:menu]] ? image : nil;
+                [owner showText:text image:currentImage menu:menu];
+            }
+            NSBlockOperation *next = owner.pendingSVGOperation;
+            owner.pendingSVGOperation = nil;
+            if (next && !next.cancelled) {
+                owner.svgOperation = next;
+                [owner.svgQueue addOperation:next];
+            }
+        });
+        CFRunLoopWakeUp(CFRunLoopGetMain());
+    };
+    // A running native decode cannot be interrupted. Keep at most one operation in
+    // the queue and one replaceable pending request, even across rapid hover changes.
+    if (self.svgOperation) {
+        [self.pendingSVGOperation cancel];
+        self.pendingSVGOperation = operation;
+    } else {
+        self.svgOperation = operation;
+        [self.svgQueue addOperation:operation];
+    }
 }
 - (void)showText:(NSString *)text image:(NSImage *)image menu:(NSMenu *)menu {
     [self showText:text image:image menu:menu aspectRatio:0];

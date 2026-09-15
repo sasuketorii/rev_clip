@@ -1,4 +1,6 @@
 #import "RCSnippetCLIService.h"
+#import "RCSettingsCLIService.h"
+#import "RCBugReportService.h"
 #import "RCDatabaseManager.h"
 #import "RCSnippetMedia.h"
 #import "RCSnippetEditorWindowController.h"
@@ -13,8 +15,10 @@
 #import <poll.h>
 #import <unistd.h>
 #import <errno.h>
+#import <CoreFoundation/CoreFoundation.h>
 
 static const NSUInteger RCRequestLimit = 16 * 1024 * 1024;
+static const void *RCCLIQueueKey = &RCCLIQueueKey;
 static NSDictionary *RCFailure(NSString *message) { return @{@"ok":@NO,@"error":message}; }
 static NSDictionary *RCSuccess(id result) { return @{@"ok":@YES,@"result":result}; }
 static BOOL RCString(id value) { return [value isKindOfClass:NSString.class]; }
@@ -62,9 +66,17 @@ static BOOL RCTransfer(int fd, void *bytes, size_t length, BOOL writing) {
     if (![request isKindOfClass:NSDictionary.class]) return RCFailure(@"Expected JSON object");
     NSString *operation = request[@"op"];
     if (!RCString(operation)) return RCFailure(@"Missing op");
+    if ([operation isEqual:@"bug-report"]) return RCFailure(@"bug-report requires the asynchronous CLI transport");
+    if ([@[@"settings-schema", @"settings-get", @"settings-set", @"app-action"] containsObject:operation]) {
+        return [[RCSettingsCLIService shared] executeRequest:request];
+    }
     NSSet *operations = [NSSet setWithArray:@[@"folders",@"folder-create",@"folder-delete",@"list",@"get",@"create",@"update",@"delete"]];
     if (![operations containsObject:operation]) return RCFailure(@"Unknown operation");
     NSSet *keys = [NSSet setWithArray:@[@"op",@"id",@"folder",@"title",@"content",@"image_base64",@"enabled"]];
+    // Read operations address only the template catalog. Reject extra selectors
+    // instead of silently accepting a history/clipboard targeting attempt.
+    if ([operation isEqual:@"list"]) keys = [NSSet setWithArray:@[@"op", @"folder"]];
+    if ([operation isEqual:@"get"]) keys = [NSSet setWithArray:@[@"op", @"id"]];
     for (NSString *key in request) {
         if (![keys containsObject:key]) return RCFailure(@"Unknown field");
         if (![key isEqual:@"enabled"] && !RCString(request[key])) return RCFailure(@"Fields must be strings");
@@ -136,6 +148,84 @@ static BOOL RCTransfer(int fd, void *bytes, size_t length, BOOL writing) {
     }
     return success ? RCSuccess(@{@"identifier":identifier}) : RCFailure(@"Save failed; no success reported");
 }
+// Private seams keep transport tests independent of actual report delivery.
+- (dispatch_queue_t)makeClientQueue {
+    dispatch_queue_t queue = dispatch_queue_create("com.revclip.cli", DISPATCH_QUEUE_SERIAL);
+    dispatch_queue_set_specific(queue, RCCLIQueueKey, (void *)RCCLIQueueKey, NULL);
+    return queue;
+}
+- (NSTimeInterval)bugReportWaitTimeout { return 20.0; }
+- (void)submitBugReportRequest:(NSDictionary *)request completion:(void (^)(NSDictionary *))completion {
+    [[RCBugReportService shared] submitTitle:request[@"title"]
+                               description:request[@"description"]
+                                   contact:request[@"contact"]
+                                   consent:YES
+                                completion:completion];
+}
+- (NSDictionary *)executeBugReportRequest:(NSDictionary *)request {
+    // This synchronous bridge belongs exclusively to the socket's serial queue.
+    // In particular it must never wait on the main thread that delivers callbacks.
+    if (NSThread.isMainThread || dispatch_get_specific(RCCLIQueueKey) != RCCLIQueueKey) {
+        return RCFailure(@"Bug reports require the CLI transport queue");
+    }
+    if (![request isKindOfClass:NSDictionary.class] || ![request[@"op"] isEqual:@"bug-report"]) return RCFailure(@"Invalid bug report request");
+    NSSet *allowed = [NSSet setWithArray:@[@"op", @"title", @"description", @"contact", @"source_info_consent"]];
+    for (id key in request) if (![allowed containsObject:key]) return RCFailure(@"Unknown bug report field");
+    id consent = request[@"source_info_consent"];
+    if (![consent isKindOfClass:NSNumber.class] || CFGetTypeID((__bridge CFTypeRef)consent) != CFBooleanGetTypeID() || ![consent boolValue]) {
+        return RCFailure(@"Explicit source_info_consent true is required");
+    }
+    NSMutableDictionary *snapshot = [NSMutableDictionary dictionary];
+    NSDictionary *limits = @{@"title":@120, @"description":@2500, @"contact":@200};
+    for (NSString *key in @[@"title", @"description", @"contact"]) {
+        id value = request[key];
+        if (!RCString(value)) return RCFailure(@"title, description and contact must be strings");
+        NSString *trimmed = [value stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+        if (trimmed.length > [limits[key] unsignedIntegerValue] || (![key isEqual:@"contact"] && !trimmed.length)) {
+            return RCFailure(@"Invalid report length: title 1–120, description 1–2500, contact 0–200 characters");
+        }
+        snapshot[key] = [trimmed copy];
+    }
+    NSDictionary *submission = [snapshot copy];
+    NSObject *stateLock = [NSObject new];
+    dispatch_semaphore_t completed = dispatch_semaphore_create(0);
+    NSTimeInterval timeout = MIN(20.0, MAX(0.001, [self bugReportWaitTimeout]));
+    NSTimeInterval deadline = NSProcessInfo.processInfo.systemUptime + timeout;
+    dispatch_time_t waitDeadline = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC));
+    __block NSDictionary *response = nil;
+    __block BOOL finished = NO;
+    __block BOOL started = NO;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @synchronized (stateLock) {
+            // A congested main queue must not send a report after we timed out.
+            if (finished || NSProcessInfo.processInfo.systemUptime >= deadline) return;
+            started = YES;
+        }
+        [self submitBugReportRequest:submission completion:^(NSDictionary *reply) {
+            @synchronized (stateLock) {
+                // Late/duplicate callbacks cannot race response serialization or
+                // accidentally write to a socket already reused for another client.
+                if (finished) return;
+                BOOL sent = [reply isKindOfClass:NSDictionary.class]
+                    && [reply[@"ok"] isKindOfClass:NSNumber.class]
+                    && CFGetTypeID((__bridge CFTypeRef)reply[@"ok"]) == CFBooleanGetTypeID()
+                    && [reply[@"ok"] boolValue]
+                    && [reply[@"result"] isKindOfClass:NSDictionary.class]
+                    && [reply[@"result"][@"status"] isEqual:@"sent"];
+                response = sent ? RCSuccess(@{@"status":@"sent"}) : RCFailure(@"Could not send the report");
+                finished = YES;
+            }
+            dispatch_semaphore_signal(completed);
+        }];
+    });
+    dispatch_semaphore_wait(completed, waitDeadline);
+    @synchronized (stateLock) {
+        finished = YES;
+        return response ?: RCFailure(started
+            ? @"Report submission timed out; delivery status is unknown. Check before retrying."
+            : @"Report submission timed out before it started; no report was submitted.");
+    }
+}
 - (void)serveClient:(int)client {
     uid_t uid; gid_t gid;
     if (getpeereid(client, &uid, &gid) != 0 || uid != geteuid()) return;
@@ -149,13 +239,17 @@ static BOOL RCTransfer(int fd, void *bytes, size_t length, BOOL writing) {
     if (!RCTransfer(client, data.mutableBytes, length, NO)) return;
     id request = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
     __block NSDictionary *response;
-    dispatch_sync(dispatch_get_main_queue(), ^{
-        if (![[RCSnippetEditorWindowController shared] saveChangesIfLoaded]) {
+    NSString *operation = [request isKindOfClass:NSDictionary.class] ? request[@"op"] : nil;
+    if ([operation isEqual:@"bug-report"]) {
+        response = [self executeBugReportRequest:request];
+    } else dispatch_sync(dispatch_get_main_queue(), ^{
+        NSString *op = [request isKindOfClass:NSDictionary.class] ? request[@"op"] : nil;
+        BOOL templateOperation = [@[@"folders", @"list", @"get", @"folder-create", @"folder-delete", @"create", @"update", @"delete"] containsObject:op ?: @""];
+        if (templateOperation && ![[RCSnippetEditorWindowController shared] saveChangesIfLoaded]) {
             response = RCFailure(@"Editor is loading media or its draft could not be saved"); return;
         }
         response = [self executeRequest:request];
-        NSString *op = [request isKindOfClass:NSDictionary.class] ? request[@"op"] : nil;
-        if ([response[@"ok"] boolValue] && ![@[@"folders",@"list",@"get"] containsObject:op ?: @""]) {
+        if (templateOperation && [response[@"ok"] boolValue] && ![@[@"folders",@"list",@"get"] containsObject:op ?: @""]) {
             [[RCSnippetEditorWindowController shared] reloadIfLoaded];
             [NSNotificationCenter.defaultCenter postNotificationName:RCSnippetsDidChangeNotification object:self];
             [[RCHotKeyService shared] reloadFolderHotKeys];
@@ -182,7 +276,7 @@ static BOOL RCTransfer(int fd, void *bytes, size_t length, BOOL writing) {
     if (bind(fd,(struct sockaddr *)&address,sizeof(address)) || chmod(path,0600) || listen(fd,8)) {
         close(fd); [self stop]; return;
     }
-    dispatch_queue_t queue = dispatch_queue_create("com.revclip.cli", DISPATCH_QUEUE_SERIAL);
+    dispatch_queue_t queue = [self makeClientQueue];
     self.listener = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ,fd,0,queue);
     __weak typeof(self) weakSelf = self;
     dispatch_source_set_event_handler(self.listener, ^{

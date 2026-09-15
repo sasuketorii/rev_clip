@@ -12,6 +12,12 @@ Revclipは、クリップボード履歴を扱うローカルアプリです。�
 
 ## 保護範囲の限界
 
+### エージェントとCLIの境界
+
+RevclipのCLIは履歴本文・履歴一覧・現在のクリップボードを公開しません。`list` / `get` はテンプレート専用で、履歴を指定する追加フィールドや未対応の操作は拒否します。設定CLIは許可された設定項目だけを扱い、履歴の保存件数・期限を変更できても、保存内容は返しません。バグ報告にも履歴を自動添付しません。
+
+これはRevclipが提供するAPIの制限です。端末全体へのアクセス権があるエージェントによる、OSのクリップボードAPI・画面操作・他プロセスへのアクセスまで禁止するサンドボックスではありません。同梱スキルにも、履歴取得を別の手段で迂回しないことを記載しています。
+
 これはパスワードマネージャーや、侵害されたMacから秘密を守る仕組みではありません。
 
 - 暗号化は、**保存ファイルだけがコピーされた場合**の内容保護を主な目的としています。動作中は復号した内容と鍵がメモリに存在します。管理者権限、マルウェア、プロセスへの侵入、ユーザーが許可したキーチェーンアクセスからの完全な保護は保証しません。
@@ -25,9 +31,22 @@ Revclipは、クリップボード履歴を扱うローカルアプリです。�
 
 ## 問題の報告
 
+設定の「バグ報告」フォームは、送信ボタンを押した場合だけ、入力した件名・説明・任意の連絡先と、同意した送信元情報（IP・地域・回線・言語・タイムゾーン・アプリ／OSバージョン・User-Agent）をCloudflare経由で開発者のTelegramグループへ送信します。履歴・テンプレート・クリップボード・ログ・スクリーンショットは自動添付しません。入力内容はCloudflareとTelegramで処理されるため、秘密情報を含めないでください。
+
+TelegramのBotトークンと受信先はWorkerのSecretに保存し、アプリには配布しません。報告URL自体は公開情報です。サーバーは送信先を固定し、本文上限・送信回数制限・タイムアウトを適用します。回数制限は不正送信の完全な防止や、アプリからの送信であることの認証を保証しません。
+
 最新リリースを対象に修正します。再現手順、影響、対象バージョンを添えて報告してください。クリップボードの実データ、鍵、認証情報は公開Issueに貼らないでください。非機密の不具合は[Issues](https://github.com/sasuketorii/rev_clip/issues)で受け付けています。機密性のある報告は、まず内容を公開せず、非公開の連絡方法を確認してください。
 
 ## English
+
+The optional Bug Report form sends the entered subject, description, optional
+contact, and consented source information (IP, region, network, language, timezone, app/OS
+versions, and User-Agent) through Cloudflare to the developer's
+Telegram group only when Send is pressed. It does not automatically attach history,
+templates, clipboard contents, logs, or screenshots. Cloudflare and Telegram process
+the submitted information. The bot token and recipient stay in Worker Secrets;
+the app contains only the public endpoint. Server-side validation, rate limits and
+timeouts reduce abuse but do not authenticate an official app or eliminate spam.
 
 Revclip encrypts its local database with SQLCipher, including history titles and template contents. Clip payloads and thumbnails use authenticated AES-256-GCM encryption through CryptoKit. A randomly generated 256-bit root key is stored in the macOS login Keychain, with separate HKDF-derived keys for the database and files. The Keychain item is not configured for iCloud synchronization.
 

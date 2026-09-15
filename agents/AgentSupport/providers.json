@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "verified_on": "2026-09-16",
+  "providers": [
+    {
+      "id": "codex",
+      "name": "Codex",
+      "base": "~/.codex",
+      "skills": "skills",
+      "reload": "Start a new session after installing.",
+      "sources": [
+        "https://developers.openai.com/codex/skills/"
+      ],
+      "env": "CODEX_HOME"
+    },
+    {
+      "id": "claude",
+      "name": "Claude Code",
+      "base": "~/.claude",
+      "skills": "skills",
+      "reload": "Existing roots hot reload; restart if the skills root was absent at startup. Bare mode does not watch.",
+      "sources": [
+        "https://code.claude.com/docs/en/skills",
+        "https://code.claude.com/docs/en/claude-directory"
+      ],
+      "env": "CLAUDE_CONFIG_DIR"
+    },
+    {
+      "id": "cursor",
+      "name": "Cursor",
+      "base": "~/.cursor",
+      "skills": "skills",
+      "reload": "Startup discovery is documented; restart Cursor for reliable refresh.",
+      "sources": [
+        "https://prod.cursor.com/docs/skills"
+      ]
+    },
+    {
+      "id": "antigravity2",
+      "name": "Antigravity 2.0",
+      "base": "~/.gemini/config",
+      "skills": "skills",
+      "reload": "Start a new conversation; live reload is not documented.",
+      "sources": [
+        "https://antigravity.google/docs/skills"
+      ]
+    },
+    {
+      "id": "antigravity-ide",
+      "name": "Antigravity for IDEs",
+      "base": "~/.gemini/antigravity",
+      "skills": "skills",
+      "reload": "Restart the application after installing, then start a new conversation.",
+      "sources": [
+        "https://antigravity.google/docs/ide/skills/",
+        "https://codelabs.developers.google.com/io26/keynote/agent-first-workflows"
+      ]
+    },
+    {
+      "id": "antigravity-cli",
+      "name": "Antigravity CLI",
+      "base": "~/.gemini/antigravity-cli",
+      "skills": "skills",
+      "reload": "Unsupported bundle target; official CLI documentation describes flat Markdown.",
+      "sources": [
+        "https://antigravity.google/docs/cli/plugins/"
+      ],
+      "supported": false
+    },
+    {
+      "id": "gemini",
+      "name": "Gemini CLI",
+      "base": "~/.gemini",
+      "skills": "skills",
+      "reload": "Run /skills reload or /skills refresh.",
+      "sources": [
+        "https://geminicli.com/docs/cli/using-agent-skills/",
+        "https://geminicli.com/docs/reference/configuration/"
+      ],
+      "env": "GEMINI_CLI_HOME",
+      "env_is_home_parent": true
+    },
+    {
+      "id": "grok",
+      "name": "Grok Build",
+      "base": "~/.grok",
+      "skills": "skills",
+      "reload": "Filesystem changes reload within seconds.",
+      "sources": [
+        "https://docs.x.ai/build/settings",
+        "https://github.com/xai-org/grok-build/blob/482711333c7195dc16a272777f86086d615e2afb/crates/codegen/xai-grok-pager/docs/user-guide/08-skills.md"
+      ],
+      "env": "GROK_HOME"
+    },
+    {
+      "id": "kimi",
+      "name": "Kimi Code",
+      "base": "~/.kimi-code",
+      "skills": "skills",
+      "reload": "Current Kimi Code watches user skill roots; restart older versions.",
+      "sources": [
+        "https://www.kimi.com/code/docs/en/kimi-code-cli/customization/skills.html",
+        "https://github.com/MoonshotAI/kimi-code/commit/fb0353a8ba5ceb7e8ae4e27f3260b3c8c8d80784"
+      ],
+      "env": "KIMI_CODE_HOME"
+    },
+    {
+      "id": "kimi-legacy",
+      "name": "Kimi CLI (Python)",
+      "base": "~/.kimi",
+      "skills": "skills",
+      "reload": "Restart the CLI for startup discovery. KIMI_SHARE_DIR does not change skill roots.",
+      "sources": [
+        "https://moonshotai.github.io/kimi-cli/en/customization/skills.html",
+        "https://moonshotai.github.io/kimi-cli/en/configuration/data-locations.html"
+      ]
+    },
+    {
+      "id": "hermes",
+      "name": "Hermes Agent",
+      "base": "~/.hermes",
+      "skills": "skills",
+      "reload": "Start a new session or use /reset; no gateway restart is performed.",
+      "sources": [
+        "https://hermes-agent.nousresearch.com/docs/user-guide/features/skills",
+        "https://hermes-agent.nousresearch.com/docs/user-guide/profiles",
+        "https://hermes-agent.nousresearch.com/docs/guides/work-with-skills"
+      ],
+      "env": "HERMES_HOME"
+    },
+    {
+      "id": "deepseek-harness",
+      "name": "DeepSeek Harness (experimental)",
+      "base": "~/.dsh",
+      "skills": "skills",
+      "reload": "Default filesystem provider watches roots; changes reach the next model step.",
+      "sources": [
+        "https://www.deepseek.com/harness/en/",
+        "https://github.com/deepseek-ai/deepseek-harness/blob/0d1f50007f9bca3f52b06e1c3074fa14d5fb0720/packages/skill/skill-filesystem/README.md"
+      ],
+      "env": "DSH_HOME",
+      "experimental": true
+    }
+  ]
+}

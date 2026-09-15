@@ -1,0 +1,11 @@
+{
+  "name": "revclip-feedback",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "miniflare": "5.20260915.0-alpha"
+  }
+}

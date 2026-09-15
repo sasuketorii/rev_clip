@@ -292,3 +292,42 @@
 "Menu Primary Color" = "Couleur principale / icônes";
 
 "Enter Six Digit Hex" = "Saisissez une couleur HEX à six chiffres, par exemple #FF005E.";
+
+/* Agent preferences */
+"Agent Settings" = "Réglages des agents";
+"Manage Revclip templates and settings with your coding agent." = "Gérez les modèles et les réglages de Revclip avec votre agent de programmation.";
+"Copy the prompt into Codex or Claude Code. Review the installation results, then reload your agent or start a new session." = "Collez la consigne dans Codex ou Claude Code. Vérifiez le résultat de l’installation, puis rechargez votre agent ou ouvrez une nouvelle session.";
+"Copy Prompt" = "Copier la consigne";
+"Installation prompt" = "Consigne d’installation";
+"Installed only for detected, supported tools. DeepSeek Harness (.dsh) is experimental (developer preview)." = "Installation uniquement pour les outils détectés et pris en charge. DeepSeek Harness (.dsh) est expérimental (version préliminaire pour développeurs).";
+"Prompt copied. Paste it into your agent." = "Consigne copiée. Collez-la dans votre agent.";
+"Could not copy the prompt. Select and copy the text below." = "Impossible de copier la consigne. Sélectionnez et copiez le texte ci-dessous.";
+"Install the Revclip skill in all detected supported agent roots using this bundled installer and providers.json. Run inspect, install with defaults, then inspect to verify. Stop on errors; never force or overwrite conflicts. Report installed paths, skips, and conflicts. Include experimental DeepSeek Harness (.dsh) only if detected and supported by the installer." = "Installez la compétence Revclip dans tous les répertoires racines d’agents détectés et pris en charge, avec cet installateur intégré et providers.json. Exécutez inspect, install avec les options par défaut, puis inspect pour vérifier. Arrêtez-vous en cas d’erreur ; ne forcez jamais l’installation et n’écrasez aucun fichier en conflit. Indiquez les chemins d’installation, les éléments ignorés et les conflits. Incluez DeepSeek Harness (.dsh), expérimental, uniquement s’il est détecté et pris en charge par l’installateur.";
+"Explain any reload or new session needed. Then use the skill for template CRUD and supported settings; ask what I want to change first." = "Expliquez si un rechargement ou une nouvelle session est nécessaire. Utilisez ensuite la compétence pour créer, consulter, modifier et supprimer des modèles et gérer les réglages pris en charge ; demandez-moi d’abord ce que je souhaite changer.";
+
+/* Bug report preferences */
+"Bug Report" = "Signaler un problème";
+"Describe a problem with Revclip. Your report is sent to the support team via Telegram." = "Décrivez un problème avec Revclip. Votre signalement est envoyé à l’équipe d’assistance via Telegram.";
+"Title (required, up to 120 characters)" = "Titre (obligatoire, 120 caractères maximum)";
+"Description (required, up to 2,500 characters)" = "Description (obligatoire, 2 500 caractères maximum)";
+"Reply contact (optional, up to 200 characters)" = "Coordonnées de réponse (facultatif, 200 caractères maximum)";
+"Send Report" = "Envoyer le signalement";
+"Enter a title (1–120 characters), a description (1–2,500), and an optional contact (up to 200)." = "Saisissez un titre (1 à 120 caractères), une description (1 à 2 500) et, si vous le souhaitez, vos coordonnées (200 maximum).";
+"Bug reporting is unavailable in this build." = "Le signalement de problèmes n’est pas disponible dans cette version.";
+"Could not send the report. Your text is preserved. Please try again when you are ready." = "Impossible d’envoyer le signalement. Votre texte est conservé. Réessayez lorsque vous le souhaitez.";
+"Sending report…" = "Envoi du signalement…";
+"Report sent. Thank you for helping improve Revclip." = "Signalement envoyé. Merci de contribuer à l’amélioration de Revclip.";
+"I consent to the collection of source information." = "J’accepte la collecte des informations sur la source d’envoi.";
+"With your consent, the server collects your source IP address, approximate location, and network provider (ASN). Your report also includes the app and macOS versions, language, and time zone. Clipboard contents, history, and logs are not collected." = "Avec votre accord, le serveur collecte votre adresse IP source, votre localisation approximative et votre fournisseur de réseau (ASN). Le signalement inclut aussi les versions de l’application et de macOS, la langue et le fuseau horaire. Le contenu du presse-papiers, l’historique et les journaux ne sont pas collectés.";
+"App version: %@\nmacOS: %@\nLanguage: %@\nTime zone: %@" = "Version de l’application : %@\nmacOS : %@\nLangue : %@\nFuseau horaire : %@";
+"Consent to source information collection is required." = "Votre accord est nécessaire pour collecter les informations sur la source d’envoi.";
+"A report is already being sent. Please wait." = "Un signalement est déjà en cours d’envoi. Veuillez patienter.";
+
+/* Agent skill update status */
+"Checking installed skills…" = "Vérification des compétences installées…";
+"Check skill updates" = "Vérifier les mises à jour des compétences";
+"Could not check skills. Run the setup prompt to inspect them." = "Impossible de vérifier les compétences. Exécutez la consigne de configuration pour les examiner.";
+"A skill has local changes. The setup prompt will report conflicts without overwriting them." = "Une compétence comporte des modifications locales. La consigne de configuration signalera les conflits sans écraser les modifications.";
+"Skill updates are available. Copy and run the setup prompt to update them." = "Des mises à jour des compétences sont disponibles. Copiez et exécutez la consigne de configuration pour les appliquer.";
+"Installed skills are up to date. Python is not required." = "Les compétences installées sont à jour. Python n’est pas nécessaire.";
+"Run the setup prompt to install skills. Python is not required." = "Exécutez la consigne de configuration pour installer les compétences. Python n’est pas nécessaire.";

@@ -21,3 +21,11 @@ regenerating icons.
 
 The same dependency license text is included in the app's resources as
 `ThirdPartyNotices.txt`.
+
+## Poppins font
+
+The settings wordmark uses the bundled Poppins SemiBold font from the
+[Google Fonts Poppins distribution](https://github.com/google/fonts/tree/main/ofl/poppins).
+Copyright 2020 The Poppins Project Authors. Licensed under the
+[SIL Open Font License 1.1](src/Revclip/Revclip/Resources/Fonts/OFL.txt).
+The font and complete license are included in the application resources.

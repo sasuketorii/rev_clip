@@ -62,3 +62,92 @@
     XCTAssertEqual(([[self.api executeRequest:@{@"op":@"get",@"id":sid}][@"result"][@"media_bytes"] integerValue]),0);
 }
 @end
+
+// No database initialization or real clipboard/history access in these tests.
+// This deliberately is not an RCDatabaseManager subclass: only the template
+// catalog exists, and any unexpected database selector fails the test.
+@interface RCCLITemplateOnlyDatabaseStub : NSObject
+@property (nonatomic) NSUInteger catalogReads;
+@property (nonatomic) NSUInteger forbiddenReads;
+- (NSArray *)fetchSnippetCatalog;
+- (NSArray *)fetchClipItemsWithLimit:(NSInteger)limit;
+- (NSDictionary *)clipItemWithDataHash:(NSString *)dataHash;
+@end
+@implementation RCCLITemplateOnlyDatabaseStub
+- (NSArray *)fetchSnippetCatalog {
+    self.catalogReads++;
+    return @[@{@"identifier":@"synthetic-folder", @"title":@"Synthetic templates", @"folder_index":@0,
+        @"snippets":@[@{@"identifier":@"synthetic-template", @"title":@"Synthetic title", @"content":@"Synthetic template content"}]}];
+}
+- (NSArray *)fetchClipItemsWithLimit:(NSInteger)limit {
+    self.forbiddenReads++;
+    return @[];
+}
+- (NSDictionary *)clipItemWithDataHash:(NSString *)dataHash {
+    self.forbiddenReads++;
+    return nil;
+}
+@end
+@interface RCSnippetCLIPrivacyBoundaryTests : XCTestCase
+@property (nonatomic, strong) RCCLITemplateOnlyDatabaseStub *stub;
+@property (nonatomic, strong) RCSnippetCLIService *api;
+@end
+@implementation RCSnippetCLIPrivacyBoundaryTests
+- (void)setUp {
+    [super setUp];
+    self.stub = [RCCLITemplateOnlyDatabaseStub new];
+    self.api = [[RCSnippetCLIService alloc] initWithDatabase:(RCDatabaseManager *)(id)self.stub];
+}
+- (void)testHistoryAndClipboardOperationsFailBeforeAnyDatabaseAccess {
+    for (NSString *op in @[@"history", @"history-get", @"clipboard", @"read-clipboard", @"export-history"]) {
+        NSDictionary *response = [self.api executeRequest:@{@"op":op}];
+        XCTAssertEqualObjects(response[@"ok"], @NO, @"%@", op);
+        XCTAssertNil(response[@"result"]);
+    }
+    XCTAssertEqual(self.stub.catalogReads, 0u);
+    XCTAssertEqual(self.stub.forbiddenReads, 0u);
+}
+- (void)testListAndGetRejectHistoryTargetingFieldsBeforeDatabaseAccess {
+    for (NSString *op in @[@"list", @"get"]) {
+        for (NSString *field in @[@"history", @"clipboard", @"source", @"table", @"data_hash", @"include_history"]) {
+            NSDictionary *response = [self.api executeRequest:@{@"op":op, field:@"history"}];
+            XCTAssertEqualObjects(response[@"ok"], @NO);
+            XCTAssertNil(response[@"result"]);
+        }
+    }
+    NSDictionary *list = [self.api executeRequest:@{@"op":@"list", @"id":@"history"}];
+    NSDictionary *get = [self.api executeRequest:@{@"op":@"get", @"id":@"synthetic-template", @"folder":@"history"}];
+    XCTAssertEqualObjects(list[@"ok"], @NO);
+    XCTAssertEqualObjects(get[@"ok"], @NO);
+    XCTAssertEqual(self.stub.catalogReads, 0u);
+    XCTAssertEqual(self.stub.forbiddenReads, 0u);
+}
+- (void)testIdentifiersNeverSelectHistoryAndNormalReadsReturnOnlySyntheticTemplates {
+    for (NSString *identifier in @[@"history", @"clipboard", @"clip_items", @"synthetic-history-hash"]) {
+        NSDictionary *get = [self.api executeRequest:@{@"op":@"get", @"id":identifier}];
+        NSDictionary *list = [self.api executeRequest:@{@"op":@"list", @"folder":identifier}];
+        XCTAssertEqualObjects(get[@"ok"], @NO);
+        XCTAssertEqualObjects(list[@"ok"], @NO);
+        XCTAssertNil(get[@"result"]); XCTAssertNil(list[@"result"]);
+    }
+    NSDictionary *get = [self.api executeRequest:@{@"op":@"get", @"id":@"synthetic-template"}];
+    NSDictionary *list = [self.api executeRequest:@{@"op":@"list"}];
+    XCTAssertEqualObjects(get[@"result"][@"content"], @"Synthetic template content");
+    XCTAssertEqualObjects(list[@"result"], (@[get[@"result"]]));
+    XCTAssertEqual(self.stub.catalogReads, 10u);
+    XCTAssertEqual(self.stub.forbiddenReads, 0u);
+}
+- (void)testRawHistoryDefaultsKeysAreNotSettingsAndSchemaDeclaresBoundary {
+    for (NSString *key in @[@"history", @"clipboard", @"clip_items", @"raw_history", @"kRCPrefHistoryKey"]) {
+        NSDictionary *response = [self.api executeRequest:@{@"op":@"settings-get", @"key":key}];
+        XCTAssertEqualObjects(response[@"ok"], @NO);
+        XCTAssertNil(response[@"result"]);
+    }
+    NSDictionary *schema = [self.api executeRequest:@{@"op":@"settings-schema"}][@"result"];
+    XCTAssertEqualObjects(schema[@"security_boundary"][@"history_readable"], @NO);
+    XCTAssertEqualObjects(schema[@"security_boundary"][@"clipboard_readable"], @NO);
+    XCTAssertEqualObjects(schema[@"security_boundary"][@"bug_report_auto_collects_history"], @NO);
+    XCTAssertEqual(self.stub.catalogReads, 0u);
+    XCTAssertEqual(self.stub.forbiddenReads, 0u);
+}
+@end

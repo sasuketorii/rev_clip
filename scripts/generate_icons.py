@@ -22,7 +22,7 @@ def assets_root() -> Path:
 
 def load_app_icon_master() -> Image.Image:
     # Keep the square Figma export as the sole application icon source.
-    return Image.open(repo_root() / "revclip_icon_square.png").convert("RGB")
+    return Image.open(repo_root() / "design" / "branding" / "revclip_icon_square.png").convert("RGB")
 
 
 def generate_app_icons(appicon_dir: Path) -> None:

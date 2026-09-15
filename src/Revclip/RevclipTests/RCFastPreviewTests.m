@@ -4,8 +4,17 @@
 #import "RCMenuManager.h"
 #import "RCClipItem.h"
 #import "RCClipData.h"
+#import "RCMenuStyle.h"
+#import "RCSVGPreview.h"
 @interface RCFastPreviewController (Testing)
 @property (readonly) NSPanel *panel;
+@property (readonly) NSTimer *timer;
+@property (readonly) NSOperationQueue *svgQueue;
+@property (readonly) NSBlockOperation *svgOperation;
+@property (readonly) NSBlockOperation *pendingSVGOperation;
+- (NSColor *)SVGColorForMenu:(NSMenu *)menu;
+- (NSImage *)renderSVG:(NSString *)svg color:(NSColor *)color size:(CGFloat)size;
+- (void)showText:(NSString *)text image:(NSImage *)image menu:(NSMenu *)menu;
 - (void)showText:(NSString *)text image:(NSImage *)image menu:(NSMenu *)menu aspectRatio:(CGFloat)ratio;
 - (void)showLinkURL:(NSURL *)url title:(NSString *)title image:(NSImage *)image menu:(NSMenu *)menu;
 @end
@@ -41,6 +50,19 @@
     NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL pixelsWide:80 pixelsHigh:40 bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO colorSpaceName:NSDeviceRGBColorSpace bytesPerRow:0 bitsPerPixel:0];
     memset(bitmap.bitmapData,255,bitmap.bytesPerRow*bitmap.pixelsHigh);
     NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(80,40)]; [image addRepresentation:bitmap]; return image;
+}
+@end
+@interface RCSVGTestPreviewController : RCFastPreviewController
+@property (copy) NSImage *(^renderBlock)(NSString *, NSColor *, CGFloat);
+@property (copy) void (^showBlock)(NSString *, NSImage *);
+@end
+@implementation RCSVGTestPreviewController
+- (NSImage *)renderSVG:(NSString *)svg color:(NSColor *)color size:(CGFloat)size {
+    return self.renderBlock ? self.renderBlock(svg,color,size) : [super renderSVG:svg color:color size:size];
+}
+- (void)showText:(NSString *)text image:(NSImage *)image menu:(NSMenu *)menu {
+    [super showText:text image:image menu:menu];
+    if (self.showBlock) self.showBlock(text,image);
 }
 @end
 @interface RCFastPreviewTests : XCTestCase
@@ -191,5 +213,186 @@
     [manager menu:menu willHighlightItem:item]; menu.testHighlightedItem = nil;
     [manager menu:menu willHighlightItem:nil]; [self waitForTrackingTimer];
     XCTAssertEqual(manager.previewReads,0); XCTAssertEqual(manager.archiveReads,0);
+}
+- (RCPreviewTestMenu *)SVGMenu {
+    RCPreviewTestMenu *menu = [RCPreviewTestMenu new];
+    menu.autoenablesItems = NO;
+    menu.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+    menu.testFrame = NSMakeRect(200,500,300,90);
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"SVG" action:nil keyEquivalent:@""];
+    [menu addItem:item]; item.enabled = YES; menu.testHighlightedItem = item;
+    return menu;
+}
+- (void)testSVGWaitsForHoverAndCapturesUntruncatedImmutableCode {
+    RCSVGTestPreviewController *controller = [RCSVGTestPreviewController new];
+    RCPreviewTestMenu *menu = [self SVGMenu];
+    NSMutableString *source = [@"<svg viewBox='0 0 10 10'>" mutableCopy];
+    [source appendString:[@"" stringByPaddingToLength:2500 withString:@" " startingAtIndex:0]];
+    [source appendString:@"<path d='M0 0L10 10'/></svg>"];
+    NSString *original = [source copy];
+    XCTestExpectation *rendered = [self expectationWithDescription:@"Full SVG rendered on worker"];
+    XCTestExpectation *shown = [self expectationWithDescription:@"SVG completion presents on main"];
+    NSImage *result = [[NSImage alloc] initWithSize:NSMakeSize(20,20)];
+    controller.renderBlock = ^NSImage *(NSString *svg, NSColor *color, CGFloat size) {
+        XCTAssertFalse(NSThread.isMainThread);
+        XCTAssertEqualObjects(svg,original); XCTAssertEqual(size,720);
+        XCTAssertNotNil(color); [rendered fulfill]; return result;
+    };
+    controller.showBlock = ^(NSString *text, NSImage *image) {
+        XCTAssertTrue(NSThread.isMainThread); XCTAssertEqual(image,result);
+        XCTAssertLessThan(text.length,original.length); [shown fulfill];
+    };
+    [controller highlightItem:menu.testHighlightedItem text:source];
+    XCTAssertNil(controller.svgQueue); XCTAssertFalse(controller.panel.visible);
+    [source setString:@"clipboard changed after hover"];
+    [controller.timer fire];
+    [self waitForExpectations:@[rendered,shown] timeout:3];
+    [controller hide];
+}
+- (void)testLeavingSVGBeforeDelayStartsNoDecode {
+    RCSVGTestPreviewController *controller = [RCSVGTestPreviewController new];
+    RCPreviewTestMenu *menu = [self SVGMenu];
+    controller.renderBlock = ^NSImage *(NSString *svg, NSColor *color, CGFloat size) { XCTFail(@"Unexpected decode after hide"); return nil; };
+    [controller highlightItem:menu.testHighlightedItem text:@"<svg viewBox='0 0 10 10'/>"];
+    [controller hide]; [self waitForTrackingTimer];
+    XCTAssertNil(controller.svgQueue); XCTAssertFalse(controller.panel.visible);
+}
+- (void)testSVGRapidHoverKeepsOnlyLatestPendingAndDropsStaleCompletion {
+    RCSVGTestPreviewController *controller = [RCSVGTestPreviewController new];
+    RCPreviewTestMenu *menu = [self SVGMenu];
+    dispatch_semaphore_t release = dispatch_semaphore_create(0);
+    XCTestExpectation *started = [self expectationWithDescription:@"First decode running"];
+    XCTestExpectation *shown = [self expectationWithDescription:@"Only latest hover shown"];
+    NSString *first = @"<svg viewBox='0 0 10 10'/>";
+    NSString *second = @"<svg viewBox='0 0 20 20'/>";
+    NSString *latest = @"<svg viewBox='0 0 30 30'/>";
+    __block NSUInteger calls = 0;
+    controller.renderBlock = ^NSImage *(NSString *svg, NSColor *color, CGFloat size) {
+        calls++;
+        if ([svg isEqual:first]) {
+            [started fulfill];
+            dispatch_semaphore_wait(release, dispatch_time(DISPATCH_TIME_NOW, 3*NSEC_PER_SEC));
+        } else XCTAssertEqualObjects(svg,latest);
+        return [[NSImage alloc] initWithSize:NSMakeSize(20,20)];
+    };
+    controller.showBlock = ^(NSString *text, NSImage *image) { XCTAssertEqualObjects(text,latest); [shown fulfill]; };
+    [controller highlightItem:menu.testHighlightedItem text:first]; [controller.timer fire];
+    [self waitForExpectations:@[started] timeout:2];
+    NSBlockOperation *old = controller.svgOperation;
+    [controller highlightItem:menu.testHighlightedItem text:second]; [controller.timer fire];
+    NSBlockOperation *replaced = controller.pendingSVGOperation;
+    XCTAssertNotNil(replaced);
+    [controller highlightItem:menu.testHighlightedItem text:latest]; [controller.timer fire];
+    XCTAssertTrue(old.cancelled); XCTAssertTrue(replaced.cancelled);
+    XCTAssertNotNil(controller.pendingSVGOperation);
+    XCTAssertLessThanOrEqual(controller.svgQueue.operationCount,1);
+    XCTAssertEqual(controller.svgQueue.maxConcurrentOperationCount,1);
+    dispatch_semaphore_signal(release);
+    [self waitForExpectations:@[shown] timeout:3];
+    XCTAssertEqual(calls,2); [controller hide];
+}
+- (void)testSVGHideCancelsPendingAndRejectsRunningCompletion {
+    RCSVGTestPreviewController *controller = [RCSVGTestPreviewController new];
+    RCPreviewTestMenu *menu = [self SVGMenu];
+    dispatch_semaphore_t release = dispatch_semaphore_create(0);
+    XCTestExpectation *started = [self expectationWithDescription:@"Decode started"];
+    __block NSUInteger calls = 0;
+    controller.renderBlock = ^NSImage *(NSString *svg, NSColor *color, CGFloat size) {
+        calls++; [started fulfill];
+        dispatch_semaphore_wait(release,dispatch_time(DISPATCH_TIME_NOW,3*NSEC_PER_SEC));
+        return [[NSImage alloc] initWithSize:NSMakeSize(20,20)];
+    };
+    controller.showBlock = ^(NSString *text, NSImage *image) { XCTFail(@"Stale preview after hide"); };
+    [controller highlightItem:menu.testHighlightedItem text:@"<svg viewBox='0 0 10 10'/>"]; [controller.timer fire];
+    [self waitForExpectations:@[started] timeout:2];
+    [controller highlightItem:menu.testHighlightedItem text:@"<svg viewBox='0 0 20 20'/>"]; [controller.timer fire];
+    NSBlockOperation *pending = controller.pendingSVGOperation;
+    XCTAssertNotNil(pending);
+    [controller hide];
+    XCTAssertTrue(pending.cancelled); XCTAssertNil(controller.pendingSVGOperation);
+    dispatch_semaphore_signal(release);
+    XCTNSPredicateExpectation *drained = [[XCTNSPredicateExpectation alloc] initWithPredicate:[NSPredicate predicateWithBlock:^BOOL(id object, NSDictionary *bindings) { return controller.svgOperation == nil; }] object:nil];
+    [self waitForExpectations:@[drained] timeout:3];
+    XCTAssertEqual(calls,1); XCTAssertFalse(controller.panel.visible);
+}
+- (void)testSVGCompletionChecksCurrentHighlightEvenWithoutHide {
+    RCSVGTestPreviewController *controller = [RCSVGTestPreviewController new];
+    RCPreviewTestMenu *menu = [self SVGMenu];
+    dispatch_semaphore_t release = dispatch_semaphore_create(0);
+    XCTestExpectation *started = [self expectationWithDescription:@"Decode started"];
+    controller.renderBlock = ^NSImage *(NSString *svg, NSColor *color, CGFloat size) {
+        [started fulfill]; dispatch_semaphore_wait(release,dispatch_time(DISPATCH_TIME_NOW,3*NSEC_PER_SEC));
+        return [[NSImage alloc] initWithSize:NSMakeSize(20,20)];
+    };
+    controller.showBlock = ^(NSString *text, NSImage *image) { XCTFail(@"Preview for unhighlighted row"); };
+    [controller highlightItem:menu.testHighlightedItem text:@"<svg viewBox='0 0 10 10'/>"]; [controller.timer fire];
+    [self waitForExpectations:@[started] timeout:2];
+    menu.testHighlightedItem = nil; dispatch_semaphore_signal(release);
+    XCTNSPredicateExpectation *drained = [[XCTNSPredicateExpectation alloc] initWithPredicate:[NSPredicate predicateWithBlock:^BOOL(id object, NSDictionary *bindings) { return controller.svgOperation == nil; }] object:nil];
+    [self waitForExpectations:@[drained] timeout:3];
+    XCTAssertFalse(controller.panel.visible); [controller hide];
+}
+- (void)testInvalidSVGFallsBackToText {
+    RCSVGTestPreviewController *controller = [RCSVGTestPreviewController new];
+    RCPreviewTestMenu *menu = [self SVGMenu];
+    NSString *source = @"<svg viewBox='0 0 10 10'><image href='https://example.invalid/a'/></svg>";
+    XCTestExpectation *shown = [self expectationWithDescription:@"Unsupported SVG shown as text"];
+    controller.showBlock = ^(NSString *text, NSImage *image) {
+        XCTAssertTrue(NSThread.isMainThread); XCTAssertNil(image); XCTAssertEqualObjects(text,source); [shown fulfill];
+    };
+    [controller highlightItem:menu.testHighlightedItem text:source]; [controller.timer fire];
+    [self waitForExpectations:@[shown] timeout:3];
+    XCTAssertTrue([controller.panel.contentView.subviews.firstObject isKindOfClass:NSTextField.class]);
+    [controller hide];
+}
+- (void)testActualHermesSVGDecodesOnHoverWorker {
+    NSString *tests = [[NSString stringWithUTF8String:__FILE__] stringByDeletingLastPathComponent];
+    NSString *path = [[tests stringByAppendingPathComponent:@"../Revclip/Resources/AgentIcons/hermes.svg"] stringByStandardizingPath];
+    NSError *error;
+    NSString *svg = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&error];
+    XCTAssertNotNil(svg, @"%@",error);
+    if (!svg) return;
+    XCTAssertGreaterThan(svg.length,2000);
+    RCSVGTestPreviewController *controller = [RCSVGTestPreviewController new];
+    RCPreviewTestMenu *menu = [self SVGMenu];
+    XCTestExpectation *shown = [self expectationWithDescription:@"Actual Hermes SVG renders after hover"];
+    controller.renderBlock = ^NSImage *(NSString *fullCode, NSColor *color, CGFloat size) {
+        XCTAssertFalse(NSThread.isMainThread); XCTAssertEqualObjects(fullCode,svg);
+        return [RCSVGPreview imageForString:fullCode color:color size:size];
+    };
+    controller.showBlock = ^(NSString *text, NSImage *image) {
+        XCTAssertTrue(NSThread.isMainThread); XCTAssertNotNil(image);
+        XCTAssertTrue([image.representations.firstObject isKindOfClass:NSBitmapImageRep.class]);
+        [shown fulfill];
+    };
+    [controller highlightItem:menu.testHighlightedItem text:svg];
+    XCTAssertNil(controller.svgQueue);
+    [controller.timer fire]; [self waitForExpectations:@[shown] timeout:4];
+    [controller hide];
+}
+- (void)testSVGNormalTextColorResolvesAppearanceAndIgnoresHoverWhite {
+    RCFastPreviewController *controller = [RCFastPreviewController new];
+    RCPreviewTestMenu *menu = [self SVGMenu];
+    NSUserDefaults *defaults = NSUserDefaults.standardUserDefaults;
+    NSString *palette = RCMenuStyle.paletteKey;
+    id savedEnabled = [defaults objectForKey:@"RCMenuCustomColorsEnabled"];
+    id savedPalette = [defaults objectForKey:palette];
+    @try {
+        [defaults setBool:NO forKey:@"RCMenuCustomColorsEnabled"];
+        NSColor *light = [controller SVGColorForMenu:menu];
+        menu.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+        NSColor *dark = [controller SVGColorForMenu:menu];
+        XCTAssertLessThan(light.redComponent,0.5); XCTAssertGreaterThan(dark.redComponent,0.5);
+        [defaults setBool:YES forKey:@"RCMenuCustomColorsEnabled"];
+        [defaults setObject:@{@"text":@"#204060",@"hoverText":@"#FFFFFF"} forKey:palette];
+        menu.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+        NSColor *custom = [controller SVGColorForMenu:menu];
+        XCTAssertEqualWithAccuracy(custom.redComponent,32/255.0,0.01);
+        XCTAssertEqualWithAccuracy(custom.greenComponent,64/255.0,0.01);
+        XCTAssertEqualWithAccuracy(custom.blueComponent,96/255.0,0.01);
+    } @finally {
+        if (savedEnabled) [defaults setObject:savedEnabled forKey:@"RCMenuCustomColorsEnabled"]; else [defaults removeObjectForKey:@"RCMenuCustomColorsEnabled"];
+        if (savedPalette) [defaults setObject:savedPalette forKey:palette]; else [defaults removeObjectForKey:palette];
+    }
 }
 @end

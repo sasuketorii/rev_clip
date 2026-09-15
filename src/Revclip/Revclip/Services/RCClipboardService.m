@@ -6,6 +6,7 @@
 //
 
 #import "RCClipboardService.h"
+#import "RCFileImagePreview.h"
 #import "Revclip-Swift.h"
 #import "RCStorageMigration.h"
 #import <sys/stat.h>
@@ -560,7 +561,7 @@ static os_log_t RCClipboardServiceLog(void) {
 - (NSString *)generateThumbnailPathForClipData:(RCClipData *)clipData
                                      identifier:(NSString *)identifier
                                   directoryPath:(NSString *)directoryPath {
-    if (clipData.TIFFData.length == 0 || identifier.length == 0 || directoryPath.length == 0) {
+    if (identifier.length == 0 || directoryPath.length == 0) {
         return @"";
     }
 
@@ -570,7 +571,13 @@ static os_log_t RCClipboardServiceLog(void) {
         return @"";
     }
 
-    CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)clipData.TIFFData, NULL);
+    // Keep a larger encrypted snapshot for hover, independently of file-copy data.
+    NSImage *fileImage = [RCFileImagePreview imageForClip:clipData size:360];
+    NSData *sourceData = fileImage ? fileImage.TIFFRepresentation : clipData.TIFFData;
+    if (!sourceData.length) return @"";
+    if (fileImage) maxDimension = 720;
+    CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)sourceData,
+        (__bridge CFDictionaryRef)@{(__bridge NSString *)kCGImageSourceShouldCache: @NO});
     if (imageSource == NULL) {
         return @"";
     }

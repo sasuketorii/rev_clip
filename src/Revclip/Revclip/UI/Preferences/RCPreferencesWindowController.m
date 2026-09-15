@@ -1,4 +1,7 @@
 #import "RCGlassBackground.h"
+#import "RCAgentPreferencesViewController.h"
+#import "RCBugReportPreferencesViewController.h"
+#import "RCSettingsCLIService.h"
 #import "RCPreferencesPage.h"
 #import "RCLocalization.h"
 //
@@ -18,6 +21,36 @@
 #import "RCShortcutsPreferencesViewController.h"
 #import "RCTypePreferencesViewController.h"
 #import "RCUpdatesPreferencesViewController.h"
+#import "RCConstants.h"
+#import <CoreText/CoreText.h>
+
+static NSFont *RCPreferencesBrandFont(void) {
+    static NSFont *font;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        // Register only when the sidebar is first needed, in this process only.
+        NSBundle *bundle = NSBundle.mainBundle;
+        NSURL *url = [bundle URLForResource:@"Poppins-SemiBold" withExtension:@"ttf" subdirectory:@"Fonts"]
+            ?: [bundle URLForResource:@"Poppins-SemiBold" withExtension:@"ttf"];
+        if (url) { CTFontManagerRegisterFontsForURL((__bridge CFURLRef)url, kCTFontManagerScopeProcess, NULL); }
+        font = [NSFont fontWithName:@"Poppins-SemiBold" size:22] ?: [NSFont systemFontOfSize:22 weight:NSFontWeightSemibold];
+    });
+    return font;
+}
+
+// Reuse the pages' display-only refresh paths; never invoke their save actions.
+@interface RCGeneralPreferencesViewController (CLIRefresh)
+- (void)setMaxHistorySize:(NSInteger)value persist:(BOOL)persist;
+- (void)setAutoExpiryValue:(NSInteger)value persist:(BOOL)persist;
+- (void)updateAutoExpiryControlsEnabled:(BOOL)enabled;
+- (void)refreshLoginAtStartupButtonState;
+@end
+@interface RCTypePreferencesViewController (CLIRefresh)
+- (BOOL)isStoreTypeEnabledForKey:(NSString *)key inStoreTypes:(NSDictionary *)types;
+@end
+@interface RCExcludePreferencesViewController (CLIRefresh)
+- (void)reloadExcludedApplications;
+@end
 
 NSString * const RCPreferencesTabGeneral = @"general";
 NSString * const RCPreferencesTabMenu = @"menu";
@@ -25,6 +58,8 @@ NSString * const RCPreferencesTabType = @"type";
 NSString * const RCPreferencesTabExclude = @"exclude";
 NSString * const RCPreferencesTabShortcuts = @"shortcuts";
 NSString * const RCPreferencesTabUpdates = @"updates";
+NSString * const RCPreferencesTabAgents = @"agents";
+NSString * const RCPreferencesTabBugReport = @"bug-report";
 NSString * const RCPreferencesTabPanic = @"panic";
 static NSString * const RCPreferencesTabAppearance = @"appearance";
 
@@ -49,9 +84,15 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 @property (nonatomic, strong, nullable) RCUpdatesPreferencesViewController *updatesViewController;
 @property (nonatomic, strong, nullable) RCPanicPreferencesViewController *panicViewController;
 @property (nonatomic, strong) NSViewController *appearanceViewController;
+@property (nonatomic, strong) RCAgentPreferencesViewController *agentViewController;
+@property (nonatomic, strong, nullable) RCBugReportPreferencesViewController *bugReportViewController;
 @property (nonatomic, assign) BOOL centeredOnFirstShow;
+@property (nonatomic, assign) BOOL refreshScheduled;
+@property (nonatomic, assign) BOOL appearancePaletteNeedsRefresh;
 @property (nonatomic, copy) NSString *selectedTab;
 @property (nonatomic, strong) NSTableView *sidebar;
+@property (nonatomic, strong) NSImageView *brandFooter;
+@property (nonatomic, strong) NSTextField *brandWordmark;
 @property (nonatomic, strong) NSScrollView *pageScrollView;
 @property (nonatomic, strong) NSTextField *pageTitle;
 @property (nonatomic, strong) NSArray<NSLayoutConstraint *> *documentConstraints;
@@ -79,14 +120,18 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
     [super windowDidLoad];
 
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(languageDidChange:) name:RCLanguageDidChangeNotification object:nil];
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(settingsDidChange:) name:RCSettingsDidChangeNotification object:nil];
     [self configureWindow];
     [self configureSidebar];
     [self showTab:RCPreferencesTabGeneral];
 }
 
 - (void)languageDidChange:(NSNotification *)notification {
-    // Defer replacement until the popup action returns; no template editor state is replaced.
+    if (self.refreshScheduled) return;
+    self.refreshScheduled = YES;
+    // Only a language change requires rebuilding the localized shell and pages.
     dispatch_async(dispatch_get_main_queue(), ^{
+        self.refreshScheduled = NO;
         NSString *tab = self.selectedTab;
         self.generalViewController = nil;
         self.menuViewController = nil;
@@ -96,10 +141,96 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
         self.updatesViewController = nil;
         self.panicViewController = nil;
         self.appearanceViewController = nil;
+        self.appearancePaletteNeedsRefresh = NO;
+        self.agentViewController = nil;
+        self.bugReportViewController = nil;
         self.window.title = RCLocalizedString(@"Preferences", nil);
         [self configureSidebar];
         [self showTab:tab];
     });
+}
+
+- (NSUserDefaults *)settingsDefaults { return NSUserDefaults.standardUserDefaults; }
+
+- (void)settingsDidChange:(NSNotification *)notification {
+    NSArray *changedKeys = notification.userInfo[@"keys"];
+    if (![changedKeys isKindOfClass:NSArray.class]) return;
+    NSSet *keys = [NSSet setWithArray:changedKeys];
+    NSUserDefaults *defaults = [self settingsDefaults];
+    RCGeneralPreferencesViewController *general = self.generalViewController;
+    if (general.isViewLoaded) {
+        if ([keys containsObject:@"max_history_size"]) {
+            [general setMaxHistorySize:[[defaults objectForKey:kRCPrefMaxHistorySizeKey] ?: @30 integerValue] persist:NO];
+        }
+        if ([keys containsObject:@"auto_expiry_value"]) {
+            [general setAutoExpiryValue:[[defaults objectForKey:kRCPrefAutoExpiryValueKey] ?: @30 integerValue] persist:NO];
+        }
+        if ([keys containsObject:@"auto_expiry_unit"]) {
+            [general.autoExpiryUnitPopUpButton selectItemAtIndex:[defaults integerForKey:kRCPrefAutoExpiryUnitKey]];
+        }
+        if ([keys containsObject:@"auto_expiry_enabled"]) {
+            BOOL enabled = [defaults boolForKey:kRCPrefAutoExpiryEnabledKey];
+            general.autoExpiryEnabledButton.state = enabled ? NSControlStateValueOn : NSControlStateValueOff;
+            [general updateAutoExpiryControlsEnabled:enabled];
+        }
+        if ([keys containsObject:@"login_at_startup"]) [general refreshLoginAtStartupButtonState];
+        if ([keys containsObject:@"show_status_item"]) {
+            NSPopUpButton *popup = [general valueForKey:@"showStatusItemPopUpButton"];
+            [popup selectItemAtIndex:[[defaults objectForKey:kRCPrefShowStatusItemKey] ?: @1 integerValue] == 0 ? 0 : 1];
+        }
+        NSDictionary *toggles = @{
+            @"paste_command": @[kRCPrefInputPasteCommandKey, @"pasteCommandButton"],
+            @"reorder_after_pasting": @[kRCPrefReorderClipsAfterPasting, @"reorderAfterPastingButton"],
+            @"overwrite_same_history": @[kRCPrefOverwriteSameHistory, @"overwriteSameHistoryButton"],
+            @"copy_same_history": @[kRCPrefCopySameHistory, @"sameHistoryCopyButton"]
+        };
+        for (NSString *key in toggles) {
+            if (![keys containsObject:key]) continue;
+            NSArray *entry = toggles[key];
+            NSSwitch *control = [general valueForKey:entry[1]];
+            control.state = [[defaults objectForKey:entry[0]] ?: @YES boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
+        }
+    }
+    // Menu values and dependent enabled states already have Cocoa Bindings.
+    // Reassigning them here would unnecessarily disturb their field editors.
+    if ([keys containsObject:@"store_types"] && self.typeViewController.isViewLoaded) {
+        NSDictionary *types = [defaults dictionaryForKey:kRCPrefStoreTypesKey];
+        NSDictionary *controls = @{@"HTML":@"htmlCheckbox", @"String":@"plainTextCheckbox",
+            @"RTF":@"richTextCheckbox", @"RTFD":@"richTextWithAttachmentsCheckbox",
+            @"PDF":@"pdfCheckbox", @"Filenames":@"filenamesCheckbox", @"URL":@"urlCheckbox", @"TIFF":@"imagesTiffCheckbox"};
+        for (NSString *name in controls) {
+            NSSwitch *control = [self.typeViewController valueForKey:controls[name]];
+            control.state = [self.typeViewController isStoreTypeEnabledForKey:name inStoreTypes:types] ? NSControlStateValueOn : NSControlStateValueOff;
+        }
+    }
+    if (self.updatesViewController.isViewLoaded) {
+        NSSwitch *automatic = [self.updatesViewController valueForKey:@"automaticCheckButton"];
+        NSPopUpButton *interval = [self.updatesViewController valueForKey:@"checkIntervalPopUpButton"];
+        if ([keys containsObject:@"automatic_update_check"]) {
+            BOOL enabled = [[defaults objectForKey:kRCEnableAutomaticCheckKey] ?: @YES boolValue];
+            automatic.state = enabled ? NSControlStateValueOn : NSControlStateValueOff;
+            interval.enabled = enabled;
+        }
+        if ([keys containsObject:@"update_check_interval"]) {
+            [interval selectItemWithTag:[[defaults objectForKey:kRCUpdateCheckIntervalKey] ?: @86400 integerValue]];
+        }
+    }
+    if ([keys containsObject:@"excluded_applications"] && self.excludeViewController.isViewLoaded) {
+        [self.excludeViewController reloadExcludedApplications];
+    }
+    // Theme and custom-color enablement use @AppStorage. Palette dictionaries
+    // use private SwiftUI @State, so only an affected palette needs a new host.
+    BOOL dark = [[NSApp.effectiveAppearance bestMatchFromAppearancesWithNames:@[NSAppearanceNameAqua, NSAppearanceNameDarkAqua]] isEqualToString:NSAppearanceNameDarkAqua];
+    if ([keys containsObject:dark ? @"menu_custom_colors_dark" : @"menu_custom_colors_light"] && self.appearanceViewController) {
+        self.appearancePaletteNeedsRefresh = YES;
+        if (![self.selectedTab isEqualToString:RCPreferencesTabAppearance]) {
+            self.appearanceViewController = nil;
+            self.appearancePaletteNeedsRefresh = NO;
+        } else if (![self.window.firstResponder isKindOfClass:NSTextView.class]) {
+            [self showTab:RCPreferencesTabAppearance];
+        }
+        // While editing HEX, retain the host/draft until the next page visit.
+    }
 }
 
 - (void)showWindow:(id)sender {
@@ -119,6 +250,10 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 
 - (void)showTab:(NSString *)tabIdentifier {
     NSString *resolvedTabIdentifier = tabIdentifier.length > 0 ? tabIdentifier : RCPreferencesTabGeneral;
+    if ([resolvedTabIdentifier isEqualToString:RCPreferencesTabAppearance] && self.appearancePaletteNeedsRefresh) {
+        self.appearanceViewController = nil;
+        self.appearancePaletteNeedsRefresh = NO;
+    }
     NSViewController *viewController = [self viewControllerForTabIdentifier:resolvedTabIdentifier];
     if (viewController == nil) {
         resolvedTabIdentifier = RCPreferencesTabGeneral;
@@ -149,22 +284,37 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
     [background addSubview:sidebarBackground];
 
     NSImageView *brandIcon = [[NSImageView alloc] initWithFrame:NSZeroRect];
+    brandIcon.identifier = @"preferencesBrandIcon";
     brandIcon.image = [NSImage imageNamed:NSImageNameApplicationIcon];
     brandIcon.imageScaling = NSImageScaleProportionallyUpOrDown;
     brandIcon.translatesAutoresizingMaskIntoConstraints = NO;
     brandIcon.wantsLayer = YES;
-    brandIcon.layer.cornerRadius = 18;
+    brandIcon.layer.cornerRadius = 21;
     brandIcon.layer.masksToBounds = YES;
     [brandIcon setAccessibilityLabel:@"Revclip"];
     [sidebarBackground addSubview:brandIcon];
     [NSLayoutConstraint activateConstraints:@[
         [brandIcon.leadingAnchor constraintEqualToAnchor:sidebarBackground.leadingAnchor constant:20],
         [brandIcon.topAnchor constraintEqualToAnchor:sidebarBackground.topAnchor constant:40],
-        [brandIcon.widthAnchor constraintEqualToConstant:36],
-        [brandIcon.heightAnchor constraintEqualToConstant:36],
+        [brandIcon.widthAnchor constraintEqualToConstant:42],
+        [brandIcon.heightAnchor constraintEqualToConstant:42],
+    ]];
+
+    self.brandWordmark = [NSTextField labelWithString:@"revclip"];
+    self.brandWordmark.identifier = @"preferencesBrandWordmark";
+    self.brandWordmark.font = RCPreferencesBrandFont();
+    self.brandWordmark.textColor = NSColor.labelColor;
+    self.brandWordmark.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.brandWordmark setAccessibilityLabel:@"revclip"];
+    [sidebarBackground addSubview:self.brandWordmark];
+    [NSLayoutConstraint activateConstraints:@[
+        [self.brandWordmark.leadingAnchor constraintEqualToAnchor:brandIcon.trailingAnchor constant:10],
+        [self.brandWordmark.centerYAnchor constraintEqualToAnchor:brandIcon.centerYAnchor],
+        [self.brandWordmark.trailingAnchor constraintLessThanOrEqualToAnchor:sidebarBackground.trailingAnchor constant:-20],
     ]];
 
     NSScrollView *navigation = [[NSScrollView alloc] initWithFrame:NSZeroRect];
+    navigation.identifier = @"preferencesSidebarNavigation";
     navigation.drawsBackground = NO;
     navigation.hasVerticalScroller = YES;
     navigation.autohidesScrollers = YES;
@@ -182,6 +332,30 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
     [self.sidebar setAccessibilityLabel:RCLocalizedString(@"Preferences", nil)];
     navigation.documentView = self.sidebar;
     [sidebarBackground addSubview:navigation];
+
+    self.brandFooter = [[NSImageView alloc] initWithFrame:NSZeroRect];
+    self.brandFooter.identifier = @"preferencesBrandFooter";
+    NSImage *footerImage = [[NSImage imageNamed:@"BuiltByRevC"] copy];
+    footerImage.template = YES;
+    self.brandFooter.image = footerImage;
+    self.brandFooter.imageScaling = NSImageScaleProportionallyUpOrDown;
+    self.brandFooter.imageAlignment = NSImageAlignLeft;
+    self.brandFooter.contentTintColor = [NSColor.secondaryLabelColor colorWithAlphaComponent:0.25];
+    self.brandFooter.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.brandFooter setAccessibilityElement:YES];
+    [self.brandFooter setAccessibilityLabel:@"Built by RevC"];
+    [sidebarBackground addSubview:self.brandFooter];
+    CGFloat footerAspect = footerImage.size.height > 0 ? footerImage.size.width / footerImage.size.height : 2089.0 / 200.0;
+    NSLayoutConstraint *footerWidth = [self.brandFooter.widthAnchor constraintEqualToAnchor:sidebarBackground.widthAnchor multiplier:2.0 / 3.0 constant:-40.0 * 2.0 / 3.0];
+    footerWidth.priority = NSLayoutPriorityDefaultHigh;
+    [NSLayoutConstraint activateConstraints:@[
+        [self.brandFooter.leadingAnchor constraintEqualToAnchor:sidebarBackground.leadingAnchor constant:20],
+        [self.brandFooter.bottomAnchor constraintEqualToAnchor:sidebarBackground.bottomAnchor constant:-20],
+        [self.brandFooter.widthAnchor constraintLessThanOrEqualToAnchor:sidebarBackground.widthAnchor constant:-40],
+        [self.brandFooter.heightAnchor constraintLessThanOrEqualToConstant:20.0 * 2.0 / 3.0],
+        [self.brandFooter.widthAnchor constraintEqualToAnchor:self.brandFooter.heightAnchor multiplier:footerAspect],
+        footerWidth,
+    ]];
 
     RCPreferencesSurface *pane = [[RCPreferencesSurface alloc] initWithFrame:NSZeroRect];
     pane.cornerRadius = 24;
@@ -214,7 +388,7 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
         [navigation.leadingAnchor constraintEqualToAnchor:sidebarBackground.leadingAnchor constant:8],
         [navigation.trailingAnchor constraintEqualToAnchor:sidebarBackground.trailingAnchor constant:-8],
         [navigation.topAnchor constraintEqualToAnchor:brandIcon.bottomAnchor constant:12],
-        [navigation.bottomAnchor constraintEqualToAnchor:background.bottomAnchor constant:-16],
+        [navigation.bottomAnchor constraintEqualToAnchor:self.brandFooter.topAnchor constant:-16],
         [self.pageTitle.leadingAnchor constraintEqualToAnchor:pane.leadingAnchor constant:24],
         [self.pageTitle.topAnchor constraintEqualToAnchor:pane.topAnchor constant:24],
         [self.pageTitle.trailingAnchor constraintLessThanOrEqualToAnchor:background.trailingAnchor constant:-24],
@@ -313,11 +487,21 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
         RCPreferencesTabExclude,
         RCPreferencesTabShortcuts,
         RCPreferencesTabUpdates,
+        RCPreferencesTabAgents,
+        RCPreferencesTabBugReport,
         RCPreferencesTabPanic,
     ];
 }
 
 - (nullable NSViewController *)viewControllerForTabIdentifier:(NSString *)tabIdentifier {
+    if ([tabIdentifier isEqualToString:RCPreferencesTabBugReport]) {
+        if (!self.bugReportViewController) self.bugReportViewController = [RCBugReportPreferencesViewController new];
+        return self.bugReportViewController;
+    }
+    if ([tabIdentifier isEqualToString:RCPreferencesTabAgents]) {
+        if (!self.agentViewController) self.agentViewController = [RCAgentPreferencesViewController new];
+        return self.agentViewController;
+    }
     if ([tabIdentifier isEqualToString:RCPreferencesTabAppearance]) {
         if (self.appearanceViewController == nil) {
             self.appearanceViewController = [RCAppearanceController makePreferencesController];
@@ -378,6 +562,8 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 }
 
 - (NSString *)titleForTabIdentifier:(NSString *)tabIdentifier {
+    if ([tabIdentifier isEqualToString:RCPreferencesTabBugReport]) return RCLocalizedString(@"Bug Report", nil);
+    if ([tabIdentifier isEqualToString:RCPreferencesTabAgents]) return RCLocalizedString(@"Agent Settings", nil);
     if ([tabIdentifier isEqualToString:RCPreferencesTabAppearance]) return RCLocalizedString(@"Appearance", nil);
     if ([tabIdentifier isEqualToString:RCPreferencesTabGeneral]) {
         return RCLocalizedString(@"General", nil);
@@ -404,6 +590,12 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 }
 
 - (NSString *)symbolNameForTabIdentifier:(NSString *)tabIdentifier {
+    if ([tabIdentifier isEqualToString:RCPreferencesTabBugReport]) {
+        for (NSString *name in @[@"bubble.left.and.exclamationmark", @"ladybug", @"exclamationmark.triangle"]) {
+            if ([NSImage imageWithSystemSymbolName:name accessibilityDescription:nil]) return name;
+        }
+    }
+    if ([tabIdentifier isEqualToString:RCPreferencesTabAgents]) return @"sparkles";
     if ([tabIdentifier isEqualToString:RCPreferencesTabAppearance]) return @"circle.lefthalf.filled";
     if ([tabIdentifier isEqualToString:RCPreferencesTabGeneral]) {
         return @"gearshape";

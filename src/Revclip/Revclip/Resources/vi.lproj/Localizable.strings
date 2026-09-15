@@ -292,3 +292,42 @@
 "Menu Primary Color" = "Màu chủ đạo / biểu tượng";
 
 "Enter Six Digit Hex" = "Nhập mã màu HEX gồm sáu chữ số, ví dụ #FF005E.";
+
+/* Agent preferences */
+"Agent Settings" = "Cài đặt tác nhân";
+"Manage Revclip templates and settings with your coding agent." = "Quản lý mẫu và cài đặt Revclip bằng tác nhân lập trình của bạn.";
+"Copy the prompt into Codex or Claude Code. Review the installation results, then reload your agent or start a new session." = "Dán lời nhắc vào Codex hoặc Claude Code. Xem kết quả cài đặt, rồi tải lại tác nhân hoặc bắt đầu phiên mới.";
+"Copy Prompt" = "Sao chép lời nhắc";
+"Installation prompt" = "Lời nhắc cài đặt";
+"Installed only for detected, supported tools. DeepSeek Harness (.dsh) is experimental (developer preview)." = "Chỉ cài cho các công cụ được phát hiện và hỗ trợ. DeepSeek Harness (.dsh) đang thử nghiệm (bản xem trước dành cho nhà phát triển).";
+"Prompt copied. Paste it into your agent." = "Đã sao chép lời nhắc. Hãy dán vào tác nhân của bạn.";
+"Could not copy the prompt. Select and copy the text below." = "Không thể sao chép lời nhắc. Hãy chọn và sao chép văn bản bên dưới.";
+"Install the Revclip skill in all detected supported agent roots using this bundled installer and providers.json. Run inspect, install with defaults, then inspect to verify. Stop on errors; never force or overwrite conflicts. Report installed paths, skips, and conflicts. Include experimental DeepSeek Harness (.dsh) only if detected and supported by the installer." = "Dùng trình cài đặt đi kèm này và providers.json để cài kỹ năng Revclip vào tất cả thư mục gốc của tác nhân được phát hiện và hỗ trợ. Chạy inspect, install với mặc định, rồi inspect để xác minh. Dừng khi có lỗi; không ép cài đặt hoặc ghi đè tệp xung đột. Báo cáo đường dẫn đã cài, mục bỏ qua và xung đột. Chỉ bao gồm DeepSeek Harness (.dsh) thử nghiệm nếu được phát hiện và trình cài đặt hỗ trợ.";
+"Explain any reload or new session needed. Then use the skill for template CRUD and supported settings; ask what I want to change first." = "Giải thích khi nào cần tải lại hoặc bắt đầu phiên mới. Sau đó dùng kỹ năng để tạo, đọc, cập nhật, xóa mẫu và quản lý các cài đặt được hỗ trợ; trước tiên hãy hỏi tôi muốn thay đổi gì.";
+
+/* Bug report preferences */
+"Bug Report" = "Báo cáo lỗi";
+"Describe a problem with Revclip. Your report is sent to the support team via Telegram." = "Mô tả sự cố với Revclip. Báo cáo sẽ được gửi đến nhóm hỗ trợ qua Telegram.";
+"Title (required, up to 120 characters)" = "Tiêu đề (bắt buộc, tối đa 120 ký tự)";
+"Description (required, up to 2,500 characters)" = "Mô tả (bắt buộc, tối đa 2.500 ký tự)";
+"Reply contact (optional, up to 200 characters)" = "Liên hệ nhận phản hồi (tùy chọn, tối đa 200 ký tự)";
+"Send Report" = "Gửi báo cáo";
+"Enter a title (1–120 characters), a description (1–2,500), and an optional contact (up to 200)." = "Nhập tiêu đề (1–120 ký tự), mô tả (1–2.500) và thông tin liên hệ tùy chọn (tối đa 200).";
+"Bug reporting is unavailable in this build." = "Bản dựng này không hỗ trợ báo cáo lỗi.";
+"Could not send the report. Your text is preserved. Please try again when you are ready." = "Không thể gửi báo cáo. Nội dung của bạn vẫn được giữ lại. Hãy thử lại khi bạn sẵn sàng.";
+"Sending report…" = "Đang gửi báo cáo…";
+"Report sent. Thank you for helping improve Revclip." = "Đã gửi báo cáo. Cảm ơn bạn đã giúp cải thiện Revclip.";
+"I consent to the collection of source information." = "Tôi đồng ý cho thu thập thông tin nguồn gửi.";
+"With your consent, the server collects your source IP address, approximate location, and network provider (ASN). Your report also includes the app and macOS versions, language, and time zone. Clipboard contents, history, and logs are not collected." = "Khi bạn đồng ý, máy chủ sẽ thu thập địa chỉ IP nguồn, vị trí gần đúng và nhà cung cấp mạng (ASN). Báo cáo cũng bao gồm phiên bản ứng dụng và macOS, ngôn ngữ và múi giờ. Không thu thập nội dung bảng nhớ tạm, lịch sử hay nhật ký.";
+"App version: %@\nmacOS: %@\nLanguage: %@\nTime zone: %@" = "Phiên bản ứng dụng: %@\nmacOS: %@\nNgôn ngữ: %@\nMúi giờ: %@";
+"Consent to source information collection is required." = "Bạn cần đồng ý cho thu thập thông tin nguồn gửi.";
+"A report is already being sent. Please wait." = "Một báo cáo đang được gửi. Vui lòng chờ.";
+
+/* Agent skill update status */
+"Checking installed skills…" = "Đang kiểm tra kỹ năng đã cài…";
+"Check skill updates" = "Kiểm tra cập nhật kỹ năng";
+"Could not check skills. Run the setup prompt to inspect them." = "Không thể kiểm tra kỹ năng. Hãy chạy lời nhắc thiết lập để kiểm tra.";
+"A skill has local changes. The setup prompt will report conflicts without overwriting them." = "Một kỹ năng có thay đổi cục bộ. Lời nhắc thiết lập sẽ báo cáo xung đột mà không ghi đè các thay đổi.";
+"Skill updates are available. Copy and run the setup prompt to update them." = "Có bản cập nhật kỹ năng. Hãy sao chép và chạy lời nhắc thiết lập để cập nhật.";
+"Installed skills are up to date. Python is not required." = "Các kỹ năng đã cài đều là phiên bản mới nhất. Không cần Python.";
+"Run the setup prompt to install skills. Python is not required." = "Chạy lời nhắc thiết lập để cài kỹ năng. Không cần Python.";

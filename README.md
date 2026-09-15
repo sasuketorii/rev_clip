@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="revclip_icon_rounded.png" width="128" height="128" alt="Revclip icon" />
+  <img src="design/branding/revclip_icon_rounded.png" width="128" height="128" alt="Revclip icon" />
   <h1>Revclip</h1>
   <p><strong>コピーしたものを、もう一度。自分に馴染むクリップボードを。</strong></p>
   <p>A native macOS clipboard manager. Local history. Reusable snippets. Yours to customize.</p>
@@ -19,7 +19,9 @@
 
 **⌘⇧Vで、履歴も、定型文も、設定も。** RevclipはmacOSのメニューバーに常駐する、ローカル保存型のクリップボードマネージャーです。コピー履歴、文章・画像テンプレート、ホバープレビューをひとつのメニューから利用できます。
 
-このREADMEは **v0.1.5（build 38、2026年9月16日時点）** の実装を説明します。v0.1.5ではベトナム語を追加しました。配布版の変更履歴は[Releases](https://github.com/sasuketorii/rev_clip/releases)をご覧ください。
+エージェントと一緒に使うクリップボードとして、定型文・プロンプト・画像テンプレートの作成・編集・削除をエージェントへ依頼できます。Revclip CLIにはコピー履歴を読み出すコマンドがありません。これはCLIの機能範囲であり、OSの権限を持つエージェントからの完全な隔離を保証するものではありません。
+
+このREADMEは **v0.1.6（build 39、2026年9月16日時点）** の実装を説明します。v0.1.6ではエージェント設定・35項目の設定CLI・SVGプレビュー・同意付きバグ報告を追加しました。ベトナム語を含む9言語に対応します。配布版の変更履歴は[Releases](https://github.com/sasuketorii/rev_clip/releases)をご覧ください。
 
 ## 目次
 
@@ -47,16 +49,18 @@
 | --- | --- |
 | コピー履歴 | 文章、書式付きテキスト、HTML、画像、PDF、ファイル参照、URLを記録し、後から選んで復元 |
 | テンプレート | フォルダで分類した定型文・プロンプト・画像を保存。専用エディタとCLIから編集 |
-| プレビュー | 文章、画像、URL単体のリンクカードをホバーで確認 |
+| プレビュー | 文章、画像、対応するSVGコード、URL単体のリンクカードをホバーで確認 |
 | メニュー | 履歴を件数ごとのサブメニューに整理。表示数、タイトル、画像、アイコンなどを調整 |
 | 外観 | システム連動・ライト・ダーク。メニュー専用の色設定とHEX入力 |
 | 保存時の暗号化 | SQLCipherでデータベース、AES-256-GCMでクリップ本体・サムネイルを保護 |
 | 自動整理 | 最大件数・保存期限による履歴削除。手動消去にも対応 |
 | 多言語 | 日本語を含む9言語。設定から切り替え |
 | 更新 | 通常版はSparkleによる更新確認・配布版への更新 |
+| エージェント連携 | 同梱スキルの登録、テンプレート操作、35項目の設定CLI |
+| バグ報告 | GUI・CLIから明示的な同意付きで送信。履歴の自動添付なし |
 | 開発・撮影 | 同じ機能実装から、データ領域を分離したDemo版を生成 |
 
-アカウント登録は不要です。履歴・テンプレートのクラウド同期はありません。**更新確認・ダウンロードと、URL単体のリンクプレビュー／ファビコン取得ではネットワークを使用します。**
+アカウント登録は不要です。履歴・テンプレートのクラウド同期はありません。**更新確認・ダウンロード、URL単体のリンクプレビュー／ファビコン取得、ユーザーが同意して実行するバグ報告ではネットワークを使用します。**
 
 ## はじめる
 
@@ -125,7 +129,7 @@ Figmaなどの複数選択や書式付きコピーは、コピー元と貼り付
 - 貼り付け後の並び替えや、同じ内容をコピーした場合の扱いは「一般」で調整できます。
 - 保存期限を有効にすると、期限を過ぎた履歴も整理対象になります。
 
-保存上限に達した項目は、表示だけを隠すのではなく削除します。ただし整理は非同期のため、コピー直後に一時的に上限を超えることがあります。詳しくは[保存・削除・プライバシー](#保存削除プライバシー)をご覧ください。
+新しいコピーで保存件数の上限を超えると、古い履歴から超過分のDB行と対応ファイルを削除します。古さは履歴の更新順に基づき、再コピーや貼り付け後の並び替え設定で変わることがあります。表示だけを隠す処理ではありません。ただし整理は非同期のため、コピー直後に一時的に上限を超えることがあります。詳しくは[保存・削除・プライバシー](#保存削除プライバシー)をご覧ください。
 
 ## テンプレート
 
@@ -176,6 +180,12 @@ XML plist形式のテンプレートをインポート・エクスポートで�
 
 画面下に余裕がなければプレビューを上側へ配置するなど、画面内に収めます。画像の読み込み・縮小処理をUIスレッドでまとめて実行しない構成です。
 
+### SVGコード単体
+
+対応するSVG単体のコードは、メニューの文字色に合わせたアイコンプレビューで確認できます。貼り付ける内容は元のSVGコードのままです。ホバー後に上限付きのバックグラウンド処理で描画し、結果をキャッシュします。
+
+外部参照、スクリプト、埋め込み画像、CSS、アニメーションを含むSVGなど、安全に扱える対象外のコードは通常の文章プレビューへ戻します。ブラウザと同じSVG機能をすべて実装するものではありません。
+
 ### URL単体
 
 リンクカードは、内容全体がWeb URLとして認識できる場合だけ表示します。先頭・末尾の空白は無視します。
@@ -217,6 +227,8 @@ XML plist形式のテンプレートをインポート・エクスポートで�
 | 除外アプリ | 記録対象から外すアプリの追加・削除、現在のアプリを追加 |
 | ショートカット | メイン・履歴・テンプレート・履歴消去の割り当てとリセット |
 | アップデート | 自動確認、確認間隔、手動確認 |
+| エージェント設定 | スキルの一括登録用プロンプトと対応ツール |
+| バグ報告 | 再現手順と任意の連絡先を開発者へ送信 |
 | Panic | 履歴・テンプレート・設定などの削除 |
 
 現在の設定画面に「ベータ」セクションはありません。
@@ -303,31 +315,70 @@ Panicは確認欄へ `Panic` と入力して実行します。削除完了後は
 
 詳しくは[セキュリティ方針](SECURITY.md)をご覧ください。実際のコピー内容・鍵・認証情報を公開Issueへ添付しないでください。
 
+### エージェントからの履歴アクセス
+
+Revclip CLIでは、エージェントがテンプレートを作成・編集・削除し、許可された設定を変更できます。明示的な同意付きのバグ報告にも対応します。**履歴一覧・履歴本文・現在のクリップボードを読み出すコマンドはありません。** 保存件数や期限を変更する操作と、保存内容の読み出しは分離しています。バグ報告にも履歴は自動添付しません。
+
+SQLCipherによるDB暗号化、AES-256-GCMによる保存クリップ・サムネイルの暗号化、Keychainでの鍵管理は、保存データを保護する仕組みです。CLIの機能制限と合わせても、同じOSユーザーとして広い操作権限を与えたエージェントや、OS全体を操作できるプログラムを完全に隔離するものではありません。現在のクリップボードは、Revclip CLI以外のmacOS APIやツールから読み取られる可能性があります。動作中のメモリ、画面、貼り付け先、エクスポートやバックアップも、この保存暗号化で一律に保護されるわけではありません。
+
+保存が気になる場合は、メニューの「履歴を消去」を実行できます。Revclip内の履歴のDB行・保存アーカイブ・サムネイルを削除し、テンプレートと設定は残します。件数上限での自動削除も手動消去も、バックアップ・スナップショットやSSD上の痕跡の完全消去を保証しません。「履歴を消去」は現在のmacOSクリップボードを空にする操作ではなく、監視再開後のコピーは設定に従って再び記録されます。詳しくは[セキュリティ方針](SECURITY.md)を参照してください。
+
 ## CLIとAIエージェントからの操作
 
 ### 現在提供しているもの
 
-リポジトリ内の **`scripts/revclip`** から、起動中のアプリのテンプレートを操作できます。Python 3が必要です。通常版・Demo版で同じCLI実装を使用します。
+配布アプリに同梱するネイティブCLI **`Contents/Helpers/revclip`** から、起動中のアプリのテンプレート・許可された設定を操作し、同意付きのバグ報告を送信できます。アプリの利用・スキル導入・CLI操作にPythonは不要です。通常版・Demo版で同じCLI実装を使用します。
 
-**エージェント用の `SKILL.md`、スキルの自動登録、MCPサーバーは現在同梱していません。** DMGをインストールしただけでは、CodexやClaudeがRevclipを操作できることを自動認知しません。CLIはリポジトリ内のスクリプトで、グローバルコマンドとしても自動インストールされません。
+**エージェント用の `revclip` スキルとCLIをアプリ本体に同梱しています。** 「設定 → エージェント設定」でプロンプトをコピーし、CodexまたはClaude Codeへ貼り付けて実行してください。ひとつのエージェントから、このMacで検出した対応ツールのスキル配置先へまとめて登録できます。
 
-エージェントへ使わせる場合は、リポジトリを作業場所にして、次のように指示します。
+1. 同梱インストーラで既存の設定ディレクトリを調査します。
+2. 検出した対応ツールへスキルとCLIをコピーします。
+3. 再度調査し、登録先・スキップ・競合を報告します。
+4. 必要に応じて各エージェントを再読み込みするか、新しいセッションを開きます。
 
-> このリポジトリの docs/TEMPLATE_CLI.md を読んで、scripts/revclip で起動中のRevclipのテンプレートを操作してください。対象は --app Revclip です。最初に folders と list で現在の状態を確認し、変更後は get または list で結果を確認してください。削除や全置き換えは依頼した範囲に限定してください。
+Revclipを起動しただけで登録先へ書き込むことはありません。未検出のツールの設定領域を自動作成せず、管理対象と確認できない同名スキルや、利用者が変更した内容は上書きしません。登録後のテンプレート・設定・バグ報告の操作には、起動中の対象アプリと同じOSユーザーによるローカルCLI実行が必要です。エージェントの権限設定は迂回しません。
 
-繰り返し利用する場合は、利用プロジェクトのエージェント向け指示書に、このCLIのドキュメントと対象アプリを記載してください。**説明を渡すことと、エージェントへ操作権限を与えることは別です。** エージェント側でシェル実行が許可され、同じMac・OSユーザーから起動中アプリへ接続できる必要があります。
+「エージェント設定」を開いたときと「再確認」を押したときに、登録状態（`installed`）と更新有無（`update_available`）を調べます。確認だけではインストールや上書きを行いません。更新があればセットアップ用プロンプトをコピーし、エージェントで手動実行します。管理対象の未編集コピーだけを更新し、利用者の変更や競合は報告して停止します。
+
+ターミナルから実行する場合は、`APP` を対象アプリの場所に置き換えます。以下の `path/to/Revclip.app` は相対パスの記入例です。以降のCLI例でも同じ変数を使います。
+
+```sh
+APP='path/to/Revclip.app'
+"$APP/Contents/Helpers/revclip" agent inspect --app Revclip
+"$APP/Contents/Helpers/revclip" agent install --app Revclip
+"$APP/Contents/Helpers/revclip" agent inspect --app Revclip
+```
+
+製品によって配置先や再読み込み方法が異なります。対応範囲と公式資料は[エージェント導入ガイド](docs/AGENT_SUPPORT.md)を参照してください。モデルのAPIを利用するだけでは、ローカルスキルは読み込まれません。
+
+### 設定もCLIから操作
+
+```sh
+"$APP/Contents/Helpers/revclip" --app Revclip settings-schema
+"$APP/Contents/Helpers/revclip" --app Revclip settings-get
+"$APP/Contents/Helpers/revclip" --app Revclip settings-set --json '{"appearance":"dark","max_history_size":30}'
+"$APP/Contents/Helpers/revclip" --app Revclip settings-set --file settings.json
+"$APP/Contents/Helpers/revclip" --app Revclip app-action permissions
+"$APP/Contents/Helpers/revclip" --app Revclip app-action update-check
+```
+
+`settings-schema` に、35項目の設定名・型・範囲と使用可能な操作をまとめています。一般・外観・メニュー・保存形式・除外アプリ・更新設定を扱えます。**ショートカットとPanicはGUI専用です。**
+
+変更前にすべての値を検証し、変更後に適用値を返します。保存件数・期限の変更は通常の履歴整理を起動し、追加の削除確認は挟みません。OSの許可やアップデートの完了は、表示される画面でユーザーが操作します。CLIの `queued` は操作の受付を示し、許可・インストール完了を示しません。
+
+CLIからの設定変更は、開いている設定画面の対象コントロールへ反映します。無関係な入力途中の値やバグ報告の下書きは保持します。言語変更時は画面を再生成します。配色の変更がHEX入力中に届いた場合は、次に外観ページを開くまでページ更新を保留します。
 
 ### 対象アプリを明示
 
 ```sh
 # 通常版
-scripts/revclip --app Revclip folders
+"$APP/Contents/Helpers/revclip" --app Revclip folders
 
 # Demo版
-scripts/revclip --app revclip-demo folders
+"$APP/Contents/Helpers/revclip" --app revclip-demo folders
 ```
 
-`--app` を省略すると、互換性維持のため **Demo版が対象**になります。通常版を操作する例では省略しないでください。CLI自体はアプリを起動しません。
+`--app` を省略したネイティブCLIの対象は **通常版のRevclip** です。誤操作を避けるため、例では対象を明示しています。Demo版には `--app revclip-demo` を指定します。テンプレート・設定・バグ報告には起動中の対象アプリが必要です。`agent inspect/install` はローカルのスキル登録を扱い、アプリの起動を必要としません。CLI自体はアプリを起動しません。
 
 ### コマンド例
 
@@ -335,38 +386,38 @@ scripts/revclip --app revclip-demo folders
 
 ```sh
 # フォルダを作り、そのidentifierを確認
-scripts/revclip --app Revclip folder-create --title '作業用'
+"$APP/Contents/Helpers/revclip" --app Revclip folder-create --title '作業用'
 
 # 一覧
-scripts/revclip --app Revclip list --folder FOLDER_ID
+"$APP/Contents/Helpers/revclip" --app Revclip list --folder FOLDER_ID
 
 # テキストを作成
-scripts/revclip --app Revclip create --folder FOLDER_ID --title '挨拶' --content 'お世話になっております。'
+"$APP/Contents/Helpers/revclip" --app Revclip create --folder FOLDER_ID --title '挨拶' --content 'お世話になっております。'
 
 # UTF-8ファイルから本文を読み込み
-scripts/revclip --app Revclip create --folder FOLDER_ID --title 'メール' --content-file mail.txt
+"$APP/Contents/Helpers/revclip" --app Revclip create --folder FOLDER_ID --title 'メール' --content-file mail.txt
 
 # 標準入力で本文を更新
-printf '%s' '新しい本文' | scripts/revclip --app Revclip update TEMPLATE_ID --content-file -
+printf '%s' '新しい本文' | "$APP/Contents/Helpers/revclip" --app Revclip update TEMPLATE_ID --content-file -
 
 # タイトルだけを更新（本文・画像を維持）
-scripts/revclip --app Revclip update TEMPLATE_ID --title '新しい名前'
+"$APP/Contents/Helpers/revclip" --app Revclip update TEMPLATE_ID --title '新しい名前'
 
 # 埋め込み画像を作成
-scripts/revclip --app Revclip create --folder FOLDER_ID --title 'ロゴ' --image logo.png
+"$APP/Contents/Helpers/revclip" --app Revclip create --folder FOLDER_ID --title 'ロゴ' --image logo.png
 
 # 非表示に変更
-scripts/revclip --app Revclip update TEMPLATE_ID --enabled false
+"$APP/Contents/Helpers/revclip" --app Revclip update TEMPLATE_ID --enabled false
 
 # 更新結果を確認
-scripts/revclip --app Revclip get TEMPLATE_ID
+"$APP/Contents/Helpers/revclip" --app Revclip get TEMPLATE_ID
 ```
 
 削除が必要な場合のみ、次の操作を使用します。フォルダは空でなければ削除できません。
 
 ```sh
-scripts/revclip --app Revclip delete TEMPLATE_ID
-scripts/revclip --app Revclip folder-delete EMPTY_FOLDER_ID
+"$APP/Contents/Helpers/revclip" --app Revclip delete TEMPLATE_ID
+"$APP/Contents/Helpers/revclip" --app Revclip folder-delete EMPTY_FOLDER_ID
 ```
 
 ### 応答・編集の整合性
@@ -406,7 +457,7 @@ scripts/revclip --app Revclip folder-delete EMPTY_FOLDER_ID
 
 - Xcode 26.6（CIの使用版）
 - XcodeGen
-- CLIを使う場合はPython 3
+- ソース内の互換ツールやPythonテストを使う開発者はPython 3（配布アプリ・ネイティブCLIには不要）
 - アイコンを再生成する場合はPillow
 
 Xcodeを初回起動して必要なコンポーネントを導入し、コマンドラインツールの参照先をXcodeに設定してください。Debugビルドに有料のApple Developer契約は必要ありません。
@@ -421,6 +472,8 @@ open src/Revclip/build/Debug/Revclip.app
 ```
 
 **通常のDebugビルドは、インストール済み通常版と同じアプリID・データを使用します。** 既存のRevclipを終了してから起動してください。データを分離して開発・撮影する場合はDemo版を使用します。
+
+ソース内の `scripts/revclip` と `agents/AgentSupport/install.py` はPython版の開発・互換検証用です。利用者向けの導入手順ではなく、ネイティブCLIの代わりにPythonの導入を求めるものではありません。
 
 ### テストと編集
 
@@ -457,7 +510,7 @@ UIはObjective-C/AppKitとSwiftUIです。ElectronやWebViewのランタイム�
 | プレビュー表示 | [RCFastPreviewController.m](src/Revclip/Revclip/UI/RCFastPreviewController.m) |
 | 外観の適用 | [RCAppearanceController.swift](src/Revclip/Revclip/UI/Appearance/RCAppearanceController.swift) |
 | テンプレート編集 | [SnippetEditor](src/Revclip/Revclip/UI/SnippetEditor) |
-| テンプレートCLI | [scripts/revclip](scripts/revclip) |
+| ネイティブCLI・スキル導入 | [RevclipCLI](src/Revclip/RevclipCLI) |
 | 言語リソース | [Resources](src/Revclip/Revclip/Resources) |
 | ビルド構成 | [project.yml](src/Revclip/project.yml) |
 | アイコン生成 | [generate_icons.py](scripts/generate_icons.py) |
@@ -486,11 +539,36 @@ macOS標準フレームワーク、Sparkle内部の構成要素、開発用ツ�
 
 ### 現在の検証範囲
 
-v0.1.5では、ローカルの最適化ビルドで139テストが成功し、CIでDebug・最適化ReleaseのテストとUniversalビルドを確認しました。公開DMGについて署名・公証とバージョンを確認し、通常版へのインストールも確認しています。
+v0.1.6のローカル検証結果（2026年9月16日）です。
 
-これらはすべてのmacOS環境・コピー元アプリ・外部サイトの動作保証ではありません。最新の結果は[CI](https://github.com/sasuketorii/rev_clip/actions/workflows/ci.yml)と[リリース](https://github.com/sasuketorii/rev_clip/releases)で確認できます。
+| 検証 | 結果 |
+| --- | --- |
+| macOS XCTest | 225件成功（24.8秒） |
+| CLI・インストーラテスト合計 | 77件成功（5.9秒）：Python互換40件＋ネイティブ37件 |
+| ネイティブUniversal Debugコンパイル | arm64・x86_64とも成功 |
+| バグ報告Workerテスト | 23件成功、skip 0件 |
+| Finderでコピーしたファイルの画像表示 | 報告者が実機で表示できることを確認 |
+| SVG描画ベンチマーク | 8種類すべて描画成功。初回1.672〜19.835 ms、キャッシュ取得100回の平均0.00499〜0.00663 ms |
+
+Demo版のウォーム起動1回の測定では、起動からCLI応答可能になるまで512 ms、終了227 msでした。RSSは約178.5 MiBで安定し、2〜9秒のCPUサンプル表示は0.0%。初回サンプルは70.8%、累積CPU時間0.38秒（最終サンプル0.39秒）です。これは単一データ条件の短時間測定であり、コールド起動、UI全体の準備完了、通常版、他機種・他データでの性能や改善倍率を示しません。比較基準もありません。内訳は[性能メモ](docs/PERFORMANCE.md)を参照してください。
+
+**検証と公開状態:** UIのAX（アクセシビリティ）テキストエリアは到達性テストで確認済みです。ローカル検証と公開配布物の検証は区別します。Finderの実機確認、ローカルテスト、両アーキテクチャのコンパイルを、性能対応全体・公開CI・署名／公証済み配布物の検証完了とは扱いません。配布状況は[Releases](https://github.com/sasuketorii/rev_clip/releases)をご確認ください。
 
 ## 困ったとき
+
+### アプリからバグ報告
+
+「設定 → バグ報告」で件名と再現手順を入力し、「送信元情報の取得に同意します。」をチェックして送信します。連絡先は任意です。送信元情報はIP・地域・回線・言語・タイムゾーン・アプリ／OSバージョン・User-Agentです。未同意では送信できません。
+
+Cloudflare経由で開発者のTelegramグループに届きます。履歴・テンプレート・クリップボード・ログ・スクリーンショットは自動添付しません。送信失敗時は入力を残します。通信がタイムアウトした場合、既に届いている可能性があるため、自動再送は行いません。
+
+CLIでも送信できます。次のオプションは送信元情報の取得・送信への明示的な同意を表します。
+
+```sh
+"$APP/Contents/Helpers/revclip" --app Revclip bug-report --title '問題の概要' --description-file report.txt --consent-source-info
+```
+
+Botのトークンはアプリに含めず、サーバーのSecretで管理します。[送信処理と運用](docs/FEEDBACK_DEPLOYMENT.md)、[セキュリティ方針](SECURITY.md)も参照してください。
 
 | 症状 | 確認すること |
 | --- | --- |
@@ -511,6 +589,7 @@ v0.1.5では、ローカルの最適化ビルドで139テストが成功し、CI
 
 ## 関連ドキュメント
 
+- [エージェント導入ガイド](docs/AGENT_SUPPORT.md)
 - [テンプレートCLIと詳細な制限](docs/TEMPLATE_CLI.md)
 - [通常版・Demo版の配布構成](docs/DISTRIBUTIONS.md)
 - [カスタマイズガイド](docs/CUSTOMIZATION.md)

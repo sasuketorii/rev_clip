@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="revclip_icon_rounded.png" width="128" height="128" alt="Revclip icon" />
+  <img src="design/branding/revclip_icon_rounded.png" width="128" height="128" alt="Revclip icon" />
   <h1>Revclip</h1>
   <p><strong>Copy once. Find it again. Make your clipboard your own.</strong></p>
   <p>A native macOS clipboard manager. Local history. Reusable templates. Yours to customize.</p>
@@ -19,6 +19,10 @@
 
 **History, templates, and settings—all at ⌘⇧V.** Revclip lives in your Mac's menu bar. Browse past copies, preview a template, and paste it into the app you were using. Keep your workflow moving from a single menu.
 
+A clipboard for working with agents: ask an agent to create, edit, or delete reusable text, prompt, and image templates. Revclip CLI has no commands for reading clipboard history. This defines the CLI’s capabilities; it does not guarantee isolation from an agent with broader OS permissions.
+
+This README describes **v0.1.6 (build 39, September 16, 2026)**: bundled agent setup, 35 CLI settings, SVG previews, and consent-based bug reports. See [Releases](https://github.com/sasuketorii/rev_clip/releases) for distribution history.
+
 ## A small app for everyday copying
 
 | Feature | What it means for you |
@@ -26,11 +30,11 @@
 | **Native macOS UI** | Standard AppKit menus and SwiftUI, without an Electron or WebView runtime. |
 | **Local history** | Your history and templates stay on your Mac. No account or cloud setup required. |
 | **Ten items at a time** | History is grouped into folders of ten by default. Adjust the grouping and menu options in settings. |
-| **Reusable templates** | Organize text into folders, edit it in a dedicated editor, and import or export your collection. |
-| **Preview before pasting** | Hover to preview an item. When space allows, the preview appears below the submenu. |
-| **Your preferred appearance** | Choose light, dark, or system appearance. Change the source to build a UI that suits you. |
+| **Reusable templates** | Organize text and embedded images into folders, edit them in the dedicated editor or CLI, and import or export your collection. |
+| **Preview before pasting** | Hover to preview text, images, supported standalone SVG code, or a standalone URL link card. |
+| **Your preferred appearance** | Choose light, dark, or system appearance and edit separate light/dark menu palettes with HEX input. |
 
-Revclip uses the network for features such as update checks. It does not provide cloud history sync.
+Revclip uses the network for updates, standalone URL previews and favicons, and bug reports explicitly submitted with consent. It does not provide cloud history sync.
 
 ## Privacy and resource use
 
@@ -40,6 +44,22 @@ Revclip uses the network for features such as update checks. It does not provide
 - **Keep storage growth in check.** Set limits on history count and saved clip size. The saved-size limit is not a guarantee of maximum runtime memory use.
 
 Native UI and few dependencies are the foundation of the design. We have not published comparative CPU or memory benchmarks against other clipboard managers.
+
+### Agent access to history
+
+Agents can use Revclip CLI to create, edit, and delete templates, change allowlisted settings, and submit bug reports with explicit consent. **There are no CLI commands to read history lists, history contents, or the current clipboard.** Changing retention settings does not grant access to stored contents. Bug reports do not automatically attach history.
+
+SQLCipher encrypts the database, AES-256-GCM encrypts saved clip payloads and thumbnails, and macOS Keychain manages the keys. These protect stored data. Neither encryption at rest nor the CLI restrictions completely isolate agents granted broad permissions as the same OS user, or programs with OS-wide control. Other macOS APIs and tools may still read the current clipboard. Runtime memory, the screen, paste destinations, exports, and backups are outside the blanket protection of this storage encryption. See the [security policy](SECURITY.md).
+
+### Bounded history and clearing it
+
+The default history limit is 30 items. When a new copy exceeds the configured count, cleanup removes the oldest excess history rows and their associated files. Age follows history update order, which can change when an item is copied again or reordered after pasting. Cleanup is asynchronous, so the count can temporarily exceed the limit. This deletes stored history rather than merely hiding it.
+
+If you are concerned about retained copies, choose **Clear History** in the menu. It deletes Revclip’s history rows, saved archives, and thumbnails while preserving templates and settings. Neither automatic eviction nor Clear History guarantees secure erasure of backups, snapshots, or physical SSD remnants. Clear History does not empty the current macOS clipboard; new copies can be recorded after monitoring resumes, according to your settings.
+
+### Bug-report privacy
+
+Bug reports require explicit consent to collect and send source information: IP address, region, network, language, timezone, app/OS versions, and User-Agent. Reports go through Cloudflare to the developer's Telegram group. History, templates, clipboard contents, logs, and screenshots are not automatically attached. Contact details are optional; failed submissions preserve the input and are not automatically retried. A timeout does not prove that the report was not delivered. The bot token stays in server-side secrets, not in the app.
 
 ## How to use it
 
@@ -87,6 +107,67 @@ make -C src/Revclip test
 # Edit in Xcode; the project is generated from project.yml
 open src/Revclip/Revclip.xcodeproj
 ```
+
+The repository’s `scripts/revclip` and `agents/AgentSupport/install.py` remain Python compatibility/developer tools. Their Python requirement does not apply to the distributed app, native CLI, or skill setup.
+
+## Agent access and SVG previews
+
+Settings → Agent Settings provides a copyable setup prompt. Run it once in Codex
+or Claude Code to inspect the supported agent configuration roots on your Mac
+and install the bundled Revclip skill into detected tools. The installer protects
+unmanaged or locally edited skills; absent products are skipped. The CLI and skill
+ship inside the app. The native CLI and installer require neither Python nor a repository checkout.
+
+Agent Settings checks installation state (`installed`) and update availability (`update_available`) when opened and when you choose Recheck. Inspection does not install or overwrite anything. If updates are available, copy the setup prompt and run it manually in your agent. Only validated, unedited managed copies can be updated; local edits and conflicts are preserved.
+
+For terminal use, replace the relative placeholder below with your app location. Subsequent examples use the same `APP` variable:
+
+```sh
+APP='path/to/Revclip.app'
+"$APP/Contents/Helpers/revclip" agent inspect --app Revclip
+"$APP/Contents/Helpers/revclip" agent install --app Revclip
+"$APP/Contents/Helpers/revclip" agent inspect --app Revclip
+```
+
+The native CLI defaults to `Revclip`; pass `--app revclip-demo` for Demo. Template, settings, and bug-report commands require the target app to be running. Local `agent inspect/install` commands do not start or require the running app.
+
+The CLI supports template creation, editing and deletion, plus settings discovery,
+reading and writing for 35 settings. Shortcuts and Panic remain GUI-only. Permissions and update
+checks use the app's existing UI. See [agent support](docs/AGENT_SUPPORT.md) and
+the [CLI reference](docs/TEMPLATE_CLI.md) for commands and reload instructions.
+
+Settings writes validate all values before mutation. Retention changes schedule normal cleanup without an extra confirmation. CLI notifications update affected controls while preserving unrelated drafts; language changes rebuild the preferences UI. An active HEX editor defers palette-page replacement until the next visit.
+
+Standalone SVG shape code can be previewed in the menu text color. The original
+code is preserved when pasted. A bounded background renderer and cache keep the
+work on demand; unsupported SVG uses the text preview.
+
+## Report a bug
+
+Open **Settings → Bug Report**, between Agent Settings and Panic. Enter a title and reproduction steps, optionally add contact details, and check the source-information consent box before sending. The GUI and CLI use the same submission service.
+
+```sh
+"$APP/Contents/Helpers/revclip" --app Revclip bug-report --title 'Problem summary' --description-file report.txt --consent-source-info
+```
+
+The consent flag explicitly authorizes collection and submission of the source information described above. See [feedback deployment](docs/FEEDBACK_DEPLOYMENT.md) and the [security policy](SECURITY.md).
+
+## v0.1.6 validation
+
+Local results recorded on September 16, 2026.
+
+| Check | Result |
+| --- | --- |
+| macOS XCTest | 225 passed in 24.8 seconds |
+| CLI and installer tests, total | 77 passed in 5.9 seconds: 40 Python compatibility + 37 native |
+| Native Universal Debug compilation | arm64 and x86_64 passed |
+| Bug-report Worker tests | 23 passed, zero skipped |
+| Image display for files copied in Finder | Reporter confirmed the image displays on their Mac |
+| SVG benchmark | All 8 inputs rendered; first render 1.672–19.835 ms; mean of 100 cache hits 0.00499–0.00663 ms |
+
+One warm Demo run measured 512 ms from launch to CLI readiness and 227 ms to quit. RSS settled near 178.5 MiB; CPU samples at seconds 2–9 displayed 0.0%. The first sample showed 70.8% CPU and 0.38 seconds cumulative CPU time (0.39 seconds in the final sample). This short run uses one data condition and has no comparison baseline. It does not establish cold-start performance, full UI readiness, regular-app performance, or results on other hardware/data. See [performance notes](docs/PERFORMANCE.md).
+
+**Validation and publication:** UI AX (accessibility) text-area reachability is covered by the passing final test run. Local validation and verification of public distribution artifacts are separate. Finder acceptance, local tests, and compilation do not establish completion of all performance work, public CI success, or signed/notarized distribution acceptance. Check [Releases](https://github.com/sasuketorii/rev_clip/releases) for published versions.
 
 ## Three focused runtime dependencies
 
