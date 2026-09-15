@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Manage templates in the running revclip-demo app. JSON output; no direct DB access."""
+"""Manage templates in the running Revclip or revclip-demo app. JSON output; no direct DB access."""
 import argparse
 import base64
 import json
@@ -34,6 +34,7 @@ def receive(sock, length):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--app', choices=('revclip-demo', 'Revclip'), default='revclip-demo', help='Target app; defaults to the isolated demo')
     commands = parser.add_subparsers(dest='op', required=True)
     commands.add_parser('folders')
     commands.add_parser('folder-create').add_argument('--title', required=True)
@@ -53,6 +54,7 @@ def main():
         content.add_argument('--image', help='Image file; embedded in template')
         command.add_argument('--enabled', choices=('true', 'false'))
     args = vars(parser.parse_args())
+    app = args.pop('app')
     request = {key: value for key, value in args.items() if value is not None}
     if 'content_file' in request:
         path = request.pop('content_file')
@@ -67,11 +69,11 @@ def main():
     payload = json.dumps(request, ensure_ascii=False).encode('utf-8')
     if len(payload) > 16 * 1024 * 1024:
         raise ValueError('Request exceeds 16 MiB')
-    path = Path.home() / 'Library/Application Support/revclip-demo/cli.sock'
+    path = Path.home() / 'Library/Application Support' / app / 'cli.sock'
     try:
         info = path.lstat()
         if not stat.S_ISSOCK(info.st_mode) or info.st_uid != os.getuid():
-            raise ValueError('Invalid demo socket owner or type')
+            raise ValueError('Invalid app socket owner or type')
         with socket.socket(socket.AF_UNIX) as sock:
             sock.settimeout(15)
             sock.connect(str(path))
@@ -81,7 +83,7 @@ def main():
                 raise ValueError('Response exceeds size limit')
             response = json.loads(receive(sock, size))
     except (FileNotFoundError, ConnectionRefusedError) as exc:
-        raise ValueError('Start the updated /Applications/revclip-demo.app first') from exc
+        raise ValueError(f'Start the updated {app}.app first') from exc
     print(json.dumps(response, ensure_ascii=False, indent=2))
     return 0 if response.get('ok') else 1
 

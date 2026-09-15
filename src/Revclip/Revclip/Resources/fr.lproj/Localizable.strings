@@ -264,3 +264,13 @@
 "Revclip could not safely open its saved data. Unlock your login keychain and try again. Existing data has not been replaced with an empty history." = "Revclip n’a pas pu ouvrir vos données en toute sécurité. Déverrouillez votre trousseau de session, puis réessayez. Les données existantes n’ont pas été remplacées par un historique vide.";
 "Revclip data deletion incomplete" = "Suppression des données Revclip incomplète";
 "Not all Revclip data could be deleted. Clipboard recording is stopped. Some data may already have been deleted. Try the deletion again before quitting." = "Toutes les données Revclip n’ont pas pu être supprimées. L’enregistrement du presse-papiers est arrêté. Certaines données ont peut-être déjà été supprimées. Réessayez la suppression avant de quitter.";
+
+"Add Media…" = "Ajouter un média…";
+
+"Replace Image…" = "Remplacer l’image…";
+
+"The image is saved with the template, even if the original file is moved." = "L’image est enregistrée avec le modèle, même si le fichier original est déplacé.";
+
+"Choose a still image up to 10 MB and 16 megapixels." = "Choisissez une image fixe de 10 Mo et 16 mégapixels maximum.";
+
+"Replace template text with an image?" = "Remplacer le texte du modèle par une image ?";

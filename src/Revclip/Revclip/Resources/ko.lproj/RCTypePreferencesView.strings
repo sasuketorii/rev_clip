@@ -7,3 +7,5 @@
 "k8p-Pw-N0g.title" = "파일 이름 (NSFilenamesPboardType)";
 "z3J-YL-9kD.title" = "URL (NSPasteboardTypeURL)";
 "fY2-kC-G4L.title" = "이미지 (TIFF) (NSPasteboardTypeTIFF)";
+
+"html-cell.title" = "HTML (서식 및 디자인 클립보드 데이터)";

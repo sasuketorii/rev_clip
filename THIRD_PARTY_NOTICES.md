@@ -1,6 +1,7 @@
 # Third-party notices
 
-Revclip's own code and artwork are available under the [MIT License](LICENSE).
+Revclip v0.1.0 and later as a whole are licensed under [AGPL-3.0-only](LICENSE).
+Code published through v0.0.32 retains its [MIT license](LICENSE-MIT-LEGACY).
 Vendored dependencies retain their original copyright notices and licenses.
 
 | Direct dependency | Included version | Purpose | License |

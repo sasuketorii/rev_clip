@@ -264,3 +264,13 @@
 "Revclip could not safely open its saved data. Unlock your login keychain and try again. Existing data has not been replaced with an empty history." = "Revclip konnte die gespeicherten Daten nicht sicher öffnen. Entsperren Sie Ihren Anmeldeschlüsselbund und versuchen Sie es erneut. Vorhandene Daten wurden nicht durch einen leeren Verlauf ersetzt.";
 "Revclip data deletion incomplete" = "Revclip-Daten nicht vollständig gelöscht";
 "Not all Revclip data could be deleted. Clipboard recording is stopped. Some data may already have been deleted. Try the deletion again before quitting." = "Nicht alle Revclip-Daten konnten gelöscht werden. Die Aufzeichnung der Zwischenablage ist gestoppt. Einige Daten wurden möglicherweise bereits gelöscht. Versuchen Sie die Löschung vor dem Beenden erneut.";
+
+"Add Media…" = "Medien hinzufügen…";
+
+"Replace Image…" = "Bild ersetzen…";
+
+"The image is saved with the template, even if the original file is moved." = "Das Bild wird mit der Vorlage gespeichert, auch wenn die Originaldatei verschoben wird.";
+
+"Choose a still image up to 10 MB and 16 megapixels." = "Wähle ein Standbild mit höchstens 10 MB und 16 Megapixeln.";
+
+"Replace template text with an image?" = "Vorlagentext durch ein Bild ersetzen?";

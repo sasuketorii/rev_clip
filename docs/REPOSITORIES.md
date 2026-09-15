@@ -1,16 +1,16 @@
-# Repository split
+# Repository and licensing
 
-- Public source: https://github.com/sasuketorii/rev_clip_public
-- Frozen public code: v0.0.32, commit 161490e6750060c8a4708c97c6d04e64a41fb2a2.
-- Private development: https://github.com/sasuketorii/rev_clip
-- Local origin points to private development. The public remote is read-only
-  locally (push URL disabled). Never push private commits to the public repo.
-- Public releases and tags remain in the renamed public repository.
-- Existing v0.0.32 binaries contain the old GitHub update-feed URL. Reusing
-  rev_clip for the private repository stops the old repository redirect.
-  Existing installations must use the public releases page for downloads.
-  A new updater distribution endpoint must be selected before releasing
-  another binary; a private GitHub asset is not an anonymous update feed.
-- Previously published MIT code retains its license in LICENSE-MIT-LEGACY.
-  New original private contributions are governed by LICENSE.
-- CI secrets and release signing credentials are not copied between repos.
+Revclip is developed publicly at https://github.com/sasuketorii/rev_clip.
+Version 0.1.0 onward is licensed as a whole under AGPL-3.0-only; see LICENSE.
+Previously published code through v0.0.32 retains the terms in
+LICENSE-MIT-LEGACY. Third-party components keep their original licenses.
+
+The original repository identity, releases, tags and signing settings are
+retained. The update feed continues at:
+https://github.com/sasuketorii/rev_clip/releases/latest/download/appcast.xml
+
+A temporary private development repository is preserved as
+rev_clip_private_archive for rollback reference, not ongoing development.
+The local origin is the public development repository.
+Do not put private user templates, clipboard archives, credentials or
+signing keys into source control.

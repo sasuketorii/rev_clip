@@ -1,9 +1,11 @@
-# Template CLI (demo)
+# Template CLI
 
 Run `scripts/revclip` from the repository. Requires Python 3 and the updated,
 running `revclip-demo` app. The CLI connects to the app's private local socket;
 it uses the app's encrypted storage and never opens a second app or edits the DB directly.
-Currently the demo build alone enables this endpoint. No skill is installed.
+Both regular and demo builds enable this endpoint from v0.1.0. The default
+target remains demo for compatibility. Use `scripts/revclip --app Revclip folders`
+for the regular app. No skill is installed.
 
 ```sh
 scripts/revclip folders

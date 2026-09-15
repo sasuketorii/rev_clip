@@ -1,4 +1,4 @@
-# Copyright (c) 2024-2026 Revclip. Licensed under the MIT License.
+# Copyright (c) 2024-2026 Revclip. Licensed under AGPL-3.0-only; see LICENSE-MIT-LEGACY for prior code.
 name: Revclip
 options:
   deploymentTarget:
@@ -42,8 +42,8 @@ targets:
         CFBundleName: "$(PRODUCT_NAME)"
         CFBundleDisplayName: "$(PRODUCT_NAME)"
         CFBundleIdentifier: "$(PRODUCT_BUNDLE_IDENTIFIER)"
-        CFBundleVersion: "32"
-        CFBundleShortVersionString: "0.0.32"
+        CFBundleVersion: "33"
+        CFBundleShortVersionString: "0.1.0"
         CFBundleExecutable: "$(EXECUTABLE_NAME)"
         CFBundlePackageType: "APPL"
         CFBundleSignature: "????"
@@ -51,7 +51,7 @@ targets:
         LSUIElement: true
         LSMinimumSystemVersion: "$(MACOSX_DEPLOYMENT_TARGET)"
         NSPrincipalClass: "NSApplication"
-        NSHumanReadableCopyright: "Copyright © 2024-2026 Revclip. Licensed under the MIT License."
+        NSHumanReadableCopyright: "Copyright © 2024-2026 Revclip. Licensed under AGPL-3.0-only; see LICENSE-MIT-LEGACY for prior code."
         CFBundleIconName: "AppIcon"
         # Official update feed. Forks should use their own feed and signing key.
         SUFeedURL: "$(RC_SU_FEED_URL)"

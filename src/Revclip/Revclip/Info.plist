@@ -19,11 +19,11 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.32</string>
+	<string>0.1.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>32</string>
+	<string>33</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>LSUIElement</key>
@@ -31,16 +31,16 @@
 	<key>NSAccessibilityUsageDescription</key>
 	<string>Revclip needs accessibility access to paste clipboard items into other applications.</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2024-2026 Revclip. Licensed under the MIT License.</string>
+	<string>Copyright © 2024-2026 Revclip. Licensed under AGPL-3.0-only; see LICENSE-MIT-LEGACY for prior code.</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>RCStorageDirectoryName</key>
+	<string>$(RC_STORAGE_DIRECTORY_NAME)</string>
 	<key>SUFeedURL</key>
 	<string>$(RC_SU_FEED_URL)</string>
 	<key>SUPublicEDKey</key>
 	<string>$(RC_SU_PUBLIC_ED_KEY)</string>
-	<key>RCStorageDirectoryName</key>
-	<string>$(RC_STORAGE_DIRECTORY_NAME)</string>
 </dict>
 </plist>

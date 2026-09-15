@@ -129,9 +129,7 @@ static UTType *RCSnippetImportExportContentType(void) {
         [[RCLoginItemService shared] setLoginItemEnabled:YES];
     }
 
-#if RC_DEMO_BUILD
     [[RCSnippetCLIService shared] start];
-#endif
 
     NSLog(@"[Revclip] Application did finish launching.");
 }

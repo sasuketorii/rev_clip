@@ -29,9 +29,7 @@
 - (void)highlightItem:(NSMenuItem *)item text:(NSString *)text imageData:(NSData *)imageData {
     [self hide];
     if (!item || item.hasSubmenu || !item.enabled || (text.length == 0 && imageData.length == 0)) return;
-#if RC_DEMO_BUILD
     NSURL *linkURL = imageData.length ? nil : [RCLinkPreviewService URLForText:text];
-#endif
     // Bound layout work and avoid splitting emoji / composed characters.
     if (text.length > 2000) {
         NSRange range = [text rangeOfComposedCharacterSequencesForRange:NSMakeRange(0, 2000)];
@@ -45,7 +43,6 @@
         if (!strongSelf || !selected.menu || selected.menu.highlightedItem != selected) return;
         NSImage *image = imageData.length ? [RCSnippetMedia thumbnailForData:imageData size:360] : nil;
         if (imageData.length && !image) return;
-#if RC_DEMO_BUILD
         NSURL *url = linkURL;
         if (url) {
             NSUInteger generation = strongSelf.generation;
@@ -56,7 +53,6 @@
             }];
             return;
         }
-#endif
         [strongSelf showText:text image:image menu:selected.menu];
     }];
     // Menu tracking uses its own run-loop mode.

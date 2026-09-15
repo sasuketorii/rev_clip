@@ -1,5 +1,3 @@
-> Private development: the feed below belongs to the frozen public v0.0.32 release. Select a new distribution endpoint before the next release; see [Repository split](REPOSITORIES.md).
-
 # リリース
 
 通常の開発は署名不要のDebugビルドで行えます。この手順は、署名・Apple公証済みのDMGとSparkle更新フィードを配布するメンテナー向けです。
@@ -8,7 +6,7 @@
 
 公式の配信先は、この公開リポジトリのGitHub Releasesです。
 
-- Feed: `https://github.com/sasuketorii/rev_clip_public/releases/latest/download/appcast.xml`
+- Feed: `https://github.com/sasuketorii/rev_clip/releases/latest/download/appcast.xml`
 - DMG: 各リリースに添付
 
 新しいアプリの配信に別のリポジトリや外部gistは不要です。v0.0.25から、この公開リポジトリで署名・公証済みDMGとFeedを提供しています。

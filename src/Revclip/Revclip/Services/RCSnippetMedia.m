@@ -37,7 +37,6 @@
 + (NSImage *)downsampleImageData:(NSData *)data size:(CGFloat)size {
     CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef)data, (__bridge CFDictionaryRef)@{(__bridge NSString *)kCGImageSourceShouldCache:@NO});
     if (!source) return nil;
-    if (!source) return nil;
     CGImageRef image = CGImageSourceCreateThumbnailAtIndex(source, 0, (__bridge CFDictionaryRef)@{
         (__bridge NSString *)kCGImageSourceCreateThumbnailFromImageAlways:@YES,
         (__bridge NSString *)kCGImageSourceCreateThumbnailWithTransform:@YES,
@@ -47,7 +46,10 @@
     if (!image) return nil;
     CGFloat width = CGImageGetWidth(image), height = CGImageGetHeight(image);
     CGFloat scale = size / MAX(width, height);
-    NSImage *result = [[NSImage alloc] initWithCGImage:image size:NSMakeSize(width * scale, height * scale)];
+    NSBitmapImageRep *representation = [[NSBitmapImageRep alloc] initWithCGImage:image];
+    representation.size = NSMakeSize(width * scale, height * scale);
+    NSImage *result = [[NSImage alloc] initWithSize:representation.size];
+    [result addRepresentation:representation];
     CFRelease(image);
     return result;
 }
