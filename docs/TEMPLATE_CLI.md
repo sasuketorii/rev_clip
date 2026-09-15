@@ -1,7 +1,7 @@
 # Template CLI
 
 Run `scripts/revclip` from the repository. Requires Python 3 and the updated,
-running `revclip-demo` app. The CLI connects to the app's private local socket;
+running target app (`Revclip` or `revclip-demo`). The CLI connects to the app's private local socket;
 it uses the app's encrypted storage and never opens a second app or edits the DB directly.
 Both regular and demo builds enable this endpoint from v0.1.0. The default
 target remains demo for compatibility. Use `scripts/revclip --app Revclip folders`
@@ -39,7 +39,7 @@ this does not isolate the app from other programs running as that user.
 Long menu titles wrap onto multiple lines within a 340pt text area (native menu
 within 420pt). No title text is omitted. Stored titles and accessibility labels remain full.
 
-## Link previews (demo)
+## Link previews
 
 A template containing only a web URL shows a site-provided image on hover, at
 16:9 within the menu width, with its title and URL beneath it. Bare domains such

@@ -26,6 +26,7 @@ typedef NS_ENUM(NSInteger, RCUpdateServiceErrorCode) {
     RCUpdateServiceErrorCodeUpdaterControllerMissing = 4,
     RCUpdateServiceErrorCodeUpdaterControllerCreationFailed = 5,
     RCUpdateServiceErrorCodeUpdaterNotInitialized = 6,
+    RCUpdateServiceErrorCodeFeedNotConfigured = 7,
 };
 
 typedef NS_ENUM(NSInteger, RCSparkleErrorCode) {
@@ -92,11 +93,27 @@ typedef NS_ENUM(NSInteger, RCSparkleErrorCode) {
                  notifyUserOnFailure:NO];
 }
 
+- (NSString *)updateFeedURL {
+    id value = [NSBundle.mainBundle objectForInfoDictionaryKey:@"SUFeedURL"];
+    return [value isKindOfClass:NSString.class] ? value : nil;
+}
+
 - (BOOL)setupUpdaterForUpdateCheck:(NSInteger)updateCheck
                notifyUserOnFailure:(BOOL)notifyUserOnFailure {
     @synchronized (self) {
         if (self.updaterController != nil) {
             return YES;
+        }
+
+        if ([self updateFeedURL].length == 0) {
+            NSError *error = [self serviceErrorWithCode:RCUpdateServiceErrorCodeFeedNotConfigured
+                                               reason:@"This distribution has no update feed configured."
+                                      underlyingError:nil];
+            self.lastError = error;
+            if (notifyUserOnFailure) {
+                [self reportFailureWithError:error reason:error.localizedDescription updateCheck:updateCheck];
+            }
+            return NO;
         }
 
         NSError *frameworkError = nil;

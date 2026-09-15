@@ -47,15 +47,8 @@ static NSNumber * const kRCFilePermissions = @(0600);
         kRCPrefOverwriteSameHistory: @YES,
         kRCPrefCopySameHistory: @YES,
         kRCCollectCrashReport: @YES,
-#if defined(RC_DEMO_BUILD) && RC_DEMO_BUILD
-        // The demo is launched manually for recording and must not register a
-        // second login item on the host machine.
-        kRCLoginItem: @NO,
-        kRCEnableAutomaticCheckKey: @NO,
-#else
         kRCLoginItem: @YES,
         kRCEnableAutomaticCheckKey: @YES,
-#endif
         kRCSuppressAlertForLoginItem: @NO,
         kRCPrefNumberOfItemsPlaceInlineKey: @0,
         kRCPrefNumberOfItemsPlaceInsideFolderKey: @10,

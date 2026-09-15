@@ -50,11 +50,8 @@ static UTType *RCSnippetImportExportContentType(void) {
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
     // XCTest hosts must never migrate the signed-in user's store or start capture.
     if (NSClassFromString(@"XCTestCase") != nil) return;
-    // 0. Move to Applications check (before any setup). The recording build
-    // intentionally runs from the repository build output.
-#if !defined(RC_DEMO_BUILD) || !RC_DEMO_BUILD
+    // 0. Move to Applications check (before any setup).
     [[RCMoveToApplicationsService shared] checkAndMoveIfNeeded];
-#endif
 
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(languageDidChange:) name:RCLanguageDidChangeNotification object:nil];
     [RCLocalization localizeMenu:NSApp.mainMenu table:@"MainMenu"];
@@ -115,10 +112,8 @@ static UTType *RCSnippetImportExportContentType(void) {
     // 6. Accessibility
     [[RCAccessibilityService shared] checkAndRequestAccessibilityWithAlert];
 
-    // 7. Sparkle updater. The recording build has no update feed.
-#if !defined(RC_DEMO_BUILD) || !RC_DEMO_BUILD
+    // 7. Sparkle updater uses the distribution feed in the bundle metadata.
     [[RCUpdateService shared] setupUpdater];
-#endif
 
     // 8. Screenshot monitoring (Beta)
     [[RCScreenshotMonitorService shared] startMonitoring];
