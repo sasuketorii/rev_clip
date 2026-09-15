@@ -183,8 +183,8 @@ static const NSInteger RCShowStatusItemDefault = 1;
 
 - (void)configureLanguageControls {
     self.languagePopUpButton = [[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
-    NSArray *codes = @[@"", @"ja", @"en", @"ko", @"zh-Hans", @"fr", @"de", @"pt-BR", @"it"];
-    NSArray *titles = @[RCLocalizedString(@"Follow System", nil), @"日本語", @"English", @"한국어", @"简体中文", @"Français", @"Deutsch", @"Português (Brasil)", @"Italiano"];
+    NSArray *codes = @[@"", @"ja", @"en", @"ko", @"zh-Hans", @"fr", @"de", @"pt-BR", @"it", @"vi"];
+    NSArray *titles = @[RCLocalizedString(@"Follow System", nil), @"日本語", @"English", @"한국어", @"简体中文", @"Français", @"Deutsch", @"Português (Brasil)", @"Italiano", @"Tiếng Việt"];
     NSString *selected = RCLocalization.selectedLanguage;
     for (NSUInteger index = 0; index < codes.count; index++) {
         [self.languagePopUpButton addItemWithTitle:titles[index]];

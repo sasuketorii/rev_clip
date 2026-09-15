@@ -1,0 +1,11 @@
+"7yw-t6-KP3.title" = "Loại dữ liệu cần lưu";
+"4dM-4m-v0d.title" = "Chọn loại dữ liệu để lưu trong lịch sử bảng nhớ tạm.";
+"D3w-gA-8QJ.title" = "Văn bản thuần (NSPasteboardTypeString)";
+"rL9-bK-Wx9.title" = "Văn bản có định dạng (RTF) (NSPasteboardTypeRTF)";
+"w8y-aV-MhG.title" = "Văn bản có tệp đính kèm (RTFD) (NSPasteboardTypeRTFD)";
+"Xq9-19-kLj.title" = "PDF (NSPasteboardTypePDF)";
+"k8p-Pw-N0g.title" = "Tên tệp (NSFilenamesPboardType)";
+"z3J-YL-9kD.title" = "URL (NSPasteboardTypeURL)";
+"fY2-kC-G4L.title" = "Hình ảnh (TIFF) (NSPasteboardTypeTIFF)";
+
+"html-cell.title" = "HTML (dữ liệu định dạng và thiết kế trong bảng nhớ tạm)";

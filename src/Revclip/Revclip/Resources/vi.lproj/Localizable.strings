@@ -1,0 +1,294 @@
+"History" = "Lịch sử";
+"Snippets" = "Mẫu";
+"Edit Templates..." = "Chỉnh sửa mẫu...";
+"Preferences..." = "Cài đặt...";
+"Quit Revclip" = "Thoát Revclip";
+"Clear All" = "Xóa tất cả";
+"Clear All History" = "Xóa toàn bộ lịch sử";
+"Are you sure you want to clear all clipboard history?" = "Bạn có chắc muốn xóa toàn bộ lịch sử bảng nhớ tạm không?";
+"Cancel" = "Hủy";
+"Delete" = "Xóa";
+"Delete this folder and all its snippets?" = "Xóa thư mục này và tất cả mẫu bên trong?";
+"Target folder: %@" = "Thư mục: %@";
+"Delete this snippet?" = "Xóa mẫu này?";
+"Target snippet: %@" = "Mẫu: %@";
+
+"General" = "Chung";
+"Menu" = "Menu";
+"Type" = "Loại dữ liệu";
+"Excluded Apps" = "Ứng dụng loại trừ";
+"Shortcuts" = "Phím tắt";
+"Updates" = "Cập nhật";
+"Beta" = "Thử nghiệm";
+"Coming soon" = "Sắp có";
+
+"Launch Revclip on login" = "Mở Revclip khi đăng nhập";
+"Max clipboard history size" = "Số mục lịch sử tối đa";
+"Max menu items to display" = "Số mục menu hiển thị tối đa";
+"Days" = "Ngày";
+"Hours" = "Giờ";
+"Minutes" = "Phút";
+
+"Main" = "Chính";
+"Click to record shortcut" = "Nhấp để đặt phím tắt";
+
+"Template Editor" = "Trình chỉnh sửa mẫu";
+"Add Folder" = "Thêm thư mục";
+"Add Snippet" = "Thêm mẫu";
+"Add Template" = "Thêm mẫu";
+"Title:" = "Tiêu đề:";
+"Content:" = "Nội dung:";
+"Shortcut:" = "Phím tắt:";
+"Save" = "Lưu";
+"Save with ⌘S" = "Lưu bằng ⌘S";
+"Enable/Disable" = "Bật/Tắt";
+"Untitled Folder" = "Thư mục chưa có tên";
+"Untitled Snippet" = "Mẫu chưa có tên";
+
+"Import Snippets..." = "Nhập mẫu...";
+"Import Templates..." = "Nhập mẫu...";
+"Export Snippets..." = "Xuất mẫu...";
+"Export All Snippets" = "Xuất tất cả mẫu";
+"Export All Templates..." = "Xuất tất cả mẫu...";
+"Merge" = "Hợp nhất";
+"Replace" = "Thay thế";
+
+"Excluded Applications" = "Ứng dụng loại trừ";
+"Add Current App" = "Thêm ứng dụng hiện tại";
+"Cannot add current application" = "Không thể thêm ứng dụng hiện tại";
+"No other application was detected. Please switch to the application you want to exclude, then click this button." = "Không tìm thấy ứng dụng khác. Hãy chuyển sang ứng dụng bạn muốn loại trừ, rồi nhấp nút này.";
+
+"Check for Updates" = "Kiểm tra cập nhật";
+"Automatically check for updates" = "Tự động kiểm tra cập nhật";
+"Version" = "Phiên bản";
+
+// Menu
+"No History" = "Chưa có lịch sử";
+"No Snippets" = "Chưa có mẫu";
+"(Empty)" = "(Trống)";
+"Clear History" = "Xóa lịch sử";
+"Items %lu-%lu" = "Mục %lu–%lu";
+"Clear clipboard history?" = "Xóa lịch sử bảng nhớ tạm?";
+"All saved clips will be removed." = "Tất cả mục đã lưu sẽ bị xóa.";
+"Clear" = "Xóa";
+"Search Snippets" = "Tìm mẫu";
+"Snippet" = "Mẫu";
+"Folder" = "Thư mục";
+"Saved!" = "Đã lưu!";
+"Paste" = "Dán";
+
+// Fallback titles
+"(Image)" = "(Hình ảnh)";
+"Image" = "Hình ảnh";
+"URL" = "URL";
+"PDF" = "PDF";
+"Rich Text" = "Văn bản có định dạng";
+"Files" = "Tệp";
+"Clip" = "Mục sao chép";
+
+// Import/Export
+"Failed to Import Snippets" = "Không thể nhập mẫu";
+"Failed to Export Snippets" = "Không thể xuất mẫu";
+"An unknown error occurred." = "Đã xảy ra lỗi không xác định.";
+"OK" = "OK";
+"How do you want to import snippets?" = "Bạn muốn nhập mẫu như thế nào?";
+"Choose whether to merge with existing snippets or replace them all." = "Chọn hợp nhất với các mẫu hiện có hoặc thay thế tất cả.";
+"Merge with existing snippets" = "Hợp nhất với các mẫu hiện có";
+"Replace all snippets" = "Thay thế tất cả mẫu";
+
+// Shortcuts Prefs
+"Reset all shortcuts to defaults?" = "Đặt lại tất cả phím tắt về mặc định?";
+"Main Menu, History Menu, and Snippet Menu will be restored. Clear History will be removed." = "Phím tắt cho menu chính, menu lịch sử và menu mẫu sẽ được đặt lại về mặc định. Phím tắt xóa lịch sử sẽ bị gỡ.";
+"Reset" = "Đặt lại";
+
+// Exclude Prefs
+"Application" = "Ứng dụng";
+"Add" = "Thêm";
+"The frontmost application is Revclip itself. Please switch to the application you want to exclude, then click this button." = "Ứng dụng đang ở phía trước là Revclip. Hãy chuyển sang ứng dụng bạn muốn loại trừ, rồi nhấp nút này.";
+
+// Menu Prefs
+"Menu Settings" = "Cài đặt menu";
+"Number of items inline" = "Số mục hiển thị trực tiếp";
+"Number of items in folder" = "Số mục trong thư mục";
+"Max title length" = "Độ dài tiêu đề tối đa";
+"Mark with numbers" = "Đánh số các mục";
+"Start numbering from 0" = "Bắt đầu đánh số từ 0";
+"Add numeric key equivalents" = "Thêm phím tắt bằng số";
+"Add clear history item" = "Thêm mục xóa lịch sử";
+"Show alert before clear" = "Cảnh báo trước khi xóa";
+"Show tooltip" = "Hiển thị chú giải";
+"Max tooltip length" = "Độ dài chú giải tối đa";
+"Show image preview" = "Hiển thị xem trước hình ảnh";
+"Thumbnail width" = "Chiều rộng ảnh thu nhỏ";
+"Thumbnail height" = "Chiều cao ảnh thu nhỏ";
+"Show color preview" = "Hiển thị xem trước màu";
+"Show icon" = "Hiển thị biểu tượng";
+"Icon size" = "Kích thước biểu tượng";
+
+// General Prefs
+"Hide" = "Ẩn";
+"Show" = "Hiển thị";
+
+// HotKey Recorder
+"Type shortcut" = "Nhấn tổ hợp phím tắt";
+"Click to record" = "Nhấp để đặt";
+"This shortcut may not work" = "Phím tắt này có thể không hoạt động";
+"On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "Trên macOS 15 (Sequoia) trở lên, tổ hợp chỉ dùng Option hoặc Option+Shift không được hỗ trợ do giới hạn của hệ thống.\nHãy dùng tổ hợp có Command hoặc Control.";
+
+// Template Editor
+"New Folder" = "Thư mục mới";
+"New Snippet" = "Mẫu mới";
+"Select a folder or template" = "Chọn thư mục hoặc mẫu";
+"Add a folder to organize your templates." = "Thêm thư mục để sắp xếp các mẫu.";
+"Add a template to this folder." = "Thêm mẫu vào thư mục này.";
+"This folder is hidden from the menu." = "Thư mục này đang bị ẩn khỏi menu.";
+"Template Content" = "Nội dung mẫu";
+"Changes are saved when you switch items or close the editor." = "Thay đổi được lưu khi bạn chuyển mục hoặc đóng trình chỉnh sửa.";
+"Show in Menu" = "Hiển thị trong menu";
+"Hide from Menu" = "Ẩn khỏi menu";
+"Delete Folder" = "Xóa thư mục";
+"Delete Template" = "Xóa mẫu";
+
+// Updates Prefs
+"Not Available Yet" = "Chưa khả dụng";
+"Update checking will be available in a future release." = "Tính năng kiểm tra cập nhật sẽ có trong phiên bản sau.";
+
+// Accessibility
+"Revclip requires Accessibility permission" = "Revclip cần quyền Trợ năng";
+"Revclip needs Accessibility permission to paste clipboard items. Please enable it in System Settings > Privacy & Security > Accessibility." = "Revclip cần quyền Trợ năng để dán các mục từ bảng nhớ tạm. Hãy bật quyền này trong Cài đặt hệ thống > Quyền riêng tư & Bảo mật > Trợ năng.";
+"Open System Settings" = "Mở Cài đặt hệ thống";
+"Later" = "Để sau";
+
+// Clipboard privacy (macOS 15.4+)
+"Revclip needs clipboard access" = "Revclip cần quyền truy cập bảng nhớ tạm";
+"macOS requires explicit permission for clipboard access. Please allow Revclip to access the clipboard in System Settings." = "macOS yêu cầu cấp quyền truy cập bảng nhớ tạm. Hãy cho phép Revclip truy cập bảng nhớ tạm trong Cài đặt hệ thống.";
+
+// Preferences Window
+"Preferences" = "Cài đặt";
+"Panic" = "Panic";
+
+// Version Info
+"Version %@ (%@)" = "Phiên bản %@ (%@)";
+"Version %@" = "Phiên bản %@";
+"Build %@" = "Bản dựng %@";
+"Version -" = "Phiên bản -";
+
+// Move to Applications
+"Move to Applications folder?" = "Chuyển vào thư mục Ứng dụng?";
+"Revclip needs to be in the Applications folder to work properly. Would you like to move it there?" = "Revclip cần nằm trong thư mục Ứng dụng để hoạt động bình thường. Bạn có muốn chuyển ứng dụng vào đó không?";
+"Move to Applications" = "Chuyển vào Ứng dụng";
+"Do Not Move" = "Không chuyển";
+"Could not move Revclip to Applications folder" = "Không thể chuyển Revclip vào thư mục Ứng dụng";
+"An unknown error occurred while moving Revclip." = "Đã xảy ra lỗi không xác định khi chuyển Revclip.";
+"Failed to relaunch the app from Applications." = "Không thể mở lại ứng dụng từ thư mục Ứng dụng.";
+"A newer version is already installed in Applications." = "Đã có phiên bản mới hơn trong thư mục Ứng dụng.";
+"Installed version (%@) is newer than this app (%@). Move was canceled to prevent a downgrade." = "Phiên bản đã cài (%@) mới hơn ứng dụng này (%@). Đã hủy chuyển để tránh hạ phiên bản.";
+
+// Import/export UI
+"Import" = "Nhập";
+"Export" = "Xuất";
+"Import Source" = "Nguồn nhập";
+"Choose import source." = "Chọn nguồn nhập.";
+"Import from Clipy Default File" = "Nhập từ tệp mặc định của Clipy";
+"Choose File..." = "Chọn tệp...";
+"Export Scope" = "Phạm vi xuất";
+"Choose what to export." = "Chọn nội dung cần xuất.";
+"Export Selected Item" = "Xuất mục đã chọn";
+
+"Failed to save snippets. Your changes have not been saved." = "Không thể lưu mẫu. Các thay đổi của bạn chưa được lưu.";
+"Enabled" = "Đã bật";
+"Failed to read snippets. Please try again." = "Không thể đọc mẫu. Vui lòng thử lại.";
+
+
+"Appearance" = "Giao diện";
+"Theme System" = "Theo hệ thống";
+"Theme Light" = "Sáng";
+"Theme Dark" = "Tối";
+"Theme Description" = "Chọn giao diện cho menu, cài đặt và trình chỉnh sửa mẫu.";
+
+// Panic erase
+"Delete Revclip Data" = "Xóa dữ liệu Revclip";
+"Delete All Revclip Data" = "Xóa toàn bộ dữ liệu Revclip";
+"Delete Revclip Data and Quit" = "Xóa dữ liệu Revclip và thoát";
+"This deletes clipboard history, templates, and settings stored by Revclip, clears the current clipboard, then quits Revclip. Other files on your Mac are not deleted. This cannot be undone." = "Thao tác này xóa lịch sử bảng nhớ tạm, mẫu và cài đặt do Revclip lưu, làm trống bảng nhớ tạm hiện tại, rồi thoát Revclip. Các tệp khác trên máy Mac không bị xóa. Không thể hoàn tác thao tác này.";
+"Type \"Panic\" to confirm:" = "Nhập \"Panic\" để xác nhận:";
+"Incorrect confirmation" = "Xác nhận không đúng";
+"Type \"Panic\" exactly to confirm." = "Nhập chính xác \"Panic\" để xác nhận.";
+"Delete all Revclip data?" = "Xóa toàn bộ dữ liệu Revclip?";
+"Warning" = "Cảnh báo";
+
+// Import/export validation errors
+"Export destination is invalid." = "Đích xuất không hợp lệ.";
+"Failed to write snippets file." = "Không thể ghi tệp mẫu.";
+"Failed to build snippets XML plist data." = "Không thể tạo dữ liệu XML plist cho mẫu.";
+"Import source is invalid." = "Nguồn nhập không hợp lệ.";
+"Import file is too large (exceeds 50 MB limit)." = "Tệp nhập quá lớn (vượt giới hạn 50 MB).";
+"Failed to read snippets file." = "Không thể đọc tệp mẫu.";
+"Snippets data is empty." = "Dữ liệu mẫu trống.";
+"Database is not ready." = "Cơ sở dữ liệu chưa sẵn sàng.";
+"Unsupported snippets file format." = "Định dạng tệp mẫu không được hỗ trợ.";
+"Plist does not contain supported snippet folders." = "Plist không chứa thư mục mẫu được hỗ trợ.";
+"Snippets plist root must be a dictionary." = "Phần tử gốc của plist mẫu phải là từ điển.";
+"Snippets format identifier is missing or invalid." = "Định danh định dạng mẫu bị thiếu hoặc không hợp lệ.";
+"Snippets format version is missing or invalid." = "Phiên bản định dạng mẫu bị thiếu hoặc không hợp lệ.";
+"Unsupported snippets format version." = "Phiên bản định dạng mẫu không được hỗ trợ.";
+"Imported folder count exceeds the maximum supported limit (100)." = "Số thư mục nhập vượt giới hạn được hỗ trợ (100).";
+"Folder title exceeds the maximum length (500 characters)." = "Tiêu đề thư mục vượt độ dài tối đa (500 ký tự).";
+"Imported snippet count exceeds the maximum supported limit (10000)." = "Số mẫu nhập vượt giới hạn được hỗ trợ (10000).";
+"Snippet title exceeds the maximum length (500 characters)." = "Tiêu đề mẫu vượt độ dài tối đa (500 ký tự).";
+"Snippet content exceeds the maximum size (1 MB)." = "Nội dung mẫu vượt kích thước tối đa (1 MB).";
+"DOCTYPE is not allowed in imported XML." = "Không cho phép DOCTYPE trong XML nhập.";
+"Root element must be <folders> or <snippets>." = "Phần tử gốc phải là <folders> hoặc <snippets>.";
+"Failed to delete all snippets." = "Không thể xóa tất cả mẫu.";
+"Failed to delete all snippet folders." = "Không thể xóa tất cả thư mục mẫu.";
+"Failed to insert snippet folder." = "Không thể thêm thư mục mẫu.";
+"Failed to insert snippet." = "Không thể thêm mẫu.";
+"Failed to persist imported snippets." = "Không thể lưu các mẫu đã nhập.";
+"Failed to read snippets." = "Không thể đọc mẫu.";
+"Database operation failed." = "Thao tác cơ sở dữ liệu thất bại.";
+
+// Japanese source keys retained for compatibility with existing callers
+"アップデートの確認に失敗しました" = "Không thể kiểm tra cập nhật";
+"アップデートの確認中に問題が発生しました。しばらくしてからもう一度お試しください。" = "Đã xảy ra lỗi khi kiểm tra cập nhật. Vui lòng thử lại sau.";
+"ログインアイテムの設定に失敗しました" = "Không thể thiết lập mục đăng nhập";
+"システム環境設定の「ログイン項目」で手動で設定してください。" = "Hãy thiết lập thủ công trong Cài đặt hệ thống > Cài đặt chung > Mục đăng nhập.";
+"今後表示しない" = "Không hiển thị lại";
+
+
+"App Language" = "Ngôn ngữ ứng dụng";
+"Follow System" = "Theo hệ thống";
+"Language changes apply immediately to Revclip." = "Thay đổi ngôn ngữ được áp dụng ngay cho Revclip.";
+
+
+"Protected storage unavailable" = "Bộ nhớ được bảo vệ không khả dụng";
+"Revclip could not safely open its saved data. Unlock your login keychain and try again. Existing data has not been replaced with an empty history." = "Revclip không thể mở dữ liệu đã lưu một cách an toàn. Hãy mở khóa chuỗi khóa đăng nhập và thử lại. Dữ liệu hiện có chưa bị thay thế bằng lịch sử trống.";
+"Revclip data deletion incomplete" = "Chưa xóa hết dữ liệu Revclip";
+"Not all Revclip data could be deleted. Clipboard recording is stopped. Some data may already have been deleted. Try the deletion again before quitting." = "Không thể xóa toàn bộ dữ liệu Revclip. Đã dừng ghi bảng nhớ tạm. Một phần dữ liệu có thể đã bị xóa. Hãy thử xóa lại trước khi thoát.";
+
+"Add Media…" = "Thêm nội dung đa phương tiện…";
+
+"Replace Image…" = "Thay hình ảnh…";
+
+"The image is saved with the template, even if the original file is moved." = "Hình ảnh được lưu cùng mẫu, ngay cả khi tệp gốc được di chuyển.";
+
+"Choose a still image up to 10 MB and 16 megapixels." = "Chọn ảnh tĩnh có kích thước tối đa 10 MB và 16 megapixel.";
+
+"Replace template text with an image?" = "Thay văn bản mẫu bằng hình ảnh?";
+
+"Customize Menu Colors" = "Tùy chỉnh màu menu";
+
+"Menu Colors Description" = "Áp dụng cho menu lịch sử và mẫu. Thay đổi có hiệu lực khi mở lại menu. Hiệu ứng làm mờ được giữ nguyên.";
+
+"Menu Text Color" = "Văn bản";
+
+"Menu Background Color" = "Màu nền";
+
+"Menu Hover Text Color" = "Văn bản khi di chuột";
+
+"Menu Hover Background Color" = "Nền khi di chuột";
+
+"Reset Menu Colors" = "Đặt lại màu menu";
+
+"Menu Primary Color" = "Màu chủ đạo / biểu tượng";
+
+"Enter Six Digit Hex" = "Nhập mã màu HEX gồm sáu chữ số, ví dụ #FF005E.";

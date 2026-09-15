@@ -16,13 +16,13 @@
 @implementation RCNativeMenuTests
 - (void)setUp {
     self.saved = NSUserDefaults.standardUserDefaults.dictionaryRepresentation;
-    NSDictionary *values = @{kRCPrefNumberOfItemsPlaceInlineKey:@0, kRCPrefNumberOfItemsPlaceInsideFolderKey:@10,
+    NSDictionary *values = @{@"RCMenuCustomColorsEnabled":@NO, kRCPrefNumberOfItemsPlaceInlineKey:@0, kRCPrefNumberOfItemsPlaceInsideFolderKey:@10,
         kRCMenuItemsAreMarkedWithNumbersKey:@YES, kRCPrefMenuItemsTitleStartWithZeroKey:@NO,
         kRCPrefShowIconInTheMenuKey:@YES, kRCShowToolTipOnMenuItemKey:@YES};
     [values enumerateKeysAndObjectsUsingBlock:^(id k,id v,BOOL *stop){[NSUserDefaults.standardUserDefaults setObject:v forKey:k];}];
 }
 - (void)tearDown {
-    for (NSString *key in @[kRCPrefNumberOfItemsPlaceInlineKey,kRCPrefNumberOfItemsPlaceInsideFolderKey,
+    for (NSString *key in @[@"RCMenuCustomColorsEnabled", kRCPrefNumberOfItemsPlaceInlineKey,kRCPrefNumberOfItemsPlaceInsideFolderKey,
         kRCMenuItemsAreMarkedWithNumbersKey,kRCPrefMenuItemsTitleStartWithZeroKey,kRCPrefShowIconInTheMenuKey,kRCShowToolTipOnMenuItemKey]) {
         if (self.saved[key]) [NSUserDefaults.standardUserDefaults setObject:self.saved[key] forKey:key];
         else [NSUserDefaults.standardUserDefaults removeObjectForKey:key];

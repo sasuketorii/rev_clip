@@ -23,7 +23,7 @@
         RCGeneralPreferencesViewController *controller = [[RCGeneralPreferencesViewController alloc] initWithNibName:@"RCGeneralPreferencesView" bundle:nil];
         (void)controller.view;
         NSPopUpButton *popup = [controller valueForKey:@"languagePopUpButton"];
-        XCTAssertEqual(popup.numberOfItems, 9);
+        XCTAssertEqual(popup.numberOfItems, 10);
         XCTAssertEqual(popup.target, controller);
         XCTAssertTrue([controller respondsToSelector:popup.action]);
         for (NSInteger index = 1; index < popup.numberOfItems; index++) {

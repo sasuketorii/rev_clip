@@ -3,7 +3,7 @@
 NSNotificationName const RCLanguageDidChangeNotification = @"RCLanguageDidChangeNotification";
 static NSBundle *RCCurrentLanguageBundle;
 static NSArray<NSString *> *RCSupportedLanguages(void) {
-    return @[@"ja", @"en", @"ko", @"zh-Hans", @"fr", @"de", @"pt-BR", @"it"];
+    return @[@"ja", @"en", @"ko", @"zh-Hans", @"fr", @"de", @"pt-BR", @"it", @"vi"];
 }
 
 @implementation RCLocalization

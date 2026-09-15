@@ -2,7 +2,7 @@ import XCTest
 @testable import Revclip
 
 final class LocalizationTests: XCTestCase {
-    private let languages = ["en", "ja", "ko", "zh-Hans", "fr", "de", "pt-BR", "it"]
+    private let languages = ["en", "ja", "ko", "zh-Hans", "fr", "de", "pt-BR", "it", "vi"]
 
     func testBundledLanguagesHaveCompleteTranslationsAndMatchingFormatArguments() throws {
         let bundle = Bundle.main
