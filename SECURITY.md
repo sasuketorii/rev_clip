@@ -20,7 +20,7 @@ Revclipは、クリップボード履歴を扱うローカルアプリです。�
 - コピー元が機密マークを付けていないパスワードや個人情報を、確実に自動検出することはできません。必要なアプリを除外設定に追加してください。アプリの判定には監視時の前面アプリを使うため、コピー直後にアプリを切り替えた場合など、コピー元を正しく判定できないことがあります。除外設定だけを秘密情報の完全な防御として扱わないでください。
 - 旧版の平文データは起動時に移行しますが、過去のバックアップ、APFSスナップショット、SSD上の残存データまで遡って暗号化・消去することはできません。暗号化形式を読めない旧版へのダウングレードは避けてください。
 - 鍵を失うと保存データを復号できません。Revclip側に鍵の預かりや復旧サービスはありません。
-- 履歴・テンプレートをクラウド同期する機能はありません。アップデート確認とダウンロードはネットワークを利用します。
+- 履歴・テンプレートをクラウド同期する機能はありません。アップデート確認・ダウンロードと、URL単体のリンクプレビュー・ファビコン取得はネットワークを利用します。文章に混在するURLではリンク取得を行いません。
 - Developer ID署名とApple公証は配布物の確認に役立ちますが、脆弱性がないことを証明するものではありません。第三者によるセキュリティ認証や、完全な独立監査を受けた製品とは表現しません。
 
 ## 問題の報告
@@ -37,6 +37,6 @@ Concealed, transient, and auto-generated clipboard markers are checked before re
 
 Legacy plaintext files are migrated, but old backups, APFS snapshots, and SSD remnants cannot be retroactively encrypted or reliably erased by the app. Avoid downgrading to a release that cannot read the encrypted format. Losing the Keychain key makes stored data unrecoverable; Revclip has no key escrow or recovery service.
 
-Revclip has no cloud history synchronization. Update checks and downloads use the network. Developer ID signing and Apple notarization are distribution checks, not proof that an application has no vulnerabilities. Revclip does not claim third-party security certification or a comprehensive independent audit.
+Revclip has no cloud history synchronization. Update checks and downloads, plus link previews and favicon retrieval for standalone web URLs, use the network. URLs embedded in prose do not trigger link retrieval. Developer ID signing and Apple notarization are distribution checks, not proof that an application has no vulnerabilities. Revclip does not claim third-party security certification or a comprehensive independent audit.
 
 Security fixes target the latest release. Include the affected version, impact, and reproduction steps when reporting a problem. Never post real clipboard contents, keys, or credentials in public issues. Use [Issues](https://github.com/sasuketorii/rev_clip/issues) for non-sensitive bugs; establish a private contact channel before sharing a confidential vulnerability report.
