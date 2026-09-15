@@ -67,6 +67,26 @@
     for (NSUInteger i=0;i<self.files.count;i++) XCTAssertEqual([NSFileManager.defaultManager fileExistsAtPath:self.files[i]],i>=4);
     [self.db closeDatabase]; XCTAssertTrue([self.db setupDatabase]); XCTAssertEqual(self.db.clipItemCount,2);
 }
+- (void)testEqualTimestampsDisplayExactlyTheRowsRetentionKeeps {
+    [self seed];
+    XCTAssertTrue([self.db performDatabaseOperation:^BOOL(FMDatabase *db) {
+        return [db executeUpdate:@"UPDATE clip_items SET update_time = 100"];
+    }]);
+    NSArray *expected = @[@"retention-3", @"retention-2"];
+    NSArray *before = [self.db fetchClipItemsWithLimit:2];
+    XCTAssertEqualObjects([before valueForKey:@"data_hash"], expected);
+
+    NSArray<RCClipItem *> *removed = [self.db trimClipItemsToLimit:2];
+    XCTAssertNotNil(removed);
+    XCTAssertEqual(removed.count, 2);
+    XCTAssertEqualObjects(([removed valueForKey:@"dataHash"]), (@[@"retention-1", @"retention-0"]));
+    XCTAssertEqualObjects([[self.db fetchClipItemsWithLimit:2] valueForKey:@"data_hash"], expected);
+    XCTAssertEqualObjects([self.db fetchClipItemsWithLimit:2], before);
+
+    [self.db closeDatabase];
+    XCTAssertTrue([self.db setupDatabase]);
+    XCTAssertEqualObjects([[self.db fetchClipItemsWithLimit:2] valueForKey:@"data_hash"], expected);
+}
 - (void)testManualClearDeletesDatabaseRowsAndOnlyTheirFiles {
     [self seed]; RCMenuManager *menu = [RCMenuManager new];
     NSArray *paths = [menu clipDataFilePathsSnapshotForCurrentHistoryWithDatabaseManager:self.db];

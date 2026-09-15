@@ -10,6 +10,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class RCClipData;
+@class RCClipboardService;
 
 @interface RCPasteService : NSObject
 
@@ -27,6 +28,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Cmd+Vキーイベントを送信
 - (void)sendPasteKeyStroke;
+
+// Overridable process/IO boundaries. Production calls and scheduled callbacks
+// run on main; tests replace all of these with in-memory fakes.
+- (NSPasteboard *)pasteboard;
+- (RCClipboardService *)clipboardService;
+- (nullable NSRunningApplication *)frontmostApplication;
+- (nullable id)focusedElementForApplication:(NSRunningApplication *)application;
+- (BOOL)activateApplication:(NSRunningApplication *)application;
+- (NSTimeInterval)pasteClock;
+- (void)scheduleAfterDelay:(NSTimeInterval)delay block:(dispatch_block_t)block;
 
 @end
 

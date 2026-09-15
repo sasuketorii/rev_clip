@@ -438,7 +438,7 @@ static os_log_t RCDatabaseManagerLog(void) {
 
     __block NSMutableArray<NSDictionary *> *rows = [NSMutableArray array];
     [self.databaseQueue inDatabase:^(FMDatabase * _Nonnull db) {
-        FMResultSet *resultSet = [db executeQuery:@"SELECT id, data_path, title, data_hash, primary_type, update_time, thumbnail_path, is_color_code FROM clip_items ORDER BY update_time DESC LIMIT ?"
+        FMResultSet *resultSet = [db executeQuery:@"SELECT id, data_path, title, data_hash, primary_type, update_time, thumbnail_path, is_color_code FROM clip_items ORDER BY update_time DESC, id DESC LIMIT ?"
                              withArgumentsInArray:@[@(limit)]];
         if (!resultSet) {
             [self logDatabaseError:db context:@"Failed to fetch clip_items list"];

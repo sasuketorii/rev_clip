@@ -53,6 +53,15 @@ static os_log_t RCClipboardServiceLog(void) {
 @property (nonatomic, strong, nullable) dispatch_source_t monitorTimer;
 @property (nonatomic, strong) dispatch_queue_t monitoringQueue;
 @property (nonatomic, strong) dispatch_queue_t fileOperationQueue;
+@property (nonatomic, strong) dispatch_queue_t persistenceQueue;
+@property (atomic, assign) BOOL captureSuspended;
+@property (atomic, assign) NSUInteger monitoringGeneration;
+// Main-thread-owned pasteboard generation state.
+@property (nonatomic, strong, nullable) NSNumber *internalChangeCount;
+// Guarded by pendingCondition; includes the currently executing save.
+@property (nonatomic, strong) NSCondition *pendingCondition;
+@property (nonatomic, assign) NSUInteger pendingCaptureCount;
+@property (nonatomic, assign) NSUInteger pendingCaptureBytes;
 @property (nonatomic, assign) NSInteger cachedChangeCount;
 @property (nonatomic, strong, nullable) RCPrivacyService *privacyService;
 
@@ -78,7 +87,9 @@ static os_log_t RCClipboardServiceLog(void) {
     self = [super init];
     if (self) {
         _isMonitoring = NO;
+        _pendingCondition = [NSCondition new];
         _monitoringQueue = dispatch_queue_create("com.revclip.clipboard.monitoring", DISPATCH_QUEUE_SERIAL);
+        _persistenceQueue = dispatch_queue_create("com.revclip.clipboard.persistence", DISPATCH_QUEUE_SERIAL);
         _fileOperationQueue = dispatch_queue_create("com.revclip.clipboard.file", DISPATCH_QUEUE_SERIAL);
         _cachedChangeCount = [self readGeneralPasteboardChangeCount];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -105,6 +116,11 @@ static os_log_t RCClipboardServiceLog(void) {
 #pragma mark - Public
 
 - (void)startMonitoring {
+    // Never hold the lifecycle lock while waiting for the main thread.
+    if (!NSThread.isMainThread) {
+        dispatch_sync(dispatch_get_main_queue(), ^{ [self startMonitoring]; });
+        return;
+    }
     @synchronized (self) {
         if (self.isMonitoring) {
             return;
@@ -115,7 +131,10 @@ static os_log_t RCClipboardServiceLog(void) {
             return;
         }
 
-        self.cachedChangeCount = [self readGeneralPasteboardChangeCount];
+        self.captureSuspended = NO;
+        NSUInteger generation = ++self.monitoringGeneration;
+        dispatch_block_t reset = ^{ self.cachedChangeCount = [self readGeneralPasteboardChangeCount]; };
+        if (NSThread.isMainThread) reset(); else dispatch_sync(dispatch_get_main_queue(), reset);
         uint64_t interval = (uint64_t)(kRCClipboardPollingInterval * (double)NSEC_PER_SEC);
         uint64_t leeway = interval / 10;
 
@@ -127,9 +146,7 @@ static os_log_t RCClipboardServiceLog(void) {
         __weak typeof(self) weakSelf = self;
         dispatch_source_set_event_handler(timer, ^{
             __strong typeof(weakSelf) strongSelf = weakSelf;
-            if (strongSelf == nil) {
-                return;
-            }
+            if (strongSelf == nil || generation != strongSelf.monitoringGeneration) { return; }
             [strongSelf pollPasteboardOnMonitoringQueue];
         });
 
@@ -143,9 +160,9 @@ static os_log_t RCClipboardServiceLog(void) {
     dispatch_source_t timer = nil;
 
     @synchronized (self) {
-        if (!self.isMonitoring) {
-            return;
-        }
+        self.captureSuspended = YES;
+        self.monitoringGeneration++;
+        if (!self.isMonitoring) { return; }
 
         timer = self.monitorTimer;
         self.monitorTimer = nil;
@@ -168,10 +185,15 @@ static os_log_t RCClipboardServiceLog(void) {
 
 - (void)flushQueueWithCompletion:(void(^)(void))completion {
     dispatch_async(self.monitoringQueue, ^{
-        if (completion != nil) {
-            completion();
-        }
+        dispatch_async(self.persistenceQueue, ^{
+            if (completion) completion();
+        });
     });
+}
+
+- (void)recordInternalPasteboardChangeCount:(NSInteger)changeCount {
+    NSAssert(NSThread.isMainThread, @"Internal clipboard writes must complete on main");
+    self.internalChangeCount = @(changeCount);
 }
 
 #pragma mark - Private: Monitor / Capture
@@ -207,102 +229,90 @@ static os_log_t RCClipboardServiceLog(void) {
 }
 
 - (void)pollPasteboardOnMonitoringQueue {
-    if (!self.isMonitoring) {
-        return;
-    }
-
-    // G3-004: 内部ペースト操作中はポーリングをスキップして重複登録を防ぐ
-    if (self.isPastingInternally) {
-        return;
-    }
-
-    // G3-001: NSPasteboard の読み取りをメインキューで実行
-    __block NSInteger currentChangeCount = 0;
-    __block RCClipData *clipData = nil;
-    __block NSString *capturedBundleIdentifier = @"";
-    __block BOOL shouldSkipConcealedOrTransient = NO;
-    __block BOOL skippedDueToPrivacy = NO;
-    dispatch_block_t readBlock = ^{
-        NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-        currentChangeCount = pasteboard.changeCount;
-
-        if (currentChangeCount == self.cachedChangeCount) {
-            return;
-        }
-
-        if (![self canReadPasteboardContentsUsingPrivacyGate]) {
-            skippedDueToPrivacy = YES;
-            return;
-        }
-
-        NSRunningApplication *frontmostApplication = [NSWorkspace sharedWorkspace].frontmostApplication;
-        capturedBundleIdentifier = frontmostApplication.bundleIdentifier ?: @"";
-
-        clipData = [self readEligibleClipFromPasteboard:pasteboard sourceBundleIdentifier:capturedBundleIdentifier];
-        shouldSkipConcealedOrTransient = (clipData == nil);
-
-    };
-    if ([NSThread isMainThread]) {
-        readBlock();
-    } else {
-        dispatch_sync(dispatch_get_main_queue(), readBlock);
-    }
-    if (currentChangeCount == self.cachedChangeCount) {
-        return;
-    }
-    self.cachedChangeCount = currentChangeCount;
-
-    if (skippedDueToPrivacy) {
-        [[self resolvedPrivacyService] presentClipboardAccessGuidanceIfNeeded];
-        return;
-    }
-
-    if (shouldSkipConcealedOrTransient) {
-        return;
-    }
-
-    [self processClipDataOnMonitoringQueue:clipData
-                  sourceBundleIdentifier:capturedBundleIdentifier];
+    if (!self.isMonitoring || self.captureSuspended) return;
+    [self acquireSnapshotForcingRead:NO];
 }
 
 - (void)captureCurrentClipboardOnMonitoringQueue {
-    // G3-001: NSPasteboard の読み取りをメインキューで実行
-    __block RCClipData *clipData = nil;
-    __block NSString *capturedBundleIdentifier = @"";
-    __block BOOL shouldSkipConcealedOrTransient = NO;
-    __block BOOL skippedDueToPrivacy = NO;
-    dispatch_block_t readBlock = ^{
-        if (![self canReadPasteboardContentsUsingPrivacyGate]) {
-            skippedDueToPrivacy = YES;
-            return;
+    if (self.captureSuspended) return;
+    [self acquireSnapshotForcingRead:YES];
+}
+
+- (void)acquireSnapshotForcingRead:(BOOL)force {
+    __block RCClipData *clip = nil;
+    __block NSString *source = @"";
+    __block BOOL denied = NO;
+    dispatch_block_t read = ^{
+        if (self.captureSuspended) return;
+        NSPasteboard *board = NSPasteboard.generalPasteboard;
+        NSInteger generation = board.changeCount;
+        if (self.internalChangeCount) {
+            if (generation == self.internalChangeCount.integerValue) {
+                self.cachedChangeCount = generation;
+                return;
+            }
+            self.internalChangeCount = nil;
         }
-
-        NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-        self.cachedChangeCount = pasteboard.changeCount;
-
-        NSRunningApplication *frontmostApplication = [NSWorkspace sharedWorkspace].frontmostApplication;
-        capturedBundleIdentifier = frontmostApplication.bundleIdentifier ?: @"";
-        clipData = [self readEligibleClipFromPasteboard:pasteboard sourceBundleIdentifier:capturedBundleIdentifier];
-        shouldSkipConcealedOrTransient = (clipData == nil);
-
+        if (!force && generation == self.cachedChangeCount) return;
+        // Record the generation inspected, not a newer generation published
+        // by a data provider during the read. The latter is retried next poll.
+        self.cachedChangeCount = generation;
+        if (![self canReadPasteboardContentsUsingPrivacyGate]) { denied = YES; return; }
+        source = NSWorkspace.sharedWorkspace.frontmostApplication.bundleIdentifier ?: @"";
+        clip = [self readEligibleClipFromPasteboard:board sourceBundleIdentifier:source];
     };
-    if ([NSThread isMainThread]) {
-        readBlock();
-    } else {
-        dispatch_sync(dispatch_get_main_queue(), readBlock);
-    }
+    if (NSThread.isMainThread) read(); else dispatch_sync(dispatch_get_main_queue(), read);
+    if (denied) { [[self resolvedPrivacyService] presentClipboardAccessGuidanceIfNeeded]; return; }
+    if (clip) [self enqueueCapturedClip:clip source:source];
+}
 
-    if (skippedDueToPrivacy) {
-        [[self resolvedPrivacyService] presentClipboardAccessGuidanceIfNeeded];
-        return;
+- (NSUInteger)pendingCostForClip:(RCClipData *)clip {
+    // Conservative retained payload accounting, without serializing or decoding.
+    NSUInteger cost = 1024;
+    NSArray *data = @[clip.HTMLData ?: NSData.data, clip.RTFData ?: NSData.data,
+                     clip.RTFDData ?: NSData.data, clip.PDFData ?: NSData.data,
+                     clip.TIFFData ?: NSData.data];
+    for (NSData *item in data) {
+        if (item.length > NSUIntegerMax - cost) return NSUIntegerMax;
+        cost += item.length;
     }
-
-    if (shouldSkipConcealedOrTransient) {
-        return;
+    NSMutableArray<NSString *> *strings = [NSMutableArray arrayWithArray:clip.fileNames ?: @[]];
+    [strings addObject:clip.stringValue ?: @""]; [strings addObject:clip.URLString ?: @""];
+    for (NSURL *url in clip.fileURLs) [strings addObject:url.absoluteString];
+    for (NSString *item in strings) {
+        if (item.length > (NSUIntegerMax - cost) / 2) return NSUIntegerMax;
+        cost += item.length * 2;
     }
+    return cost;
+}
 
-    [self processClipDataOnMonitoringQueue:clipData
-                  sourceBundleIdentifier:capturedBundleIdentifier];
+- (void)enqueueCapturedClip:(RCClipData *)clip source:(NSString *)source {
+    NSUInteger cost = [self pendingCostForClip:clip];
+    static const NSUInteger byteBudget = 100 * 1024 * 1024;
+    // Production acquisition is serial and off-main. Backpressure keeps the
+    // already acquired original rather than dropping it. A single large item
+    // is permitted alone; the existing archive-size preference remains the
+    // authoritative per-item limit, not this queue's working-set target.
+    [self.pendingCondition lock];
+    while (self.pendingCaptureCount != 0 &&
+           (self.pendingCaptureCount >= 16 || cost > byteBudget ||
+            self.pendingCaptureBytes > byteBudget - cost)) {
+        [self.pendingCondition wait];
+    }
+    self.pendingCaptureCount++;
+    self.pendingCaptureBytes += cost;
+    [self.pendingCondition unlock];
+    dispatch_async(self.persistenceQueue, ^{
+        @autoreleasepool {
+            @try { [self processClipDataOnMonitoringQueue:clip sourceBundleIdentifier:source]; }
+            @finally {
+                [self.pendingCondition lock];
+                self.pendingCaptureCount--; self.pendingCaptureBytes -= cost;
+                [self.pendingCondition signal];
+                [self.pendingCondition unlock];
+            }
+        }
+    });
 }
 
 // Inspect only metadata before materializing potentially confidential clipboard contents.
@@ -354,6 +364,20 @@ static os_log_t RCClipboardServiceLog(void) {
 
     NSInteger updateTime = [self currentTimestamp];
     NSDictionary *existingClipDict = [databaseManager clipItemWithDataHash:dataHash];
+    if (!existingClipDict) {
+        // Preserve pre-v2 history without rewriting user archives. A legacy
+        // digest did not identify every format, so only reuse it after checking
+        // the authenticated original's complete payload, not its title/hash.
+        NSString *legacyHash = [clipData legacyDataHash];
+        NSDictionary *legacy = [databaseManager clipItemWithDataHash:legacyHash];
+        if (legacy) {
+            RCClipData *original = [RCClipData clipDataFromPath:legacy[@"data_path"]];
+            if (original && [clipData hasSamePayloadAsClipData:original]) {
+                existingClipDict = legacy;
+                dataHash = legacyHash;
+            }
+        }
+    }
     if (existingClipDict != nil) {
         [self handleExistingClipWithHash:dataHash
                             existingDict:existingClipDict

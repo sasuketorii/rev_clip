@@ -51,10 +51,14 @@
 - (void)testGeneralNibUsesTheSelectedLanguage {
     RCGeneralPreferencesViewController *controller = [[RCGeneralPreferencesViewController alloc] initWithNibName:@"RCGeneralPreferencesView" bundle:nil];
     NSView *view = controller.view;
-    NSString *expected = NSLocalizedStringFromTable(@"nK7-cV-2pR.title", @"RCGeneralPreferencesView", nil);
+    // Controllers honor Revclip's selected language, which can differ from the
+    // host bundle's launch-time locale (including under isolated test defaults).
+    NSString *expected = [RCLocalization.languageBundle localizedStringForKey:@"nK7-cV-2pR.title"
+                                                                     value:nil table:@"RCGeneralPreferencesView"];
+    XCTAssertGreaterThan(expected.length, 0u);
     XCTAssertNotEqualObjects(expected, @"nK7-cV-2pR.title");
     XCTAssertEqualObjects(controller.autoExpiryEnabledButton.accessibilityLabel, expected);
-    XCTAssertEqualObjects(controller.autoExpiryUnitPopUpButton.itemTitles, (@[NSLocalizedString(@"Days", nil), NSLocalizedString(@"Hours", nil), NSLocalizedString(@"Minutes", nil)]));
+    XCTAssertEqualObjects(controller.autoExpiryUnitPopUpButton.itemTitles, (@[RCLocalizedString(@"Days", nil), RCLocalizedString(@"Hours", nil), RCLocalizedString(@"Minutes", nil)]));
     [self attachView:view name:@"General preferences"];
 }
 
@@ -67,7 +71,7 @@
     RCPanicPreferencesViewController *controller = [[RCPanicPreferencesViewController alloc] initWithNibName:@"RCPanicPreferencesView" bundle:nil];
     NSView *view = controller.view;
     NSButton *button = [controller valueForKey:@"eraseButton"];
-    XCTAssertEqualObjects(button.title, NSLocalizedString(@"Delete All Revclip Data", nil));
+    XCTAssertEqualObjects(button.title, RCLocalizedString(@"Delete All Revclip Data", nil));
     [view layoutSubtreeIfNeeded];
     XCTAssertTrue(NSContainsRect(view.bounds, button.frame));
     [self attachView:view name:@"Revclip data deletion scope"];
@@ -88,7 +92,7 @@
     NSImage *image = [[NSImage alloc] initWithSize:view.bounds.size];
     [image addRepresentation:bitmap];
     XCTAttachment *attachment = [XCTAttachment attachmentWithImage:image];
-    attachment.name = [NSString stringWithFormat:@"%@ — %@", name, NSBundle.mainBundle.preferredLocalizations.firstObject];
+    attachment.name = [NSString stringWithFormat:@"%@ — %@", name, RCLocalization.languageBundle.bundlePath.lastPathComponent];
     attachment.lifetime = XCTAttachmentLifetimeKeepAlways;
     [self addAttachment:attachment];
     window.contentView = nil;

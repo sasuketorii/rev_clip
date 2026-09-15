@@ -23,6 +23,8 @@ A clipboard for working with agents: ask an agent to create, edit, or delete reu
 
 This README describes **v0.1.6 (build 39, September 16, 2026)**: bundled agent setup, 35 CLI settings, SVG previews, and consent-based bug reports. See [Releases](https://github.com/sasuketorii/rev_clip/releases) for distribution history.
 
+See the [quality verification report](docs/QUALITY_REPORT.md) for the unpublished maintenance candidate, measured results, and remaining acceptance checks.
+
 ## A small app for everyday copying
 
 | Feature | What it means for you |
