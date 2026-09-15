@@ -11,3 +11,5 @@
 #import "RCSnippetImportExportService.h"
 
 #import "RCLocalization.h"
+
+#import "RCSnippetMedia.h"

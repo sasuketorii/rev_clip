@@ -18,6 +18,11 @@ options:
     - zh-Hans
     - it
 
+configs:
+  Debug: debug
+  Release: release
+  Demo: debug
+
 targets:
   Revclip:
     type: application
@@ -34,8 +39,8 @@ targets:
     info:
       path: Revclip/Info.plist
       properties:
-        CFBundleName: "Revclip"
-        CFBundleDisplayName: "Revclip"
+        CFBundleName: "$(PRODUCT_NAME)"
+        CFBundleDisplayName: "$(PRODUCT_NAME)"
         CFBundleIdentifier: "$(PRODUCT_BUNDLE_IDENTIFIER)"
         CFBundleVersion: "32"
         CFBundleShortVersionString: "0.0.32"
@@ -49,8 +54,9 @@ targets:
         NSHumanReadableCopyright: "Copyright © 2024-2026 Revclip. Licensed under the MIT License."
         CFBundleIconName: "AppIcon"
         # Official update feed. Forks should use their own feed and signing key.
-        SUFeedURL: "https://github.com/sasuketorii/rev_clip/releases/latest/download/appcast.xml"
-        SUPublicEDKey: "jW5CH5/B8IApRFYiwOGot/VUmo0uqvE1LawgUG1igUk="
+        SUFeedURL: "$(RC_SU_FEED_URL)"
+        SUPublicEDKey: "$(RC_SU_PUBLIC_ED_KEY)"
+        RCStorageDirectoryName: "$(RC_STORAGE_DIRECTORY_NAME)"
         NSAccessibilityUsageDescription: "Revclip needs accessibility access to paste clipboard items into other applications."
     sources:
       - path: Revclip
@@ -65,6 +71,11 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.revclip.Revclip
+        PRODUCT_NAME: Revclip
+        RC_DEMO_BUILD: 0
+        RC_STORAGE_DIRECTORY_NAME: Revclip
+        RC_SU_FEED_URL: "https://github.com/sasuketorii/rev_clip/releases/latest/download/appcast.xml"
+        RC_SU_PUBLIC_ED_KEY: "jW5CH5/B8IApRFYiwOGot/VUmo0uqvE1LawgUG1igUk="
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         ARCHS: "arm64 x86_64"
         ONLY_ACTIVE_ARCH: false
@@ -92,6 +103,7 @@ targets:
           - "SQLITE_THREADSAFE=2"
           - "SQLITE_EXTRA_INIT=sqlcipher_extra_init"
           - "SQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown"
+          - "RC_DEMO_BUILD=$(RC_DEMO_BUILD)"
         CLANG_ENABLE_MODULES: true
         GCC_PRECOMPILE_PREFIX_HEADER: true
         DEFINES_MODULE: YES
@@ -105,6 +117,18 @@ targets:
           ONLY_ACTIVE_ARCH: false
           CODE_SIGN_IDENTITY: "Developer ID Application"
         Debug:
+          ONLY_ACTIVE_ARCH: true
+          CODE_SIGN_IDENTITY: ""
+          CODE_SIGNING_ALLOWED: NO
+          CODE_SIGNING_REQUIRED: NO
+          CODE_SIGN_ENTITLEMENTS: ""
+        Demo:
+          PRODUCT_BUNDLE_IDENTIFIER: com.revclip.revclip-demo
+          PRODUCT_NAME: revclip-demo
+          RC_DEMO_BUILD: 1
+          RC_STORAGE_DIRECTORY_NAME: revclip-demo
+          RC_SU_FEED_URL: ""
+          RC_SU_PUBLIC_ED_KEY: ""
           ONLY_ACTIVE_ARCH: true
           CODE_SIGN_IDENTITY: ""
           CODE_SIGNING_ALLOWED: NO

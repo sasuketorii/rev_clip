@@ -264,3 +264,13 @@
 "Revclip could not safely open its saved data. Unlock your login keychain and try again. Existing data has not been replaced with an empty history." = "Revclip could not safely open its saved data. Unlock your login keychain and try again. Existing data has not been replaced with an empty history.";
 "Revclip data deletion incomplete" = "Revclip data deletion incomplete";
 "Not all Revclip data could be deleted. Clipboard recording is stopped. Some data may already have been deleted. Try the deletion again before quitting." = "Not all Revclip data could be deleted. Clipboard recording is stopped. Some data may already have been deleted. Try the deletion again before quitting.";
+
+"Add Media…" = "Add Media…";
+
+"Replace Image…" = "Replace Image…";
+
+"The image is saved with the template, even if the original file is moved." = "The image is saved with the template, even if the original file is moved.";
+
+"Choose a still image up to 10 MB and 16 megapixels." = "Choose a still image up to 10 MB and 16 megapixels.";
+
+"Replace template text with an image?" = "Replace template text with an image?";

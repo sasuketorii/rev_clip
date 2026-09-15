@@ -9,6 +9,7 @@
 
 #import "FMDB.h"
 #import "RCClipItem.h"
+#import "RCClipboardService.h"
 #import "RCConstants.h"
 #import "RCDatabaseManager.h"
 #import "RCPanicEraseService.h"
@@ -155,8 +156,9 @@ static os_log_t RCDataCleanServiceLog(void) {
     dispatch_async(self.cleanupQueue, ^{
         @synchronized (self) {
             if (self.cleanupDebounceTimer != nil) {
-                dispatch_source_cancel(self.cleanupDebounceTimer);
-                self.cleanupDebounceTimer = nil;
+                // Keep the first deadline: continuous copying must not postpone
+                // retention indefinitely.
+                return;
             }
 
             dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.cleanupQueue);
@@ -275,25 +277,12 @@ static os_log_t RCDataCleanServiceLog(void) {
         maxHistorySize = kRCMaxAllowedHistorySize;
     }
 
-    NSInteger count = [databaseManager clipItemCount];
-    if (count <= maxHistorySize) {
-        return;
-    }
-
-    NSArray<NSDictionary *> *clipDictionaries = [databaseManager fetchClipItemsWithLimit:count];
-    if (clipDictionaries.count <= (NSUInteger)maxHistorySize) {
-        return;
-    }
-
-    for (NSUInteger index = clipDictionaries.count; index > (NSUInteger)maxHistorySize; index--) {
-        RCClipItem *oldItem = [[RCClipItem alloc] initWithDictionary:clipDictionaries[index - 1]];
-        if (oldItem.dataHash.length == 0) {
-            continue;
-        }
-
-        if ([databaseManager deleteClipItemWithDataHash:oldItem.dataHash]) {
-            [self removeFilesForClipItem:oldItem];
-        }
+    NSArray<RCClipItem *> *removed = [databaseManager trimClipItemsToLimit:maxHistorySize];
+    for (RCClipItem *item in removed) [self removeFilesForClipItem:item];
+    if (removed.count) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [NSNotificationCenter.defaultCenter postNotificationName:RCClipboardDidChangeNotification object:self];
+        });
     }
 }
 

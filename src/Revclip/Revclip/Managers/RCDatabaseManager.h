@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (instancetype)shared;
 
-// データベースパス: ~/Library/Application Support/Revclip/revclip.db
+// データベースパス: Application Support/<bundle-configured storage directory>/revclip.db
 @property (nonatomic, readonly) NSString *databasePath;
 
 // 初期化・マイグレーション
@@ -62,6 +62,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray *)fetchSnippetsForFolder:(NSString *)folderIdentifier;
 - (BOOL)snippetExistsWithIdentifier:(NSString *)identifier;
 - (BOOL)deleteAllClipItems;
+// Atomically select and delete overflow; nil means transaction failure.
+- (nullable NSArray<RCClipItem *> *)trimClipItemsToLimit:(NSInteger)limit;
 - (BOOL)deleteAllSnippets;
 
 /// Panic-only: delete all clip items bypassing isPanicInProgress guard.

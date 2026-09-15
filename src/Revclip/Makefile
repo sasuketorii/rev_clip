@@ -1,7 +1,7 @@
 # Copyright (c) 2024-2026 Revclip. Licensed under the MIT License.
 # Revclip Makefile - run all workflows from the terminal.
 
-.PHONY: setup build debug release test clean run sign dmg
+.PHONY: setup build debug release demo demo-run test clean run sign dmg
 
 PROJECT = Revclip.xcodeproj
 SCHEME = Revclip
@@ -10,6 +10,9 @@ CONFIG_RELEASE = Release
 BUILD_DIR = $(CURDIR)/build
 APP_DEBUG = $(BUILD_DIR)/Debug/Revclip.app
 APP_RELEASE = $(BUILD_DIR)/Release/Revclip.app
+DEMO_BUILD_DIR = $(CURDIR)/build-demo
+APP_DEMO = $(DEMO_BUILD_DIR)/Demo/revclip-demo.app
+DEMO_CODE_SIGN_IDENTITY ?= Apple Development
 
 setup:
 	xcodegen generate
@@ -26,6 +29,15 @@ release:
 		CODE_SIGN_IDENTITY="$(CODE_SIGN_IDENTITY)" \
 		OTHER_CODE_SIGN_FLAGS="--options=runtime" \
 		SYMROOT=$(BUILD_DIR) build
+
+demo:
+	xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration Demo \
+		SYMROOT=$(DEMO_BUILD_DIR) build
+	codesign --force --deep --timestamp=none --sign "$(DEMO_CODE_SIGN_IDENTITY)" "$(APP_DEMO)"
+	codesign --verify --deep --strict "$(APP_DEMO)"
+
+demo-run: demo
+	bash Scripts/run_demo.sh "$(APP_DEMO)"
 
 test:
 	xcodebuild -project $(PROJECT) -scheme $(SCHEME) -configuration $(CONFIG_DEBUG) \

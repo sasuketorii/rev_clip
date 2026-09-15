@@ -27,6 +27,7 @@
 #import "RCScreenshotMonitorService.h"
 #import "RCSnippetEditorWindowController.h"
 #import "RCSnippetImportExportService.h"
+#import "RCSnippetCLIService.h"
 #import "RCUpdateService.h"
 #import "RCUtilities.h"
 
@@ -49,8 +50,11 @@ static UTType *RCSnippetImportExportContentType(void) {
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
     // XCTest hosts must never migrate the signed-in user's store or start capture.
     if (NSClassFromString(@"XCTestCase") != nil) return;
-    // 0. Move to Applications check (before any setup)
+    // 0. Move to Applications check (before any setup). The recording build
+    // intentionally runs from the repository build output.
+#if !defined(RC_DEMO_BUILD) || !RC_DEMO_BUILD
     [[RCMoveToApplicationsService shared] checkAndMoveIfNeeded];
+#endif
 
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(languageDidChange:) name:RCLanguageDidChangeNotification object:nil];
     [RCLocalization localizeMenu:NSApp.mainMenu table:@"MainMenu"];
@@ -111,8 +115,10 @@ static UTType *RCSnippetImportExportContentType(void) {
     // 6. Accessibility
     [[RCAccessibilityService shared] checkAndRequestAccessibilityWithAlert];
 
-    // 7. Sparkle updater
+    // 7. Sparkle updater. The recording build has no update feed.
+#if !defined(RC_DEMO_BUILD) || !RC_DEMO_BUILD
     [[RCUpdateService shared] setupUpdater];
+#endif
 
     // 8. Screenshot monitoring (Beta)
     [[RCScreenshotMonitorService shared] startMonitoring];
@@ -122,6 +128,10 @@ static UTType *RCSnippetImportExportContentType(void) {
     if (loginItemEnabled) {
         [[RCLoginItemService shared] setLoginItemEnabled:YES];
     }
+
+#if RC_DEMO_BUILD
+    [[RCSnippetCLIService shared] start];
+#endif
 
     NSLog(@"[Revclip] Application did finish launching.");
 }
@@ -140,6 +150,7 @@ static UTType *RCSnippetImportExportContentType(void) {
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
+    [[RCSnippetCLIService shared] stop];
     (void)notification;
     [[RCScreenshotMonitorService shared] stopMonitoring];
     [[RCDataCleanService shared] stopCleanupTimer];

@@ -79,8 +79,7 @@ extern NSString * const kRCExcludeApplications;
 extern NSString * const kRCSuppressAlertForDeleteSnippet;
 extern NSString * const RCSnippetsDidChangeNotification;
 
-// Paths
-extern NSString * const kRCApplicationSupportDirectoryPath;         // ~/Library/Application Support/Revclip/
-extern NSString * const kRCClipDataDirectoryPath;                   // ~/Library/Application Support/Revclip/ClipsData/
+// Storage
+extern NSString * const kRCStorageDirectoryNameInfoKey;              // Main-bundle Info.plist key
 
 NS_ASSUME_NONNULL_END

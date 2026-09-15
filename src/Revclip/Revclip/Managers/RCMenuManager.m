@@ -1,3 +1,5 @@
+#import "RCLinkPreviewService.h"
+#import "RCSnippetMedia.h"
 #import "RCLocalization.h"
 #import "RCFastPreviewController.h"
 //
@@ -8,6 +10,7 @@
 //
 
 #import "RCMenuManager.h"
+#import "RCAppDelegate.h"
 #import "Revclip-Swift.h"
 #import "RCStorageMigration.h"
 
@@ -51,6 +54,11 @@ static os_log_t RCMenuManagerLog(void) {
 @property (nonatomic, strong, nullable) NSStatusItem *statusItem;
 @property (nonatomic, strong) NSMenu *statusMenu;
 @property (nonatomic, strong) NSMapTable<NSMenuItem *, NSString *> *previewTexts;
+@property (nonatomic, strong) NSMapTable<NSMenuItem *, NSData *> *previewImageData;
+@property (nonatomic, strong) NSMapTable<NSMenuItem *, NSURL *> *previewURLs;
+@property (nonatomic) NSUInteger cacheGeneration;
+@property (nonatomic) BOOL historyClearInProgress;
+@property (nonatomic, strong) NSLock *cacheLock;
 @property (nonatomic, strong) NSMapTable<NSMenuItem *, RCClipItem *> *clipItemsByMenuItem;
 @property (nonatomic, strong) RCFastPreviewController *previewController;
 @property (nonatomic, strong, nullable) dispatch_block_t defaultsChangeDebounceBlock;
@@ -123,11 +131,16 @@ static os_log_t RCMenuManagerLog(void) {
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _previewImageData = [NSMapTable weakToStrongObjectsMapTable];
+        _previewURLs = [NSMapTable weakToStrongObjectsMapTable];
+        _cacheLock = [NSLock new];
         _previewTexts = [NSMapTable weakToStrongObjectsMapTable];
         _clipItemsByMenuItem = [NSMapTable weakToStrongObjectsMapTable];
         _previewController = [RCFastPreviewController new];
         _statusMenu = [self menuWithTitle:@"Revclip"];
         _thumbnailCache = [[NSCache alloc] init];
+        _thumbnailCache.countLimit = 128;
+        _thumbnailCache.totalCostLimit = 32 * 1024 * 1024;
         _colorPreviewEligibilityCache = [[NSCache alloc] init];
         _clipDataColorStringCache = [[NSCache alloc] init];
         _clipDataTooltipCache = [[NSCache alloc] init];
@@ -206,11 +219,7 @@ static os_log_t RCMenuManagerLog(void) {
 - (void)handleUserDefaultsDidChange:(NSNotification *)notification {
     (void)notification;
 
-    [self.thumbnailCache removeAllObjects];
-    [self.colorPreviewEligibilityCache removeAllObjects];
-    [self.clipDataColorStringCache removeAllObjects];
-    [self.clipDataTooltipCache removeAllObjects];
-    [self.clipDataFallbackPrefetchStateCache removeAllObjects];
+    [self clearMenuCaches];
 
     if (self.defaultsChangeDebounceBlock != nil) {
         dispatch_block_cancel(self.defaultsChangeDebounceBlock);
@@ -259,16 +268,13 @@ static os_log_t RCMenuManagerLog(void) {
 
 - (void)handleSnippetsDidChange:(NSNotification *)notification {
     (void)notification;
+    [self.thumbnailCache removeAllObjects];
     [self rebuildMenu];
 }
 
 - (void)handleApplicationDidReceiveMemoryWarning:(NSNotification *)notification {
     (void)notification;
-    [self.thumbnailCache removeAllObjects];
-    [self.colorPreviewEligibilityCache removeAllObjects];
-    [self.clipDataColorStringCache removeAllObjects];
-    [self.clipDataTooltipCache removeAllObjects];
-    [self.clipDataFallbackPrefetchStateCache removeAllObjects];
+    [self clearMenuCaches];
 }
 
 #pragma mark - Status Item
@@ -331,11 +337,11 @@ static os_log_t RCMenuManagerLog(void) {
         if (self.statusItem != nil) {
             [self rebuildMenuInternal];
             NSPoint mouseLocation = [NSEvent mouseLocation];
-            [self.statusMenu popUpMenuPositioningItem:nil atLocation:mouseLocation inView:nil];
+            [self.statusMenu popUpMenuPositioningItem:nil atLocation:[self popupLocationForMenu:self.statusMenu mouse:mouseLocation] inView:nil];
         } else {
             NSMenu *fallbackMenu = [self buildStandaloneMenu];
             NSPoint mouseLocation = [NSEvent mouseLocation];
-            [fallbackMenu popUpMenuPositioningItem:nil atLocation:mouseLocation inView:nil];
+            [fallbackMenu popUpMenuPositioningItem:nil atLocation:[self popupLocationForMenu:fallbackMenu mouse:mouseLocation] inView:nil];
         }
     }];
 }
@@ -404,6 +410,24 @@ static os_log_t RCMenuManagerLog(void) {
     }];
 }
 
+// Cocoa screen coordinates increase upward. Reserve the full menu height below
+// its top anchor instead of letting AppKit create a tiny scrolling menu at the edge.
+- (NSPoint)popupLocationForMenuSize:(NSSize)size mouse:(NSPoint)mouse visibleFrame:(NSRect)frame {
+    NSRect usable = NSInsetRect(frame, 8, 8);
+    CGFloat height = MIN(size.height + 12, NSHeight(usable));
+    CGFloat width = MIN(size.width, NSWidth(usable));
+    return NSMakePoint(MAX(NSMinX(usable), MIN(mouse.x, NSMaxX(usable) - width)),
+        MIN(NSMaxY(usable), MAX(mouse.y, NSMinY(usable) + height)));
+}
+
+- (NSPoint)popupLocationForMenu:(NSMenu *)menu mouse:(NSPoint)mouse {
+    NSScreen *screen = NSScreen.mainScreen;
+    for (NSScreen *candidate in NSScreen.screens) {
+        if (NSPointInRect(mouse, candidate.frame)) { screen = candidate; break; }
+    }
+    return [self popupLocationForMenuSize:menu.size mouse:mouse visibleFrame:screen.visibleFrame];
+}
+
 - (void)popUpTransientMenu:(NSMenu *)menu {
     if (menu == nil) {
         return;
@@ -412,7 +436,7 @@ static os_log_t RCMenuManagerLog(void) {
     [self capturePasteTargetApplication];
     [self configureMenuForSimpleTransparentBackground:menu];
     NSPoint mouseLocation = [NSEvent mouseLocation];
-    [menu popUpMenuPositioningItem:nil atLocation:mouseLocation inView:nil];
+    [menu popUpMenuPositioningItem:nil atLocation:[self popupLocationForMenu:menu mouse:mouseLocation] inView:nil];
 }
 
 #pragma mark - Menu Build
@@ -634,16 +658,43 @@ static os_log_t RCMenuManagerLog(void) {
                                                        keyEquivalent:@""];
         snippetItem.target = self;
         if (snippetContent.length > 0) {
-            [self setToolTip:[self truncatedString:snippetContent maxLength:200] onMenuItem:snippetItem];
+            [self setToolTip:[RCLinkPreviewService URLForText:snippetContent] ? snippetContent : [self truncatedString:snippetContent maxLength:200] onMenuItem:snippetItem];
         }
         snippetItem.representedObject = @{
             kRCSnippetMenuFolderIdentifierKey: folderIdentifier,
             kRCSnippetMenuSnippetIdentifierKey: snippetIdentifier,
         };
+        NSImage *snippetImage = [self templateSymbolNamed:@"doc.text"];
+#if RC_DEMO_BUILD
+        NSURL *snippetURL = [RCLinkPreviewService URLForText:snippetContent];
+        if (snippetURL) {
+            [self.previewURLs setObject:snippetURL forKey:snippetItem];
+            snippetImage = [[RCLinkPreviewService shared] cachedFaviconForURL:snippetURL] ?: [self templateSymbolNamed:@"link"];
+        }
+#endif
+#if RC_DEMO_BUILD
+        NSData *mediaData = snippet[@"media_data"];
+        NSColor *snippetColor = [NSColor colorWithColorString:snippetContent];
+        if (snippetColor != nil) {
+            snippetImage = [NSImage imageWithColor:snippetColor
+                                             size:NSMakeSize(16.0, 16.0)
+                                     cornerRadius:3.0];
+        }
+        if (mediaData.length > 0) {
+            [self.previewImageData setObject:mediaData forKey:snippetItem];
+            NSString *cacheKey = [@"snippet-media:" stringByAppendingString:snippetIdentifier];
+            NSImage *preview = [self.thumbnailCache objectForKey:cacheKey];
+            if (!preview) {
+                preview = [RCSnippetMedia thumbnailForData:mediaData size:16.0];
+                if (preview) [self.thumbnailCache setObject:preview forKey:cacheKey cost:4096];
+            }
+            snippetImage = preview ?: snippetImage;
+        }
+#endif
         [self applyNativeAppearanceToMenuItem:snippetItem
                                 title:snippetTitle
                                number:nil
-                                image:[self templateSymbolNamed:@"doc.text"]
+                                image:snippetImage
                       submenuChevron:NO];
         [menu addItem:snippetItem];
         hasSnippet = YES;
@@ -706,9 +757,12 @@ static os_log_t RCMenuManagerLog(void) {
 }
 
 - (void)menu:(NSMenu *)menu willHighlightItem:(NSMenuItem *)item {
-    [self.previewController highlightItem:item text:[self previewTextForMenuItem:item]];
+    [self.previewController highlightItem:item text:[self previewTextForMenuItem:item] imageData:item ? [self.previewImageData objectForKey:item] : nil];
     RCClipItem *clipItem = item ? [self.clipItemsByMenuItem objectForKey:item] : nil;
     if (clipItem == nil) return;
+    if (clipItem.thumbnailPath.length) {
+        [self loadHistoryImagePreviewForItem:item clip:clipItem];
+    }
 
     // A tooltip needs the payload only for the item the user is inspecting.
     // Never restore every image/archive just to construct an unopened menu.
@@ -720,9 +774,45 @@ static os_log_t RCMenuManagerLog(void) {
         if (strongSelf == nil || strongItem == nil) return;
         [strongSelf configureClipMenuItem:strongItem clipItem:clipItem loadThumbnail:NO];
         if (strongItem.menu.highlightedItem == strongItem) {
-            [strongSelf.previewController highlightItem:strongItem text:[strongSelf previewTextForMenuItem:strongItem]];
+            [strongSelf.previewController highlightItem:strongItem text:[strongSelf previewTextForMenuItem:strongItem] imageData:[strongSelf.previewImageData objectForKey:strongItem]];
         }
     }];
+}
+
+// Restore only the hovered image's encrypted archive, downsample off the UI
+// thread, and cache the bounded preview. Small menu thumbnails are fallback only.
+- (void)loadHistoryImagePreviewForItem:(NSMenuItem *)item clip:(RCClipItem *)clip {
+    if ([self.previewImageData objectForKey:item]) return;
+    NSString *key = [@"hover:" stringByAppendingString:[self thumbnailCacheKeyForClipItem:clip]];
+    NSString *path = clip.thumbnailPath;
+    NSString *archivePath = clip.dataPath;
+    NSString *hash = clip.dataHash;
+    NSUInteger generation = self.cacheGeneration;
+    __weak typeof(self) weakSelf = self;
+    __weak NSMenuItem *weakItem = item;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 150*NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+        RCMenuManager *owner = weakSelf;
+        NSMenuItem *row = weakItem;
+        if (!owner || owner.cacheGeneration != generation || !row.menu || row.menu.highlightedItem != row) return;
+        dispatch_async(owner.thumbnailGenerationQueue, ^{
+            NSImage *image = [owner.thumbnailCache objectForKey:key];
+            if (!image) {
+                @autoreleasepool {
+                    RCClipData *data = [owner clipDataForPath:archivePath];
+                    image = [RCSnippetMedia historyThumbnailForData:data.TIFFData size:360];
+                    if (!image) image = [owner resizedThumbnailImageAtPath:path targetSize:NSMakeSize(360,360)];
+                }
+            }
+            NSData *data = image.TIFFRepresentation;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSMenuItem *current = weakItem;
+                if (owner.cacheGeneration != generation || !data || !current.menu || current.menu.highlightedItem != current || ![current.representedObject isEqual:hash]) return;
+                [owner.thumbnailCache setObject:image forKey:key cost:720*720*4];
+                [owner.previewImageData setObject:data forKey:current];
+                [owner.previewController highlightItem:current text:[owner previewTextForMenuItem:current] imageData:data];
+            });
+        });
+    });
 }
 
 - (void)menuDidClose:(NSMenu *)menu {
@@ -742,11 +832,28 @@ static os_log_t RCMenuManagerLog(void) {
     // Only the opened menu's direct children need thumbnails. Closed history
     // folders and startup menu construction perform no payload/thumbnail I/O.
     for (NSMenuItem *item in menu.itemArray) {
+#if RC_DEMO_BUILD
+        [self loadFaviconForMenuItem:item];
+#endif
         RCClipItem *clipItem = [self.clipItemsByMenuItem objectForKey:item];
         if (clipItem != nil) {
             [self configureClipMenuItem:item clipItem:clipItem loadThumbnail:YES];
         }
     }
+}
+
+- (void)loadFaviconForMenuItem:(NSMenuItem *)item {
+    NSURL *url = [self.previewURLs objectForKey:item];
+    if (!url || [self.previewImageData objectForKey:item]) return;
+    NSUInteger generation = self.cacheGeneration;
+    __weak typeof(self) weakSelf = self;
+    __weak NSMenuItem *weakItem = item;
+    [[RCLinkPreviewService shared] assetsForURL:url completion:^(RCLinkPreviewAssets *assets) {
+        RCMenuManager *owner = weakSelf; NSMenuItem *row = weakItem;
+        if (!owner || owner.cacheGeneration != generation || !row.menu || !assets.favicon ||
+            ![[owner.previewURLs objectForKey:row] isEqual:url]) return;
+        row.image = assets.favicon;
+    }];
 }
 
 - (void)capturePasteTargetApplication {
@@ -926,6 +1033,29 @@ static os_log_t RCMenuManagerLog(void) {
     return image;
 }
 
+// Reserve room for native menu chrome. Wrap whole grapheme clusters without
+// discarding title text; AppKit owns multiline sizing and menu tracking.
+- (NSString *)boundedMenuTitle:(NSString *)title {
+    NSDictionary *attributes = @{NSFontAttributeName:[NSFont menuFontOfSize:0]};
+    NSString *text = [[title stringByReplacingOccurrencesOfString:@"\r\n" withString:@"\n"]
+        stringByReplacingOccurrencesOfString:@"\t" withString:@" "];
+    NSMutableString *result = [NSMutableString string];
+    NSMutableString *line = [NSMutableString string];
+    [text enumerateSubstringsInRange:NSMakeRange(0,text.length)
+        options:NSStringEnumerationByComposedCharacterSequences
+        usingBlock:^(NSString *part, NSRange range, NSRange enclosingRange, BOOL *stop) {
+            if ([part rangeOfCharacterFromSet:NSCharacterSet.newlineCharacterSet].location != NSNotFound) {
+                [result appendString:@"\n"]; [line setString:@""]; return;
+            }
+            NSString *candidate = [line stringByAppendingString:part];
+            if (line.length && [candidate sizeWithAttributes:attributes].width > 340) {
+                [result appendString:@"\n"]; [line setString:@""];
+            }
+            [result appendString:part]; [line appendString:part];
+        }];
+    return result;
+}
+
 - (void)applyMenuItemTitleForItem:(NSMenuItem *)item
                      numberPrefix:(NSString *)numberPrefix
                         baseTitle:(NSString *)baseTitle
@@ -938,13 +1068,15 @@ static os_log_t RCMenuManagerLog(void) {
     NSString *safeBaseTitle = baseTitle ?: @"";
     NSString *plainTitle = (safeNumberPrefix.length > 0) ? [safeNumberPrefix stringByAppendingString:safeBaseTitle] : safeBaseTitle;
 
-    item.title = plainTitle;
+    NSString *displayTitle = [self boundedMenuTitle:plainTitle];
+    item.title = displayTitle;
+    item.accessibilityLabel = plainTitle;
 
     // Keep image rendering native: template tint, accessibility, key equivalents,
     // hover help and activation all remain owned by AppKit.
     item.view = nil;
     item.image = image;
-    item.attributedTitle = [[NSAttributedString alloc] initWithString:plainTitle attributes:@{
+    item.attributedTitle = [[NSAttributedString alloc] initWithString:displayTitle attributes:@{
         NSFontAttributeName: [NSFont menuFontOfSize:0]
     }];
 }
@@ -1207,6 +1339,7 @@ static os_log_t RCMenuManagerLog(void) {
     NSString *numberPrefixCopy = [numberPrefix copy] ?: @"";
     NSString *baseTitleCopy = [baseTitle copy] ?: @"";
     NSSize thumbnailSize = [self thumbnailPreviewSize];
+    NSUInteger generation = self.cacheGeneration;
     __weak typeof(self) weakSelf = self;
     __weak NSMenuItem *weakMenuItem = menuItem;
     dispatch_async(self.thumbnailGenerationQueue, ^{
@@ -1218,9 +1351,9 @@ static os_log_t RCMenuManagerLog(void) {
         NSImage *resizedImage = [strongSelf.thumbnailCache objectForKey:cacheKey];
         if (resizedImage == nil) {
             resizedImage = [strongSelf resizedThumbnailImageAtPath:thumbnailPath targetSize:thumbnailSize];
-            if (resizedImage != nil) {
-                [strongSelf.thumbnailCache setObject:resizedImage forKey:cacheKey];
-            }
+            [strongSelf.cacheLock lock];
+            if (resizedImage && strongSelf.cacheGeneration == generation) [strongSelf.thumbnailCache setObject:resizedImage forKey:cacheKey];
+            [strongSelf.cacheLock unlock];
         }
 
         if (resizedImage == nil) {
@@ -1229,6 +1362,7 @@ static os_log_t RCMenuManagerLog(void) {
 
         dispatch_async(dispatch_get_main_queue(), ^{
             NSMenuItem *strongMenuItem = weakMenuItem;
+            if (strongSelf.cacheGeneration != generation) return;
             if (strongMenuItem == nil) {
                 return;
             }
@@ -1380,6 +1514,20 @@ static os_log_t RCMenuManagerLog(void) {
         return;
     }
 
+#if RC_DEMO_BUILD
+    for (NSDictionary *snippet in [[RCDatabaseManager shared] fetchSnippetsForFolder:folderIdentifier]) {
+        if ([snippet[@"identifier"] isEqual:snippetIdentifier] && [snippet[@"media_data"] length] > 0) {
+            NSData *tiff = [RCSnippetMedia pasteboardTIFFForData:snippet[@"media_data"]];
+            if (tiff) {
+                RCClipData *clipData = [[RCClipData alloc] init];
+                clipData.TIFFData = tiff;
+                clipData.primaryType = NSPasteboardTypeTIFF;
+                [[RCPasteService shared] pasteClipData:clipData toApplication:self.pasteTargetApplication];
+            } else { NSBeep(); }
+            return;
+        }
+    }
+#endif
     NSString *content = [self snippetContentForFolderIdentifier:folderIdentifier snippetIdentifier:snippetIdentifier];
     if (content.length == 0) {
         return;
@@ -1389,6 +1537,7 @@ static os_log_t RCMenuManagerLog(void) {
 
 - (void)clearHistoryMenuItemSelected:(NSMenuItem *)sender {
     (void)sender;
+    if (self.historyClearInProgress) return;
 
     BOOL shouldShowAlert = [self boolPreferenceForKey:kRCPrefShowAlertBeforeClearHistoryKey defaultValue:YES];
     if (shouldShowAlert) {
@@ -1411,36 +1560,30 @@ static os_log_t RCMenuManagerLog(void) {
         [clipboardService stopMonitoring];
     }
 
-    @try {
-        RCDatabaseManager *databaseManager = [RCDatabaseManager shared];
-        NSArray<NSString *> *pathsToDelete = [self clipDataFilePathsSnapshotForCurrentHistoryWithDatabaseManager:databaseManager];
-
-        if (![databaseManager deleteAllClipItems]) {
-            return;
+    self.historyClearInProgress = YES;
+    // A cancelled polling timer may still have a capture in flight. Clear only
+    // after that serial queue has drained, so an old capture cannot reinsert rows.
+    [clipboardService flushQueueWithCompletion:^{
+        __block BOOL cleared = NO;
+        @try {
+            RCDatabaseManager *databaseManager = [RCDatabaseManager shared];
+            NSArray<NSString *> *paths = [self clipDataFilePathsSnapshotForCurrentHistoryWithDatabaseManager:databaseManager];
+            cleared = [databaseManager deleteAllClipItems];
+            if (cleared) {
+                [databaseManager performDatabaseOperation:^BOOL(FMDatabase *db) {
+                    return [db executeStatements:@"PRAGMA incremental_vacuum;"] &&
+                           [db executeStatements:@"PRAGMA wal_checkpoint(TRUNCATE);"];
+                }];
+                [self removeClipDataFilesAtPaths:paths];
+            }
+        } @finally {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                self.historyClearInProgress = NO;
+                if (cleared) { [self clearThumbnailCache]; [self rebuildMenu]; }
+                if (wasMonitoring && ![RCPanicEraseService shared].isPanicInProgress) [clipboardService startMonitoring];
+            });
         }
-
-        [databaseManager performDatabaseOperation:^BOOL(FMDatabase *db) {
-            [db executeStatements:@"PRAGMA incremental_vacuum;"];
-            [db executeStatements:@"PRAGMA wal_checkpoint(TRUNCATE);"];
-            return YES;
-        }];
-
-        [self.thumbnailCache removeAllObjects];
-        [self.colorPreviewEligibilityCache removeAllObjects];
-        [self.clipDataColorStringCache removeAllObjects];
-        [self.clipDataTooltipCache removeAllObjects];
-        [self.clipDataFallbackPrefetchStateCache removeAllObjects];
-
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            [self removeClipDataFilesAtPaths:pathsToDelete];
-        });
-
-        [self rebuildMenu];
-    } @finally {
-        if (wasMonitoring) {
-            [clipboardService startMonitoring];
-        }
-    }
+    }];
 }
 
 - (void)openPreferences:(NSMenuItem *)sender {
@@ -1570,11 +1713,7 @@ static os_log_t RCMenuManagerLog(void) {
     os_log_debug(RCMenuManagerLog(),
                  "Removed orphaned clip row for missing clip data. data_hash=%{private}@ (%{public}@)",
                  dataHash, safeReason);
-    [self.thumbnailCache removeAllObjects];
-    [self.colorPreviewEligibilityCache removeAllObjects];
-    [self.clipDataColorStringCache removeAllObjects];
-    [self.clipDataTooltipCache removeAllObjects];
-    [self.clipDataFallbackPrefetchStateCache removeAllObjects];
+    [self clearMenuCaches];
     [self rebuildMenu];
 }
 
@@ -1744,11 +1883,27 @@ static os_log_t RCMenuManagerLog(void) {
 }
 
 - (void)clearThumbnailCache {
+    if (!NSThread.isMainThread) {
+        dispatch_sync(dispatch_get_main_queue(), ^{ [self clearThumbnailCache]; });
+        return;
+    }
+    [self clearMenuCaches];
+    [self.previewController hide];
+    [self.previewImageData removeAllObjects];
+    [self.previewTexts removeAllObjects];
+    [self.previewURLs removeAllObjects];
+    [[RCLinkPreviewService shared] clearCache];
+}
+
+- (void)clearMenuCaches {
+    [self.cacheLock lock];
+    self.cacheGeneration++;
     [self.thumbnailCache removeAllObjects];
     [self.colorPreviewEligibilityCache removeAllObjects];
     [self.clipDataColorStringCache removeAllObjects];
     [self.clipDataTooltipCache removeAllObjects];
     [self.clipDataFallbackPrefetchStateCache removeAllObjects];
+    [self.cacheLock unlock];
 }
 
 - (NSString *)stringValueFromDictionary:(NSDictionary *)dictionary key:(NSString *)key defaultValue:(NSString *)defaultValue {

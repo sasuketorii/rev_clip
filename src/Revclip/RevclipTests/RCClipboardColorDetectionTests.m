@@ -360,7 +360,7 @@
     [self removeFileIfExistsAtPath:path];
 }
 
-- (void)testImageHoverDoesNotRestorePayloadAndClosedFoldersDoNotLoadThumbnails {
+- (void)testOpeningImageMenuDoesNotRestorePayloadAndClosedFoldersDoNotLoadThumbnails {
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kRCShowImageInTheMenuKey];
     RCTestMenuManager *manager = [RCTestMenuManager new];
     RCClipItem *clip = [[RCClipItem alloc] initWithDictionary:@{
@@ -378,7 +378,6 @@
     XCTAssertEqual(manager.thumbnailLoadCallCount, 0);
     [manager menuWillOpen:child];
     [manager menuWillOpen:child];
-    [manager menu:child willHighlightItem:item];
     [self drainMenuWork:manager];
     XCTAssertEqual(manager.clipDataLoadCallCount, 0);
     XCTAssertEqual(manager.thumbnailLoadCallCount, 1);

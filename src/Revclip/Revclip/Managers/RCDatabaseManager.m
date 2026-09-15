@@ -12,11 +12,12 @@
 #import "RCPanicEraseService.h"
 #import "RCUtilities.h"
 #import "RCStorageMigration.h"
+#import "RCSnippetMedia.h"
 #import "Revclip-Swift.h"
 #import <os/log.h>
 #import <sqlite3.h>
 
-static NSInteger const kRCCurrentSchemaVersion = 2;
+static NSInteger const kRCCurrentSchemaVersion = 3;
 static NSNumber * const kRCDatabaseFilePermissions = @(0600);
 static NSNumber * const kRCDatabaseDirectoryPermissions = @(0700);
 static NSString * const kRCAutoVacuumMigrationCompletedKey = @"kRCAutoVacuumMigrationCompletedKey";
@@ -192,6 +193,14 @@ static os_log_t RCDatabaseManagerLog(void) {
                 case 2:
                     if (![db executeUpdate:@"CREATE INDEX IF NOT EXISTS idx_snippets_folder_order ON snippets(folder_id, snippet_index, id)"]) {
                         [self logDatabaseError:db context:@"Failed to create idx_snippets_folder_order"];
+                        migrated = NO;
+                        *rollback = YES;
+                        return;
+                    }
+                    break;
+                case 3:
+                    if (![db columnExists:@"media_data" inTableWithName:@"snippets"] &&
+                        ![db executeUpdate:@"ALTER TABLE snippets ADD COLUMN media_data BLOB"]) {
                         migrated = NO;
                         *rollback = YES;
                         return;
@@ -490,6 +499,22 @@ static os_log_t RCDatabaseManagerLog(void) {
     return count;
 }
 
+- (NSArray<RCClipItem *> *)trimClipItemsToLimit:(NSInteger)limit {
+    if (limit < 1) return nil;
+    NSMutableArray<RCClipItem *> *removed = [NSMutableArray array];
+    BOOL success = [self performTransaction:^BOOL(FMDatabase *db, BOOL *rollback) {
+        FMResultSet *rows = [db executeQuery:@"SELECT * FROM clip_items ORDER BY update_time DESC, id DESC LIMIT -1 OFFSET ?" withArgumentsInArray:@[@(limit)]];
+        if (!rows) return NO;
+        while ([rows next]) [removed addObject:[[RCClipItem alloc] initWithDictionary:[self clipItemDictionaryFromResultSet:rows]]];
+        [rows close];
+        for (RCClipItem *item in removed) {
+            if (![db executeUpdate:@"DELETE FROM clip_items WHERE id = ?" withArgumentsInArray:@[@(item.itemId)]]) return NO;
+        }
+        return YES;
+    }];
+    return success ? removed : nil;
+}
+
 - (BOOL)deleteAllClipItems {
     if (![self ensureDatabaseReadyForOperation]) {
         return NO;
@@ -759,7 +784,7 @@ static os_log_t RCDatabaseManagerLog(void) {
         [folderResultSet close];
         if (!foldersRead) { *rollback = YES; return NO; }
 
-        FMResultSet *snippetResultSet = [db executeQuery:@"SELECT id, identifier, folder_id, snippet_index, enabled, title, content FROM snippets ORDER BY folder_id ASC, snippet_index ASC, id ASC"];
+        FMResultSet *snippetResultSet = [db executeQuery:@"SELECT id, identifier, folder_id, snippet_index, enabled, title, content, media_data FROM snippets ORDER BY folder_id ASC, snippet_index ASC, id ASC"];
         if (snippetResultSet == nil) {
             [self logDatabaseError:db context:@"Failed to fetch snippet catalog snippets"];
             *rollback = YES;
@@ -891,10 +916,12 @@ static os_log_t RCDatabaseManagerLog(void) {
     NSString *title = [self stringValueInDictionary:snippetDict keys:@[@"title"] defaultValue:@"untitled snippet"];
     NSString *content = [self stringValueInDictionary:snippetDict keys:@[@"content"] defaultValue:@""];
 
+    NSData *media = snippetDict[@"media_data"] ?: [NSData data];
+    if (![media isKindOfClass:NSData.class] || (media.length && ![RCSnippetMedia isValidImageData:media])) return NO;
     __block BOOL inserted = NO;
     [self.databaseQueue inDatabase:^(FMDatabase * _Nonnull db) {
-        inserted = [db executeUpdate:@"INSERT INTO snippets (identifier, folder_id, snippet_index, enabled, title, content) VALUES (?, ?, ?, ?, ?, ?)"
-                withArgumentsInArray:@[identifier, folderID, snippetIndex, enabled, title, content]];
+        inserted = [db executeUpdate:@"INSERT INTO snippets (identifier, folder_id, snippet_index, enabled, title, content, media_data) VALUES (?, ?, ?, ?, ?, ?, ?)"
+                withArgumentsInArray:@[identifier, folderID, snippetIndex, enabled, title, content, media]];
         if (!inserted) {
             [self logDatabaseError:db context:@"Failed to insert snippets row"];
         }
@@ -965,6 +992,13 @@ static os_log_t RCDatabaseManagerLog(void) {
         [arguments addObject:content];
     }
 
+    if (dict[@"media_data"] != nil) {
+        NSData *media = dict[@"media_data"];
+        if (![media isKindOfClass:NSData.class] || (media.length && ![RCSnippetMedia isValidImageData:media])) return NO;
+        [setClauses addObject:@"media_data = ?"];
+        [arguments addObject:media];
+    }
+
     if (setClauses.count == 0) {
         return YES;
     }
@@ -1009,7 +1043,7 @@ static os_log_t RCDatabaseManagerLog(void) {
 
     __block NSMutableArray<NSDictionary *> *rows = [NSMutableArray array];
     [self.databaseQueue inDatabase:^(FMDatabase * _Nonnull db) {
-        FMResultSet *resultSet = [db executeQuery:@"SELECT id, identifier, folder_id, snippet_index, enabled, title, content FROM snippets WHERE folder_id = ? ORDER BY snippet_index ASC, id ASC"
+        FMResultSet *resultSet = [db executeQuery:@"SELECT id, identifier, folder_id, snippet_index, enabled, title, content, media_data FROM snippets WHERE folder_id = ? ORDER BY snippet_index ASC, id ASC"
                              withArgumentsInArray:@[folderIdentifier]];
         if (!resultSet) {
             [self logDatabaseError:db context:@"Failed to fetch snippets rows"];
@@ -1132,7 +1166,7 @@ static os_log_t RCDatabaseManagerLog(void) {
         @"CREATE INDEX IF NOT EXISTS idx_clip_update_time ON clip_items(update_time DESC)",
         @"CREATE TABLE IF NOT EXISTS snippet_folders (id INTEGER PRIMARY KEY AUTOINCREMENT, identifier TEXT UNIQUE NOT NULL, folder_index INTEGER DEFAULT 0, enabled INTEGER DEFAULT 1, title TEXT DEFAULT 'untitled folder')",
         @"CREATE INDEX IF NOT EXISTS idx_folder_index ON snippet_folders(folder_index)",
-        @"CREATE TABLE IF NOT EXISTS snippets (id INTEGER PRIMARY KEY AUTOINCREMENT, identifier TEXT UNIQUE NOT NULL, folder_id TEXT NOT NULL REFERENCES snippet_folders(identifier) ON DELETE CASCADE, snippet_index INTEGER DEFAULT 0, enabled INTEGER DEFAULT 1, title TEXT DEFAULT 'untitled snippet', content TEXT DEFAULT '')",
+        @"CREATE TABLE IF NOT EXISTS snippets (id INTEGER PRIMARY KEY AUTOINCREMENT, identifier TEXT UNIQUE NOT NULL, folder_id TEXT NOT NULL REFERENCES snippet_folders(identifier) ON DELETE CASCADE, snippet_index INTEGER DEFAULT 0, enabled INTEGER DEFAULT 1, title TEXT DEFAULT 'untitled snippet', content TEXT DEFAULT '', media_data BLOB)",
         @"CREATE INDEX IF NOT EXISTS idx_snippet_folder ON snippets(folder_id)",
         @"CREATE INDEX IF NOT EXISTS idx_snippet_index ON snippets(snippet_index)",
         @"CREATE INDEX IF NOT EXISTS idx_snippets_folder_order ON snippets(folder_id, snippet_index, id)",
@@ -1447,6 +1481,7 @@ static os_log_t RCDatabaseManagerLog(void) {
         @"enabled": @([resultSet intForColumn:@"enabled"]),
         @"title": [resultSet stringForColumn:@"title"] ?: @"",
         @"content": [resultSet stringForColumn:@"content"] ?: @"",
+        @"media_data": [resultSet dataForColumn:@"media_data"] ?: [NSData data],
     };
 }
 

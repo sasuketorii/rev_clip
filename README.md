@@ -76,7 +76,13 @@ make -C src/Revclip debug
 open src/Revclip/build/Debug/Revclip.app
 ```
 
-Xcodeを初回起動して必要なコンポーネントを入れ、コマンドラインツールの参照先にXcodeを選んでください。既存のRevclipを使っている場合は終了してから開いてください。同じアプリIDのビルドは既存の設定・データを使用します。
+撮影用に通常版とデータを分離したDemo版を使う場合は、次のコマンドを実行します。起動前に通常版を終了し、`revclip-demo`を起動します。
+
+```sh
+make -C src/Revclip demo-run
+```
+
+Xcodeを初回起動して必要なコンポーネントを入れ、コマンドラインツールの参照先にXcodeを選んでください。通常のDebugビルドは既存のRevclipを終了してから開いてください。同じアプリIDのビルドは既存の設定・データを使用します。Demo版は専用のアプリIDと保存領域を使います。
 
 ```sh
 # テスト
@@ -116,3 +122,8 @@ open src/Revclip/Revclip.xcodeproj
 ## ライセンス
 
 [MIT](LICENSE) © sasuke torii and Revclip contributors. 同梱ライブラリには、それぞれのライセンスが適用されます。
+
+### エージェントからのテンプレート操作（demo）
+
+Codex・Claudeなどから `scripts/revclip` で一覧取得・作成・編集・削除できます。
+使い方と制約は[テンプレートCLI](docs/TEMPLATE_CLI.md)を参照してください。

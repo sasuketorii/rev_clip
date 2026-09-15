@@ -15,6 +15,7 @@
 #import "FMDB.h"
 #import "RCConstants.h"
 #import "RCDatabaseManager.h"
+#import "RCSnippetMedia.h"
 
 NSErrorDomain const RCSnippetImportExportErrorDomain = @"com.revclip.snippet-import-export";
 
@@ -36,7 +37,7 @@ static NSString * const kRCRevclipPlistFormatValue = @"revclip.snippets";
 static NSString * const kRCRevclipPlistVersionKey = @"version";
 static NSString * const kRCRevclipPlistFoldersKey = @"folders";
 static NSString * const kRCRevclipPlistExportedAtKey = @"exported_at";
-static NSInteger const kRCRevclipSupportedPlistVersion = 1;
+static NSInteger const kRCRevclipSupportedPlistVersion = 2;
 static unsigned long long const kRCMaxImportFileSize = 50ULL * 1024ULL * 1024ULL;
 static NSInteger const kRCMaxImportFolderCount = 100;
 static NSInteger const kRCMaxImportSnippetCount = 10000;
@@ -198,9 +199,16 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
 
 - (NSData *)exportFoldersAsXMLData:(NSArray<NSDictionary *> *)folders error:(NSError **)error {
     NSArray<NSDictionary *> *normalizedFolders = [self normalizedFolderDictionariesForExport:folders ?: @[]];
+    if (![self validateImportLimitsForFolders:normalizedFolders error:error]) return nil;
+    BOOL hasMedia = NO;
+    for (NSDictionary *folder in normalizedFolders) {
+        for (NSDictionary *snippet in folder[@"snippets"]) {
+            if ([snippet[@"media_data"] length]) hasMedia = YES;
+        }
+    }
     NSDictionary *plistRoot = @{
         kRCRevclipPlistFormatKey: kRCRevclipPlistFormatValue,
-        kRCRevclipPlistVersionKey: @(kRCRevclipSupportedPlistVersion),
+        kRCRevclipPlistVersionKey: @(hasMedia ? kRCRevclipSupportedPlistVersion : 1),
         kRCRevclipPlistExportedAtKey: [self iso8601TimestampString],
         kRCRevclipPlistFoldersKey: normalizedFolders,
     };
@@ -218,6 +226,11 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
         return nil;
     }
 
+    if (xmlData.length > kRCMaxImportFileSize) {
+        [self assignSnippetError:error code:RCSnippetImportExportErrorFileWrite
+            description:RCLocalizedString(@"Import file is too large (exceeds 50 MB limit).", nil) underlyingError:nil];
+        return nil;
+    }
     return xmlData;
 }
 
@@ -370,6 +383,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
                 @"enabled": @([self boolValueInDictionary:snippet keys:@[@"enabled", @"enable"] defaultValue:YES]),
                 @"title": [self stringValueInDictionary:snippet keys:@[@"title", @"name"] defaultValue:RCLocalizedString(@"Untitled Snippet", nil)],
                 @"content": [self stringValueInDictionary:snippet keys:@[@"content", @"text", @"value"] defaultValue:@""],
+                @"media_data": snippet[@"media_data"] ?: [NSData data],
             };
             [snippetDictionaries addObject:snippetDictionary];
         }
@@ -432,6 +446,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
                 @"enabled": @([self boolValueInDictionary:snippet keys:@[@"enabled", @"enable"] defaultValue:YES]),
                 @"title": [self stringValueInDictionary:snippet keys:@[@"title", @"name"] defaultValue:RCLocalizedString(@"Untitled Snippet", nil)],
                 @"content": [self stringValueInDictionary:snippet keys:@[@"content", @"text", @"value"] defaultValue:@""],
+                @"media_data": snippet[@"media_data"] ?: [NSData data],
             };
             [normalizedSnippets addObject:normalizedSnippet];
             snippetIndex += 1;
@@ -563,7 +578,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
                         underlyingError:nil];
     }
 
-    if (versionNumber.integerValue != kRCRevclipSupportedPlistVersion) {
+    if (versionNumber.integerValue < 1 || versionNumber.integerValue > kRCRevclipSupportedPlistVersion) {
         return [self assignSnippetError:error
                                    code:RCSnippetImportExportErrorInvalidXMLFormat
                             description:RCLocalizedString(@"Unsupported snippets format version.", nil)
@@ -638,6 +653,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
         @"identifier": [self trimmedString:identifier],
         @"title": title,
         @"content": content,
+        @"media_data": dictionary[@"media_data"] ?: [NSData data],
         @"enabled": @(enabled),
     };
 }
@@ -736,6 +752,12 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
                                            code:RCSnippetImportExportErrorInvalidXMLFormat
                                     description:RCLocalizedString(@"Snippet title exceeds the maximum length (500 characters).", nil)
                                 underlyingError:nil];
+            }
+
+            NSData *media = snippet[@"media_data"] ?: [NSData data];
+            if (![media isKindOfClass:NSData.class] || (media.length && ![RCSnippetMedia isValidImageData:media])) {
+                return [self assignSnippetError:error code:RCSnippetImportExportErrorInvalidXMLFormat
+                    description:RCLocalizedString(@"Choose a still image up to 10 MB and 16 megapixels.", nil) underlyingError:nil];
             }
 
             NSString *snippetContent = [self stringValueInDictionary:snippet
@@ -946,6 +968,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
 
             NSString *signature = [self snippetSignatureWithTitle:[self stringValueInDictionary:existingSnippet keys:@[@"title", @"name"] defaultValue:@""]
                                                           content:[self stringValueInDictionary:existingSnippet keys:@[@"content", @"text", @"value"] defaultValue:@""]];
+            signature = [signature stringByAppendingFormat:@"|%@", [RCSnippetMedia digestForData:existingSnippet[@"media_data"]]];
             [existingSignatures addObject:signature];
 
             NSInteger snippetIndex = [self integerValueInDictionary:existingSnippet keys:@[@"snippet_index", @"snippetIndex", @"index"] defaultValue:0];
@@ -1041,6 +1064,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
             BOOL snippetEnabled = [self boolValueInDictionary:parsedSnippet keys:@[@"enabled", @"enable"] defaultValue:YES];
 
             NSString *signature = [self snippetSignatureWithTitle:snippetTitle content:snippetContent];
+            signature = [signature stringByAppendingFormat:@"|%@", [RCSnippetMedia digestForData:parsedSnippet[@"media_data"]]];
             if ([signatureSet containsObject:signature]) {
                 continue;
             }
@@ -1061,6 +1085,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
                 @"enabled": @(snippetEnabled),
                 @"title": snippetTitle,
                 @"content": snippetContent,
+                @"media_data": parsedSnippet[@"media_data"] ?: [NSData data],
             };
             [snippetsToInsert addObject:snippetDictionary];
             [signatureSet addObject:signature];
@@ -1106,7 +1131,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
         for (NSString *folderIdentifier in folderInsertionOrder) {
             NSArray<NSDictionary *> *snippetsToInsert = snippetsToInsertByFolderIdentifier[folderIdentifier];
             for (NSDictionary *snippetDictionary in snippetsToInsert) {
-                BOOL insertedSnippet = [db executeUpdate:@"INSERT INTO snippets (identifier, folder_id, snippet_index, enabled, title, content) VALUES (?, ?, ?, ?, ?, ?)"
+                BOOL insertedSnippet = [db executeUpdate:@"INSERT INTO snippets (identifier, folder_id, snippet_index, enabled, title, content, media_data) VALUES (?, ?, ?, ?, ?, ?, ?)"
                                     withArgumentsInArray:@[
                                         [self stringValueInDictionary:snippetDictionary keys:@[@"identifier"] defaultValue:@""],
                                         [self stringValueInDictionary:snippetDictionary keys:@[@"folder_id", @"folderId"] defaultValue:@""],
@@ -1114,6 +1139,7 @@ static NSStringEncoding RCStringEncodingFromXMLBOM(NSData *data) {
                                         snippetDictionary[@"enabled"] ?: @1,
                                         [self stringValueInDictionary:snippetDictionary keys:@[@"title", @"name"] defaultValue:RCLocalizedString(@"Untitled Snippet", nil)],
                                         [self stringValueInDictionary:snippetDictionary keys:@[@"content", @"text", @"value"] defaultValue:@""],
+                                        snippetDictionary[@"media_data"] ?: [NSData data],
                                     ]];
                 if (!insertedSnippet) {
                     transactionError = [self databaseErrorFromDatabase:db fallbackDescription:RCLocalizedString(@"Failed to insert snippet.", nil)];

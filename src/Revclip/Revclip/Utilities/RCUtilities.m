@@ -11,6 +11,7 @@
 
 static NSString * const kRCDatabaseFileName = @"revclip.db";
 static NSString * const kRCNeverIndexFileName = @".metadata_never_index";
+static NSString * const kRCDefaultStorageDirectoryName = @"Revclip";
 static NSNumber * const kRCDirectoryPermissions = @(0700);
 static NSNumber * const kRCFilePermissions = @(0600);
 
@@ -18,6 +19,7 @@ static NSNumber * const kRCFilePermissions = @(0600);
 
 + (BOOL)applyPOSIXPermissions:(NSNumber *)permissions toPath:(NSString *)path fileManager:(NSFileManager *)fileManager;
 + (BOOL)isProtectedClipDataFileName:(NSString *)fileName;
++ (NSString *)storageDirectoryName;
 
 @end
 
@@ -45,7 +47,15 @@ static NSNumber * const kRCFilePermissions = @(0600);
         kRCPrefOverwriteSameHistory: @YES,
         kRCPrefCopySameHistory: @YES,
         kRCCollectCrashReport: @YES,
+#if defined(RC_DEMO_BUILD) && RC_DEMO_BUILD
+        // The demo is launched manually for recording and must not register a
+        // second login item on the host machine.
+        kRCLoginItem: @NO,
+        kRCEnableAutomaticCheckKey: @NO,
+#else
         kRCLoginItem: @YES,
+        kRCEnableAutomaticCheckKey: @YES,
+#endif
         kRCSuppressAlertForLoginItem: @NO,
         kRCPrefNumberOfItemsPlaceInlineKey: @0,
         kRCPrefNumberOfItemsPlaceInsideFolderKey: @10,
@@ -63,7 +73,6 @@ static NSNumber * const kRCFilePermissions = @(0600);
         kRCThumbnailHeightKey: @32,
         kRCPrefAddClearHistoryMenuItemKey: @YES,
         kRCPrefShowAlertBeforeClearHistoryKey: @YES,
-        kRCEnableAutomaticCheckKey: @YES,
         kRCUpdateCheckIntervalKey: @86400,
         kRCBetaPastePlainText: @YES,
         kRCBetaPastePlainTextModifier: @0,
@@ -79,26 +88,16 @@ static NSNumber * const kRCFilePermissions = @(0600);
 }
 
 + (NSString *)applicationSupportPath {
-    NSString *configuredPath = [kRCApplicationSupportDirectoryPath stringByExpandingTildeInPath];
-    if (configuredPath.length > 0) {
-        return [configuredPath stringByStandardizingPath];
-    }
-
     NSArray<NSString *> *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
     NSString *basePath = paths.firstObject;
     if (basePath.length == 0) {
         basePath = [[NSHomeDirectory() stringByAppendingPathComponent:@"Library"] stringByAppendingPathComponent:@"Application Support"];
     }
 
-    return [[basePath stringByAppendingPathComponent:@"Revclip"] stringByStandardizingPath];
+    return [[basePath stringByAppendingPathComponent:[self storageDirectoryName]] stringByStandardizingPath];
 }
 
 + (NSString *)clipDataDirectoryPath {
-    NSString *configuredPath = [kRCClipDataDirectoryPath stringByExpandingTildeInPath];
-    if (configuredPath.length > 0) {
-        return [configuredPath stringByStandardizingPath];
-    }
-
     NSString *clipPath = [[self applicationSupportPath] stringByAppendingPathComponent:@"ClipsData"];
     return [clipPath stringByStandardizingPath];
 }
@@ -216,6 +215,30 @@ static NSNumber * const kRCFilePermissions = @(0600);
         NSLog(@"[RCUtilities] Failed to set POSIX permissions for '%@': %@", expandedPath, error.localizedDescription);
     }
     return applied;
+}
+
++ (NSString *)storageDirectoryName {
+    id configuredValue = [NSBundle.mainBundle objectForInfoDictionaryKey:kRCStorageDirectoryNameInfoKey];
+    if (![configuredValue isKindOfClass:[NSString class]]) {
+        return kRCDefaultStorageDirectoryName;
+    }
+
+    NSString *candidate = [(NSString *)configuredValue stringByTrimmingCharactersInSet:
+                           [NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (candidate.length == 0
+        || candidate.length > 80
+        || [candidate isEqualToString:@"."]
+        || [candidate isEqualToString:@".."]
+        || [candidate hasPrefix:@"."]
+        || [candidate containsString:@"/"]
+        || [candidate containsString:@"\\"]
+        || [candidate containsString:@"$("]
+        || [candidate rangeOfCharacterFromSet:[NSCharacterSet controlCharacterSet]].location != NSNotFound) {
+        NSLog(@"[RCUtilities] Ignoring invalid storage directory name from the app bundle.");
+        return kRCDefaultStorageDirectoryName;
+    }
+
+    return candidate;
 }
 
 + (BOOL)isProtectedClipDataFileName:(NSString *)fileName {

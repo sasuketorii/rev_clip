@@ -21,6 +21,7 @@ struct SnippetDraft: Identifiable, Hashable {
     var title: String
     var content: String
     var enabled: Bool
+    var mediaData: Data = Data()
 }
 
 enum SnippetEditorSelection: Hashable {
@@ -35,6 +36,9 @@ final class SnippetEditorModel {
     var selection: SnippetEditorSelection?
     var titleDraft = ""
     var contentDraft = ""
+    var mediaDraft = Data()
+    var mediaPreview: NSImage?
+    var isLoadingMedia = false
     var query = ""
     var savedFlash = false
     var errorMessage: String?
@@ -110,7 +114,8 @@ final class SnippetEditorModel {
                     folderID: string(snippet["folder_id"], fallback: identifier),
                     title: string(snippet["title"]),
                     content: string(snippet["content"]),
-                    enabled: bool(snippet["enabled"], fallback: true)
+                    enabled: bool(snippet["enabled"], fallback: true),
+                    mediaData: snippet["media_data"] as? Data ?? Data()
                 )
             }
             return SnippetFolderDraft(
@@ -162,16 +167,19 @@ final class SnippetEditorModel {
             let title = normalized(titleDraft, fallback: RCLocalizedString("Untitled Snippet", comment: ""))
             let content = contentDraft
             if folders[folderIndex].snippets[snippetIndex].title == title,
-               folders[folderIndex].snippets[snippetIndex].content == content {
+               folders[folderIndex].snippets[snippetIndex].content == content,
+               folders[folderIndex].snippets[snippetIndex].mediaData == mediaDraft {
                 return true
             }
             guard RCDatabaseManager.shared().updateSnippet([
                 "identifier": id,
                 "title": title,
                 "content": content,
+                "media_data": mediaDraft,
             ]) else { return reportSaveFailure() }
             folders[folderIndex].snippets[snippetIndex].title = title
             folders[folderIndex].snippets[snippetIndex].content = content
+            folders[folderIndex].snippets[snippetIndex].mediaData = mediaDraft
             notifySnippetsChanged()
         case nil:
             break
@@ -205,7 +213,7 @@ final class SnippetEditorModel {
         notifySnippetsChanged()
     }
 
-    func addSnippet() {
+    func addSnippet(media: Data = Data(), title mediaTitle: String? = nil) {
         guard persistDraftIfNeeded() else { return }
         let folderID: String
         switch selection {
@@ -235,13 +243,14 @@ final class SnippetEditorModel {
         }
 
         let snippetID = UUID().uuidString
-        let title = RCLocalizedString("New Snippet", comment: "")
+        let title = mediaTitle ?? RCLocalizedString("New Snippet", comment: "")
         let inserted = RCDatabaseManager.shared().insertSnippet([
             "identifier": snippetID,
             "snippet_index": folders[folderIndex].snippets.count,
             "enabled": 1,
             "title": title,
             "content": "",
+            "media_data": media,
         ], inFolder: resolvedFolderID)
         guard inserted else {
             NSSound.beep()
@@ -251,6 +260,31 @@ final class SnippetEditorModel {
         selection = .snippet(snippetID)
         applySelectionToDrafts()
         notifySnippetsChanged()
+    }
+
+    func loadMedia(from url: URL, replacing: Bool) {
+        guard !isLoadingMedia, persistDraftIfNeeded() else { return }
+        isLoadingMedia = true
+        let target = selection
+        Task {
+            let result = await Task.detached(priority: .userInitiated) { () -> Result<Data, Error> in
+                Result { try RCSnippetMedia.readImage(at: url) }
+            }.value
+            isLoadingMedia = false
+            guard selection == target else { return }
+            switch result {
+            case .success(let data):
+                if replacing, isEditingSnippet {
+                    mediaDraft = data
+                    mediaPreview = RCSnippetMedia.thumbnail(for: data, size: 360)
+                    contentDraft = ""
+                    _ = save()
+                } else {
+                    addSnippet(media: data, title: url.deletingPathExtension().lastPathComponent)
+                }
+            case .failure(let error): errorMessage = error.localizedDescription
+            }
+        }
     }
 
     func deleteSelection() {
@@ -377,6 +411,8 @@ final class SnippetEditorModel {
     }
 
     private func applySelectionToDrafts() {
+        mediaDraft = Data()
+        mediaPreview = nil
         isApplyingSelection = true
         defer { isApplyingSelection = false }
         switch selection {
@@ -387,6 +423,8 @@ final class SnippetEditorModel {
             if let snippet = folders.flatMap(\.snippets).first(where: { $0.id == id }) {
                 titleDraft = snippet.title
                 contentDraft = snippet.content
+                mediaDraft = snippet.mediaData
+                mediaPreview = RCSnippetMedia.thumbnail(for: mediaDraft, size: 360)
             }
         case nil:
             titleDraft = ""

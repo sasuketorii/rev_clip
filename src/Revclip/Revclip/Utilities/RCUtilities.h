@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 // 全デフォルト設定を登録
 + (void)registerDefaultSettings;
 
-// Application Supportパスの取得
+// Bundle設定に応じたApplication Supportパスの取得
 + (NSString *)applicationSupportPath;
 
 // クリップデータ保存ディレクトリパスの取得

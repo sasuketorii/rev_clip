@@ -33,7 +33,7 @@
     XCTAssertEqualObjects(catalog[0][@"snippets"][0][@"identifier"],@"first");
     XCTAssertEqualObjects(catalog[0][@"snippets"][0][@"folder_id"],@"z-folder");
     XCTAssertEqual([catalog[1][@"snippets"] count],0);
-    XCTAssertEqual([db currentSchemaVersion],2);
+    XCTAssertEqual([db currentSchemaVersion],3);
     XCTAssertTrue(([db performDatabaseOperation:^BOOL(FMDatabase *sql) {
         return [sql longForQuery:@"SELECT count(*) FROM sqlite_master WHERE type='index' AND name='idx_snippets_folder_order'"] == 1;
     }]));
@@ -56,5 +56,17 @@
     XCTAssertFalse(([db updateSnippetPlacement:@[@{@"identifier":@"s",@"folder_id":@"missing",@"snippet_index":@1}]]));
     XCTAssertEqualObjects([db fetchSnippetsForFolder:@"f"][0][@"snippet_index"],@0);
     XCTAssertFalse(([db updateSnippetFolderIndexes:@[@"f",@"missing"]]));
+}
+- (void)testVersionTwoMigrationPreservesTextTemplates {
+    XCTAssertTrue([self.database insertSnippetFolder:@{@"identifier":@"old-folder"}]);
+    XCTAssertTrue(([self.database insertSnippet:@{@"identifier":@"old-text",@"content":@"保持する本文"} inFolder:@"old-folder"]));
+    XCTAssertTrue([self.database performDatabaseOperation:^BOOL(FMDatabase *db) {
+        return [db executeUpdate:@"ALTER TABLE snippets DROP COLUMN media_data"] &&
+            [db executeUpdate:@"UPDATE schema_version SET version = 2"];
+    }]);
+    XCTAssertTrue([self.database migrateIfNeeded]);
+    NSDictionary *snippet = [self.database fetchSnippetsForFolder:@"old-folder"].firstObject;
+    XCTAssertEqualObjects(snippet[@"content"],@"保持する本文");
+    XCTAssertEqual([snippet[@"media_data"] length],0);
 }
 @end

@@ -71,6 +71,5 @@ NSString * const kRCExcludeApplications = @"kRCExcludeApplications";
 NSString * const kRCSuppressAlertForDeleteSnippet = @"kRCSuppressAlertForDeleteSnippet";
 NSString * const RCSnippetsDidChangeNotification = @"RCSnippetsDidChangeNotification";
 
-// Paths
-NSString * const kRCApplicationSupportDirectoryPath = @"~/Library/Application Support/Revclip/";
-NSString * const kRCClipDataDirectoryPath = @"~/Library/Application Support/Revclip/ClipsData/";
+// Storage
+NSString * const kRCStorageDirectoryNameInfoKey = @"RCStorageDirectoryName";

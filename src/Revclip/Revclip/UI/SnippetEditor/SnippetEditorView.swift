@@ -134,6 +134,14 @@ struct SnippetEditorView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                if !model.mediaDraft.isEmpty {
+                    if let preview = model.mediaPreview {
+                        Image(nsImage: preview)
+                            .resizable().scaledToFit()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .accessibilityLabel(model.titleDraft)
+                    }
+                } else {
                 Text(RCLocalizedString("Template Content", comment: ""))
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -147,6 +155,7 @@ struct SnippetEditorView: View {
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
                             .strokeBorder(Color.primary.opacity(0.18), lineWidth: 1)
                     }
+                }
             } else {
                 ContentUnavailableView {
                     Label(
@@ -171,6 +180,12 @@ struct SnippetEditorView: View {
                     .font(.system(size: 11))
                     .foregroundStyle(.tertiary)
                 Spacer()
+                if model.isEditingSnippet, Bundle.main.bundleIdentifier == "com.revclip.revclip-demo" {
+                    Button(RCLocalizedString(model.mediaDraft.isEmpty ? "Add Media…" : "Replace Image…", comment: ""), systemImage: "photo.badge.plus") {
+                        chooseMedia(replacing: true)
+                    }
+                    .disabled(model.isLoadingMedia)
+                }
             }
         }
         .padding(20)
@@ -181,7 +196,7 @@ struct SnippetEditorView: View {
         VStack(spacing: 10) {
             HStack(spacing: 12) {
                 Button(RCLocalizedString("Add Folder", comment: ""), systemImage: "folder.badge.plus", action: model.addFolder)
-                Button(RCLocalizedString("Add Template", comment: ""), systemImage: "doc.badge.plus", action: model.addSnippet)
+                Button(RCLocalizedString("Add Template", comment: ""), systemImage: "doc.badge.plus", action: { model.addSnippet() })
                     .disabled(model.folders.isEmpty)
                 Spacer()
                 Button(model.savedFlash ? RCLocalizedString("Saved!", comment: "") : RCLocalizedString("Save", comment: "")) {
@@ -263,12 +278,14 @@ struct SnippetEditorView: View {
 
     private func snippetRow(_ snippet: SnippetDraft) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: "doc.text")
+            Image(systemName: snippet.mediaData.isEmpty ? "doc.text" : "photo")
                 .foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 2) {
                 Text(snippet.title.isEmpty ? RCLocalizedString("Untitled Snippet", comment: "") : snippet.title)
                     .lineLimit(1)
-                if !snippet.content.isEmpty {
+                if !snippet.mediaData.isEmpty {
+                    Text(RCLocalizedString("Image", comment: "")).font(.caption).foregroundStyle(.secondary)
+                } else if !snippet.content.isEmpty {
                     Text(snippet.content)
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -299,6 +316,24 @@ struct SnippetEditorView: View {
         if alert.runModal() == .alertFirstButtonReturn {
             model.deleteSelection()
         }
+    }
+
+    private func chooseMedia(replacing: Bool) {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.allowedContentTypes = [.image]
+        panel.message = RCLocalizedString("The image is saved with the template, even if the original file is moved.", comment: "")
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        if replacing, !model.contentDraft.isEmpty, model.mediaDraft.isEmpty {
+            let alert = NSAlert()
+            alert.messageText = RCLocalizedString("Replace template text with an image?", comment: "")
+            alert.addButton(withTitle: RCLocalizedString("Replace", comment: ""))
+            alert.addButton(withTitle: RCLocalizedString("Cancel", comment: ""))
+            guard alert.runModal() == .alertFirstButtonReturn else { return }
+        }
+        model.loadMedia(from: url, replacing: replacing)
     }
 
     private func importSnippets() {
@@ -361,7 +396,7 @@ final class RCSnippetEditorHost: NSObject, NSWindowDelegate {
     }
 
     @objc func reload() { model.reload() }
-    @objc func saveChanges() -> Bool { model.persistDraftIfNeeded() }
+    @objc func saveChanges() -> Bool { !model.isLoadingMedia && model.persistDraftIfNeeded() }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         model.persistDraftIfNeeded()

@@ -72,7 +72,13 @@ make -C src/Revclip debug
 open src/Revclip/build/Debug/Revclip.app
 ```
 
-Launch Xcode once to install its required components, and select Xcode as the active command-line developer tools installation. Quit any existing Revclip instance before opening your build. Builds with the same app identifier use the existing settings and data.
+For a recording build with isolated data, run the following command. It quits the regular app before launching `revclip-demo`.
+
+```sh
+make -C src/Revclip demo-run
+```
+
+Launch Xcode once to install its required components, and select Xcode as the active command-line developer tools installation. Quit any existing Revclip instance before opening a regular Debug build. Builds with the same app identifier use the existing settings and data; the Demo build uses its own app identifier and storage directory.
 
 ```sh
 # Run tests

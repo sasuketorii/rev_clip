@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Revclip</string>
+	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIconName</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Revclip</string>
+	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -37,8 +37,10 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>SUFeedURL</key>
-	<string>https://github.com/sasuketorii/rev_clip/releases/latest/download/appcast.xml</string>
+	<string>$(RC_SU_FEED_URL)</string>
 	<key>SUPublicEDKey</key>
-	<string>jW5CH5/B8IApRFYiwOGot/VUmo0uqvE1LawgUG1igUk=</string>
+	<string>$(RC_SU_PUBLIC_ED_KEY)</string>
+	<key>RCStorageDirectoryName</key>
+	<string>$(RC_STORAGE_DIRECTORY_NAME)</string>
 </dict>
 </plist>

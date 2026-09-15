@@ -28,10 +28,28 @@ python3 -m venv .venv
 
 `src/Revclip/project.yml` が設定の正本です。生成した `.xcodeproj` を直接編集しても、再生成で上書きされます。
 
+撮影用の分離版は、追加設定なしで次のコマンドから起動できます。通常版を終了し、`revclip-demo` を起動します。
+
+```sh
+make -C src/Revclip demo-run
+```
+
+Demo版は `com.revclip.revclip-demo`、`revclip-demo` の保存領域、専用のUserDefaultsとKeychainサービスを使います。通常版の履歴・設定・暗号鍵は読みません。更新確認とログイン時起動はDemo版では無効です。
+
+独自のForkを作る場合は、次の設定を同じ組み合わせで変更します。
+
 1. `PRODUCT_BUNDLE_IDENTIFIER` を独自の値にします。アプリ名・著作権表示も必要に応じて変更します。
-2. **保存先も分離します。** Bundle IDの変更だけでは十分ではありません。`App/RCConstants.m` と `Managers/RCDatabaseManager.m` の保存先定義、および `Revclip` を使うデータパスを確認し、独自名へ変更します。既存データを使って検証せず、独自版の空のデータから始めてください。
+2. **保存先も分離します。** Bundle IDの変更だけでは十分ではありません。`RC_STORAGE_DIRECTORY_NAME` と `RCStorageDirectoryName` を独自名へ変更し、既存データを使わず空のデータから始めてください。
 3. ショートカットの競合を避け、ログイン項目も独自版として確認します。
 4. Sparkleの `SUFeedURL` と `SUPublicEDKey` を自分の配信先・公開鍵に変更します。秘密鍵はコードに含めません。独自版に公式版の更新を上書き適用しないよう、配布前に必ず設定してください。
 5. `make -C src/Revclip setup` で再生成します。
 
 再配布では[MITライセンス](../LICENSE)と[第三者ライセンス](../THIRD_PARTY_NOTICES.md)を保持してください。署名・公証・更新配信は[リリース手順](RELEASING.md)を参照してください。
+
+### Demo image templates
+
+In `revclip-demo`, **Add Media…** beneath the template content attaches a still image to the selected template and keeps its title. **Replace Image…** replaces the selected image. Images are embedded in the encrypted template database, so moving the source file does not break a template. The menu shows a thumbnail beside the title; selecting it pastes an image through the existing paste service.
+
+Each image is limited to 10 MB, 16 megapixels, and 8192 pixels per side. Animated images are not supported. Image exports use snippet format version 2 and include the image bytes; text-only exports retain version 1. Imports accept both versions. The total import/export file limit remains 50 MB.
+
+Image templates also show an aspect-preserving hover preview directly beneath the submenu. Its panel stays within the submenu width and is capped at 360 points high. Demo builds use `DEMO_CODE_SIGN_IDENTITY` (default `Apple Development`) so normal rebuilds retain a stable signing identity for macOS Accessibility permissions.

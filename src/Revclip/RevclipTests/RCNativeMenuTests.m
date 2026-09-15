@@ -4,6 +4,7 @@
 #import "RCConstants.h"
 
 @interface RCMenuManager (NativeTesting)
+- (NSPoint)popupLocationForMenuSize:(NSSize)size mouse:(NSPoint)mouse visibleFrame:(NSRect)frame;
 - (void)appendClipItems:(NSArray<RCClipItem *> *)items toMenu:(NSMenu *)menu;
 - (void)appendApplicationSectionToMenu:(NSMenu *)menu;
 - (void)appendSnippetDictionaries:(NSArray<NSDictionary *> *)snippets folderIdentifier:(NSString *)folder toMenu:(NSMenu *)menu;
@@ -63,5 +64,31 @@
     for (NSMenuItem *row in menu.itemArray) { XCTAssertNil(row.view); if(row.action) [actions addObject:NSStringFromSelector(row.action)]; }
     XCTAssertTrue([actions containsObject:@"openPreferences:"]); XCTAssertTrue([actions containsObject:@"openSnippetEditor:"]);
     XCTAssertTrue([actions containsObject:@"terminate:"]); XCTAssertEqual(menu.itemArray.lastObject.target,NSApp);
+}
+- (void)testLongUnicodeTemplateTitleFitsNativeMenuWithoutChangingIdentity {
+    NSString *title = [@"株式会社👩🏽‍💻 長いタイトル\t" stringByPaddingToLength:1000 withString:@"部署名と担当者名👩🏽‍💻" startingAtIndex:0];
+    RCMenuManager *manager = [RCMenuManager new]; NSMenu *menu = [NSMenu new];
+    [manager appendSnippetDictionaries:@[@{@"identifier":@"long-id",@"title":title,@"content":@"full body",@"enabled":@YES}]
+                      folderIdentifier:@"folder-id" toMenu:menu];
+    NSMenuItem *item = menu.itemArray.firstObject;
+    XCTAssertTrue([item.title containsString:@"\n"]);
+    XCTAssertEqualObjects([item.title stringByReplacingOccurrencesOfString:@"\n" withString:@""],
+        [title stringByReplacingOccurrencesOfString:@"\t" withString:@" "]);
+    XCTAssertGreaterThan(menu.size.height,40);
+    XCTAssertEqualObjects(item.accessibilityLabel,title);
+    XCTAssertLessThanOrEqual(menu.size.width,420);
+    XCTAssertTrue([[item.representedObject allValues] containsObject:@"long-id"]);
+    XCTAssertEqualObjects(item.accessibilityHelp,@"full body");
+}
+- (void)testPopupReservesFullHeightNearBottomAndHandlesOffsetScreens {
+    RCMenuManager *manager = [RCMenuManager new];
+    NSRect screen = NSMakeRect(-1600,100,1600,900);
+    NSPoint bottom = [manager popupLocationForMenuSize:NSMakeSize(420,400) mouse:NSMakePoint(-20,110) visibleFrame:screen];
+    XCTAssertGreaterThanOrEqual(bottom.y - 400, NSMinY(screen)+8);
+    XCTAssertLessThanOrEqual(bottom.x + 420, NSMaxX(screen)-8);
+    NSPoint middle = [manager popupLocationForMenuSize:NSMakeSize(420,200) mouse:NSMakePoint(-1000,700) visibleFrame:screen];
+    XCTAssertEqual(middle.x,-1000); XCTAssertEqual(middle.y,700);
+    NSPoint tall = [manager popupLocationForMenuSize:NSMakeSize(420,2000) mouse:NSMakePoint(-1000,110) visibleFrame:screen];
+    XCTAssertEqual(tall.y,NSMaxY(screen)-8);
 }
 @end
