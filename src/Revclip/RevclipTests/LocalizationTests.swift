@@ -24,7 +24,7 @@ final class LocalizationTests: XCTestCase {
                 XCTAssertFalse(result.isEmpty, "\(language): \(key)")
                 XCTAssertEqual(arguments(value), arguments(result), "\(language): \(key)")
             }
-            for nib in ["MainMenu", "RCGeneralPreferencesView", "RCTypePreferencesView", "RCShortcutsPreferencesView", "RCUpdatesPreferencesView", "RCBetaPreferencesView"] {
+            for nib in ["MainMenu", "RCGeneralPreferencesView", "RCTypePreferencesView", "RCShortcutsPreferencesView", "RCUpdatesPreferencesView"] {
                 let url = try XCTUnwrap(bundle.resourceURL?.appendingPathComponent("\(language).lproj/\(nib).strings"))
                 XCTAssertFalse(try strings(at: url).isEmpty, "\(language): \(nib)")
             }

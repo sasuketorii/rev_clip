@@ -65,7 +65,8 @@
     NSWindow *window = controller.window;
     NSRect frame = window.frame;
     XCTAssertNil(window.toolbar);
-    for (NSString *tab in @[@"general", @"appearance", @"menu", @"type", @"exclude", @"shortcuts", @"updates", @"beta", @"panic", @"general", @"menu"]) {
+    XCTAssertFalse([[controller valueForKey:@"tabIdentifiers"] containsObject:@"beta"]);
+    for (NSString *tab in @[@"general", @"appearance", @"menu", @"type", @"exclude", @"shortcuts", @"updates", @"panic", @"general", @"menu"]) {
         [controller showTab:tab];
         [window.contentView layoutSubtreeIfNeeded];
         XCTAssertTrue(NSEqualRects(frame, window.frame));

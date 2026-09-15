@@ -11,7 +11,6 @@
 #import "RCPreferencesWindowController.h"
 #import "Revclip-Swift.h"
 
-#import "RCBetaPreferencesViewController.h"
 #import "RCExcludePreferencesViewController.h"
 #import "RCGeneralPreferencesViewController.h"
 #import "RCMenuPreferencesViewController.h"
@@ -26,7 +25,6 @@ NSString * const RCPreferencesTabType = @"type";
 NSString * const RCPreferencesTabExclude = @"exclude";
 NSString * const RCPreferencesTabShortcuts = @"shortcuts";
 NSString * const RCPreferencesTabUpdates = @"updates";
-NSString * const RCPreferencesTabBeta = @"beta";
 NSString * const RCPreferencesTabPanic = @"panic";
 static NSString * const RCPreferencesTabAppearance = @"appearance";
 
@@ -49,7 +47,6 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 @property (nonatomic, strong, nullable) RCExcludePreferencesViewController *excludeViewController;
 @property (nonatomic, strong, nullable) RCShortcutsPreferencesViewController *shortcutsViewController;
 @property (nonatomic, strong, nullable) RCUpdatesPreferencesViewController *updatesViewController;
-@property (nonatomic, strong, nullable) RCBetaPreferencesViewController *betaViewController;
 @property (nonatomic, strong, nullable) RCPanicPreferencesViewController *panicViewController;
 @property (nonatomic, strong) NSViewController *appearanceViewController;
 @property (nonatomic, assign) BOOL centeredOnFirstShow;
@@ -97,7 +94,6 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
         self.excludeViewController = nil;
         self.shortcutsViewController = nil;
         self.updatesViewController = nil;
-        self.betaViewController = nil;
         self.panicViewController = nil;
         self.appearanceViewController = nil;
         self.window.title = RCLocalizedString(@"Preferences", nil);
@@ -317,7 +313,6 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
         RCPreferencesTabExclude,
         RCPreferencesTabShortcuts,
         RCPreferencesTabUpdates,
-        RCPreferencesTabBeta,
         RCPreferencesTabPanic,
     ];
 }
@@ -371,12 +366,6 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
         return self.updatesViewController;
     }
 
-    if ([tabIdentifier isEqualToString:RCPreferencesTabBeta]) {
-        if (self.betaViewController == nil) {
-            self.betaViewController = [[RCBetaPreferencesViewController alloc] initWithNibName:@"RCBetaPreferencesView" bundle:nil];
-        }
-        return self.betaViewController;
-    }
 
     if ([tabIdentifier isEqualToString:RCPreferencesTabPanic]) {
         if (self.panicViewController == nil) {
@@ -408,9 +397,6 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
     if ([tabIdentifier isEqualToString:RCPreferencesTabUpdates]) {
         return RCLocalizedString(@"Updates", nil);
     }
-    if ([tabIdentifier isEqualToString:RCPreferencesTabBeta]) {
-        return RCLocalizedString(@"Beta", nil);
-    }
     if ([tabIdentifier isEqualToString:RCPreferencesTabPanic]) {
         return RCLocalizedString(@"Panic", nil);
     }
@@ -436,9 +422,6 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
     }
     if ([tabIdentifier isEqualToString:RCPreferencesTabUpdates]) {
         return @"arrow.triangle.2.circlepath";
-    }
-    if ([tabIdentifier isEqualToString:RCPreferencesTabBeta]) {
-        return @"testtube.2";
     }
     if ([tabIdentifier isEqualToString:RCPreferencesTabPanic]) {
         return @"exclamationmark.triangle";

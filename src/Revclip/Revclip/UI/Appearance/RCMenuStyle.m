@@ -70,11 +70,11 @@
         image = self.tintedImage;
     }
     BOOL historyRow = [NSStringFromSelector(item.action) isEqualToString:@"selectClipMenuItem:"];
-    CGFloat imageWidth = image ? MIN(100, image.size.width) : 0;
-    CGFloat imageSlot = historyRow ? 100 : imageWidth;
+    CGFloat imageWidth = image ? MIN(56, image.size.width) : 0;
+    CGFloat imageSlot = historyRow ? 56 : imageWidth;
     CGFloat leading = 16;
     if (image) {
-        CGFloat scale = MIN(1, MIN(100 / MAX(1,image.size.width),32 / MAX(1,image.size.height)));
+        CGFloat scale = MIN(1, MIN(56 / MAX(1,image.size.width),32 / MAX(1,image.size.height)));
         NSSize size = NSMakeSize(image.size.width*scale,image.size.height*scale);
         NSRect rect = NSMakeRect(leading,(NSHeight(self.bounds)-size.height)/2,size.width,size.height);
         [image drawInRect:rect fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:item.enabled ? 1 : 0.4 respectFlipped:YES hints:nil];
@@ -82,15 +82,15 @@
     if (imageSlot) { leading += imageSlot + 8; }
     NSDictionary *attributes = @{NSFontAttributeName:font, NSForegroundColorAttributeName:text};
     CGFloat height = [item.title sizeWithAttributes:attributes].height;
-    [item.title drawInRect:NSMakeRect(leading,(NSHeight(self.bounds)-height)/2,NSWidth(self.bounds)-leading-36,height) withAttributes:attributes];
+    [item.title drawInRect:NSMakeRect(leading,(NSHeight(self.bounds)-height)/2,NSWidth(self.bounds)-leading-(item.hasSubmenu || item.keyEquivalent.length ? 32 : 16),height) withAttributes:attributes];
     if (item.hasSubmenu) {
         if (![self.arrowColor isEqual:text]) {
             self.arrowColor = text;
             NSImage *symbol = [NSImage imageWithSystemSymbolName:@"chevron.right" accessibilityDescription:nil];
-            NSImageSymbolConfiguration *configuration = [[NSImageSymbolConfiguration configurationWithPointSize:12 weight:NSFontWeightSemibold] configurationByApplyingConfiguration:[NSImageSymbolConfiguration configurationWithPaletteColors:@[text]]];
+            NSImageSymbolConfiguration *configuration = [[NSImageSymbolConfiguration configurationWithPointSize:10 weight:NSFontWeightSemibold] configurationByApplyingConfiguration:[NSImageSymbolConfiguration configurationWithPaletteColors:@[text]]];
             self.arrowImage = [symbol imageWithSymbolConfiguration:configuration];
         }
-        [self.arrowImage drawInRect:NSMakeRect(NSWidth(self.bounds)-24,(NSHeight(self.bounds)-16)/2,16,16) fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1 respectFlipped:YES hints:nil];
+        [self.arrowImage drawInRect:NSMakeRect(NSWidth(self.bounds)-20,(NSHeight(self.bounds)-10)/2,6,10) fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1 respectFlipped:YES hints:nil];
     } else if (item.keyEquivalent.length) {
         NSString *key = [@"⌘" stringByAppendingString:item.keyEquivalent.uppercaseString];
         [key drawAtPoint:NSMakePoint(NSWidth(self.bounds)-[key sizeWithAttributes:attributes].width-12,(NSHeight(self.bounds)-height)/2) withAttributes:attributes];
@@ -123,7 +123,7 @@
     if (!row) {
         NSSize textSize = [item.title sizeWithAttributes:@{NSFontAttributeName:[NSFont menuFontOfSize:0]}];
         BOOL historyRow = [NSStringFromSelector(item.action) isEqualToString:@"selectClipMenuItem:"];
-        CGFloat width = MIN(560, MAX(220, textSize.width + (historyRow ? 108 : item.image ? MIN(100,item.image.size.width)+8 : 0) + 64));
+        CGFloat width = MIN(560, MAX(220, textSize.width + (historyRow ? 64 : item.image ? MIN(56,item.image.size.width)+8 : 0) + (item.hasSubmenu || item.keyEquivalent.length ? 48 : 32)));
         row = [[RCStyledMenuRow alloc] initWithFrame:NSMakeRect(0,0,width,item.isSeparatorItem ? 12 : MAX(historyRow ? 42 : 28,MAX(textSize.height+10,item.image ? MIN(32,item.image.size.height)+10 : 0)))];
         row.autoresizingMask = NSViewWidthSizable;
         row.item = item;

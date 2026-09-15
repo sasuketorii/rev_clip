@@ -24,7 +24,6 @@ extern NSString * const RCPreferencesTabType;
 extern NSString * const RCPreferencesTabExclude;
 extern NSString * const RCPreferencesTabShortcuts;
 extern NSString * const RCPreferencesTabUpdates;
-extern NSString * const RCPreferencesTabBeta;
 extern NSString * const RCPreferencesTabPanic;
 
 NS_ASSUME_NONNULL_END
