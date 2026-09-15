@@ -28,7 +28,7 @@
 
 ## 公開手順
 
-1. `src/Revclip/project.yml` の `CFBundleShortVersionString` と `CFBundleVersion` を更新します。現在のワークフローは `0.0.N` / build `N` の対応を検査します。
+1. `src/Revclip/project.yml` の `CFBundleShortVersionString` と `CFBundleVersion` を更新します。ビルド番号は独立した正整数の連番です。タグとのバージョン一致と、配布済みappcastより大きいビルド番号であることを検査します。
 2. `make -C src/Revclip setup` と `make -C src/Revclip test` を実行し、実アプリの基本操作を確認します。
 3. バージョン変更をコミットしてmainへ反映し、一致する `v0.0.N` タグをpushします。
 4. Releaseワークフローが署名、DMG作成、公証、Sparkle署名、appcast生成、GitHub Releaseへの添付まで成功したことを確認します。

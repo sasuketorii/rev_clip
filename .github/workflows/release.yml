@@ -107,7 +107,6 @@ jobs:
         run: |
           set -euo pipefail
           TAG_VERSION="${GITHUB_REF_NAME#v}"
-          TAG_PATCH=$(echo "$TAG_VERSION" | cut -d. -f3)
           YML_SHORT=$(sed -nE 's/^[[:space:]]*CFBundleShortVersionString:[[:space:]]*"([^"]+)".*/\1/p' project.yml | head -n1)
           YML_BUILD=$(sed -nE 's/^[[:space:]]*CFBundleVersion:[[:space:]]*"([^"]+)".*/\1/p' project.yml | head -n1)
 
@@ -125,8 +124,8 @@ jobs:
             echo "::error::project.yml CFBundleShortVersionString ($YML_SHORT) != tag ($TAG_VERSION)"
             ERRORS=1
           fi
-          if [[ "$YML_BUILD" != "$TAG_PATCH" ]]; then
-            echo "::error::project.yml CFBundleVersion ($YML_BUILD) != expected ($TAG_PATCH)"
+          if [[ ! "$YML_BUILD" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::CFBundleVersion must be a positive integer"
             ERRORS=1
           fi
           if [[ "$ERRORS" -ne 0 ]]; then
@@ -134,7 +133,11 @@ jobs:
             echo "Fix: Update CFBundleShortVersionString and CFBundleVersion in project.yml before tagging."
             exit 1
           fi
-          echo "Version validation passed: $TAG_VERSION (build $TAG_PATCH)"
+          PREVIOUS_FEED="${RUNNER_TEMP}/revclip-previous-appcast.xml"
+          curl --fail --silent --show-error --location --max-time 30 \
+            "https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/appcast.xml" -o "$PREVIOUS_FEED"
+          python3 -c 'import sys, xml.etree.ElementTree as E; versions = [int(n.text) for n in E.parse(sys.argv[1]).iter("{http://www.andymatuschak.org/xml-namespaces/sparkle}version")]; assert versions and int(sys.argv[2]) > max(versions), "Build must exceed the published build"' "$PREVIOUS_FEED" "$YML_BUILD"
+          echo "Version validation passed: $TAG_VERSION (build $YML_BUILD)"
 
       - name: Download Sparkle tools
         run: |
