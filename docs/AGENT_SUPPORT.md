@@ -31,7 +31,7 @@ not linked to a source checkout.
 ## Checking and updating from Agent Settings
 
 Opening Agent Settings or pressing Recheck runs `agent inspect` and displays
-installed status and pending updates from `installed` and `update_available`.
+installation status and pending updates from `state` (`current` / `managed`) and `update_available`.
 Inspection is read-only. It neither installs skills nor automatically overwrites
 an older copy when the app is upgraded.
 
@@ -128,16 +128,18 @@ path. A provider reports:
 
 - `detected`: its exact configuration base exists and could be opened without
   following symlinks. Ownership checks may still reject it.
-- `state`: `missing`, `installed`, `conflict`, or `unsupported`.
+- `state`: `missing`, `current`, `managed`, `conflict`, or `unsupported`.
 - `action`: `skipped`, `none` (inspection), `installed`, `updated`, `unchanged`,
   or `failed`.
 - `update_available`: whether a valid managed copy differs from the bundle;
   `null` if the bundle cannot be read. Present for supported, inspected targets.
 - `reason`: skip or failure details when applicable.
 
-`installed` means the on-disk management record and content hashes agree. It
-does not mean an agent loaded the skill. After a failed update with successful
-rollback, state may be `installed` while action is `failed`: the old copy remains.
+`current` means the validated on-disk copy matches the source bundle. `managed`
+means the on-disk management record and content hashes agree, but the copy differs
+from the source bundle or the source could not be read. Neither means an agent
+loaded the skill. After a failed update with successful rollback, state may be
+`managed` while action is `failed`: the old copy remains.
 Likewise a cleanup failure after publication is reported as a failure even if the
 new skill is installed. Inspect again to determine whether an update is pending.
 

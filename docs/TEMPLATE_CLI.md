@@ -102,7 +102,7 @@ History image previews load the hovered item's encrypted clipboard archive after
 the hover delay and downsample its saved image to at most 720 pixels per side.
 The full image is not decoded on the UI thread or retained in the preview cache.
 Opening the menu still uses small thumbnails; they are also the fallback when a
-saved full-resolution image is unavailable. Original user files are not reopened.
+saved full-resolution image is unavailable. For Finder file references, eligible local image files may be reopened for preview. If the source is unavailable, a saved thumbnail or image payload is used as a fallback; the file reference is not a backup of the original file.
 Moving off the row before the delay skips archive I/O. The bounded preview is
 cached for subsequent hovers (128 menu-cache entries / approximately 32 MiB).
 Cache invalidation rejects late image results, and Panic Erase also cancels link
