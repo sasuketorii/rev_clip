@@ -30,6 +30,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)reinitializeDatabase;
 
 // clip_items CRUD
+// Successful insert/reuse stores max(requested epoch milliseconds, greatest
+// retained update_time + 1). Recency therefore survives same-ms use, clock
+// rollback and reopening the DB without a separate sequence or migration.
+// Read clipItemWithDataHash: for the actual persisted time; input is unchanged.
+// Expiry also uses this logical time, so rollback can delay wall-clock expiry.
+// An exhausted signed 64-bit clock fails without modifying history.
 - (BOOL)insertClipItem:(NSDictionary *)clipDict;
 - (BOOL)updateClipItemUpdateTime:(NSString *)dataHash time:(NSInteger)updateTime;
 - (BOOL)deleteClipItemWithDataHash:(NSString *)dataHash;

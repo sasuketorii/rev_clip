@@ -196,6 +196,27 @@ static os_log_t RCClipboardServiceLog(void) {
     self.internalChangeCount = @(changeCount);
 }
 
+- (void)recordHistoryUseWithDataHash:(NSString *)dataHash {
+    NSAssert(NSThread.isMainThread, @"History restoration must complete on main");
+    // Serialize admission with stopMonitoring. Once accepted, successful use
+    // survives stop/quit and is included in the same drain as accepted captures.
+    @synchronized (self) {
+        if (!dataHash.length || self.captureSuspended ||
+            ![self boolPreferenceForKey:kRCPrefReorderClipsAfterPasting defaultValue:YES]) return;
+        NSString *selectedHash = [dataHash copy];
+        NSInteger useTime = [self currentTimestamp];
+        dispatch_async(self.monitoringQueue, ^{
+            dispatch_async(self.persistenceQueue, ^{
+                if ([RCPanicEraseService shared].isPanicInProgress) return;
+                RCDatabaseManager *databaseManager = [RCDatabaseManager shared];
+                // UPDATE, never INSERT. Clear drains this queue before deleting;
+                // independent expiry/deletion must not be undone by a late use.
+                [self updateExistingClipRecencyWithHash:selectedHash time:useTime databaseManager:databaseManager];
+            });
+        });
+    }
+}
+
 #pragma mark - Private: Monitor / Capture
 
 - (RCPrivacyService *)resolvedPrivacyService {
@@ -424,45 +445,33 @@ static os_log_t RCClipboardServiceLog(void) {
         return;
     }
 
-    RCClipItem *clipItem = [[RCClipItem alloc] initWithDictionary:clipDictionary];
+    NSDictionary *persistedRow = [databaseManager clipItemWithDataHash:dataHash];
+    RCClipItem *clipItem = persistedRow ? [[RCClipItem alloc] initWithDictionary:persistedRow] : nil;
     // G3-006: トリミングロジックは RCDataCleanService に一本化。
     // ここでは重複して trimHistoryIfNeeded を呼ばない。
     [[RCDataCleanService shared] scheduleDebouncedCleanup];
     [self postClipboardDidChangeNotificationWithClipItem:clipItem];
 }
 
-/// G3-014: shouldOverwrite / shouldReorder セマンティクス
-///
-/// shouldOverwrite (kRCPrefOverwriteSameHistory):
-///   YES — 同一ハッシュのクリップが再度コピーされた場合、既存レコードの
-///          update_time を更新して最新位置に移動（"上書き"）する。
-///   NO  — 既存レコードを更新しない。
-///
-/// shouldReorder (kRCPrefReorderClipsAfterPasting):
-///   YES — ペースト後に同一クリップを再利用した場合にも update_time を更新して
-///          リストの先頭に並べ替える。
-///   NO  — 並べ替えを行わない。
-///
-/// 両方が NO の場合、既存クリップに対しては一切の更新を行わずスキップする。
+// External identical copies obey overwrite only. History selection follows the
+// explicit successful-restore path above and obeys reorder only.
 - (void)handleExistingClipWithHash:(NSString *)dataHash
                       existingDict:(NSDictionary *)existingClipDict
                         updateTime:(NSInteger)updateTime
                    databaseManager:(RCDatabaseManager *)databaseManager {
-    BOOL shouldOverwrite = [self boolPreferenceForKey:kRCPrefOverwriteSameHistory defaultValue:YES];
-    BOOL shouldReorder = [self boolPreferenceForKey:kRCPrefReorderClipsAfterPasting defaultValue:YES];
+    if (![self boolPreferenceForKey:kRCPrefOverwriteSameHistory defaultValue:YES]) return;
+    [self updateExistingClipRecencyWithHash:dataHash time:updateTime databaseManager:databaseManager];
+}
 
-    if (!shouldOverwrite && !shouldReorder) {
-        return;
+- (void)updateExistingClipRecencyWithHash:(NSString *)dataHash time:(NSInteger)updateTime
+                       databaseManager:(RCDatabaseManager *)databaseManager {
+    if (![databaseManager updateClipItemUpdateTime:dataHash time:updateTime]) return;
+    // The DB can advance time beyond the requested wall clock to preserve order.
+    NSDictionary *persistedRow = [databaseManager clipItemWithDataHash:dataHash];
+    if (persistedRow) {
+        RCClipItem *updatedItem = [[RCClipItem alloc] initWithDictionary:persistedRow];
+        [self postClipboardDidChangeNotificationWithClipItem:updatedItem];
     }
-
-    if (![databaseManager updateClipItemUpdateTime:dataHash time:updateTime]) {
-        return;
-    }
-
-    NSMutableDictionary *updatedDict = [existingClipDict mutableCopy];
-    updatedDict[@"update_time"] = @(updateTime);
-    RCClipItem *updatedItem = [[RCClipItem alloc] initWithDictionary:updatedDict];
-    [self postClipboardDidChangeNotificationWithClipItem:updatedItem];
 }
 
 #pragma mark - Private: Filtering

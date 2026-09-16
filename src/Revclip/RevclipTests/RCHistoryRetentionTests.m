@@ -87,6 +87,52 @@
     XCTAssertTrue([self.db setupDatabase]);
     XCTAssertEqualObjects([[self.db fetchClipItemsWithLimit:2] valueForKey:@"data_hash"], expected);
 }
+- (void)insertRecencyFixture:(NSString *)hash time:(NSInteger)time {
+    NSString *path = [[RCUtilities clipDataDirectoryPath] stringByAppendingPathComponent:
+                      [NSUUID.UUID.UUIDString stringByAppendingPathExtension:@"rcclip"]];
+    XCTAssertTrue(([self.db insertClipItem:@{@"data_hash":hash, @"data_path":path, @"update_time":@(time)}]));
+}
+- (void)testSameMillisecondReuseWinsDisplayAndRetention {
+    [self insertRecencyFixture:@"A" time:1000];
+    [self insertRecencyFixture:@"B" time:1000];
+    XCTAssertTrue([self.db updateClipItemUpdateTime:@"A" time:1000]);
+    XCTAssertEqualObjects(([[self.db fetchClipItemsWithLimit:2] valueForKey:@"data_hash"]), (@[@"A", @"B"]));
+    XCTAssertGreaterThan([[self.db clipItemWithDataHash:@"A"][@"update_time"] longLongValue],
+                         [[self.db clipItemWithDataHash:@"B"][@"update_time"] longLongValue]);
+    NSArray *removed = [self.db trimClipItemsToLimit:1];
+    XCTAssertNotNil(removed);
+    XCTAssertEqualObjects(([removed valueForKey:@"dataHash"]), (@[@"B"]));
+    XCTAssertNotNil([self.db clipItemWithDataHash:@"A"]);
+}
+- (void)testClockRollbackRecencySurvivesReopenForReuseAndInsert {
+    [self insertRecencyFixture:@"A" time:2000];
+    [self insertRecencyFixture:@"B" time:2001];
+    [self.db closeDatabase];
+    XCTAssertTrue([self.db setupDatabase]);
+    XCTAssertTrue([self.db updateClipItemUpdateTime:@"A" time:1000]);
+    XCTAssertEqualObjects(([[self.db fetchClipItemsWithLimit:2] valueForKey:@"data_hash"]), (@[@"A", @"B"]));
+    [self.db closeDatabase];
+    XCTAssertTrue([self.db setupDatabase]);
+    [self insertRecencyFixture:@"C" time:500];
+    XCTAssertEqualObjects(([[self.db fetchClipItemsWithLimit:3] valueForKey:@"data_hash"]), (@[@"C", @"A", @"B"]));
+    NSArray *removed = [self.db trimClipItemsToLimit:2];
+    XCTAssertEqualObjects(([removed valueForKey:@"dataHash"]), (@[@"B"]));
+    [self.db closeDatabase];
+    XCTAssertTrue([self.db setupDatabase]);
+    XCTAssertEqualObjects(([[self.db fetchClipItemsWithLimit:2] valueForKey:@"data_hash"]), (@[@"C", @"A"]));
+    // Once wall time catches up, retain its normal epoch-millisecond value.
+    XCTAssertTrue([self.db updateClipItemUpdateTime:@"A" time:3000]);
+    XCTAssertEqualObjects([self.db clipItemWithDataHash:@"A"][@"update_time"], @3000);
+    XCTAssertFalse([self.db updateClipItemUpdateTime:@"missing" time:4000]);
+}
+- (void)testRecencyOverflowFailsWithoutMutatingHistory {
+    [self insertRecencyFixture:@"A" time:NSIntegerMax];
+    NSArray *before = [self.db fetchClipItemsWithLimit:10];
+    XCTAssertFalse([self.db updateClipItemUpdateTime:@"A" time:1]);
+    NSString *path = [[RCUtilities clipDataDirectoryPath] stringByAppendingPathComponent:@"overflow.rcclip"];
+    XCTAssertFalse(([self.db insertClipItem:@{@"data_hash":@"B", @"data_path":path, @"update_time":@1}]));
+    XCTAssertEqualObjects([self.db fetchClipItemsWithLimit:10], before);
+}
 - (void)testManualClearDeletesDatabaseRowsAndOnlyTheirFiles {
     [self seed]; RCMenuManager *menu = [RCMenuManager new];
     NSArray *paths = [menu clipDataFilePathsSnapshotForCurrentHistoryWithDatabaseManager:self.db];

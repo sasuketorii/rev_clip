@@ -1,6 +1,141 @@
-# 既存機能の品質検証 — 2026-09-16
+# 既存機能の品質検証 — 2026-09-16 追補
 
-## 1. 結論
+## 現在の結論と対象
+
+**履歴利用・同時刻の再利用順を修正し、隔離検証済みの配布候補を更新しました。製品全体の受入は未完了です。** 専用環境は利用者から「今は用意できない」と回答されています。通常セッションの一般クリップボード、Keychain項目、作業中アプリで実機試験を代替していません。公開タグ・Release・更新配信・インストール済み通常版／Demoの差し替えは行っていません。
+
+- 今回の開始SHA: `a36c71ef9d1139340ce098333225c1a5dd033c61`。
+- 候補版: 未公開 **0.1.7 (40)**。同じ版番号の初回候補とはバイナリが異なります。確定SHA、テスト対象ソースのダイジェスト、バイナリSHA-256は `.local/quality/20260916-followup/candidate-manifest.json` で結び付けます。
+- 環境: Apple M2 Max / 96 GB / macOS 26.6.2 / Xcode 26.6。比較はRelease arm64の隔離XCTestホストで実施。通常Releaseの起動・実挿入とは別です。
+- 新機能、UI再設計、既定値・監視間隔・権限要件の変更なし。初回の時間窓撤廃、取得／保存分離、貼り付け期限、終了ドレイン、データ同一性を維持。
+
+## 1. 履歴利用の経路と修正
+
+修正前のソースでは `RCMenuManager.selectClipMenuItem:` → `pasteClipWithDataHash:targetApplication:` → `RCPasteService.pasteClipData:toApplication:` の復元後に内部changeCountが登録され、取得側はその世代をスキップしていました。履歴利用を別途更新する呼び出しはなく、更新処理は外部再コピーの `handleExistingClipWithHash:...` に残っていました。
+
+隔離DBと認証付き暗号化原本を使い、**実際のメニュー選択 → 原本読み込み → 復元 → DB照会**で再現しました。ペーストボード書き込みとキー送信は合成境界です。実OSへの挿入成功とは扱いません。
+
+修正後の経路:
+
+```text
+RCMenuManager: 選んだ履歴の保存済みhashを渡す
+  → RCPasteService: 復元成功時のみ recordHistoryUseWithDataHash:
+  → RCClipboardService: 取得キュー → 保存キュー
+  → RCDatabaseManager: 既存行だけUPDATE
+  → DBに確定した更新日時で通知
+```
+
+テンプレートには履歴hashを渡しません。旧形式の保存済みhashも、復元した内容から推定し直さず選択した行の識別子を維持します。内部changeCount除外は維持し、監視を時間窓で止めません。
+
+| overwrite | reorder | 外部から同じ内容を再コピー | 履歴選択・復元成功 |
+| --- | --- | --- | --- |
+| OFF | OFF | 更新しない | 更新しない |
+| ON | OFF | 最新へ | 更新しない |
+| OFF | ON | 更新しない | 最新へ |
+| ON | ON | 最新へ | 最新へ |
+
+更新の境界は**クリップボードへの復元成功**です。自動ペーストOFFでも利用に数え、後のキー送信キャンセルは復元成功を取り消しません。失敗した書き込みは更新しません。送信完了時に二重更新しません。これは設定名・既存コメントの「再コピー」と「再利用」の区別に合わせた修正で、キー配送の成功通知を新設したものではありません。
+
+受付済みの更新は直後のstop／終了でもドレインします。stop後の新規受付は拒否し、Clearはドレイン後に削除します。削除された行へ遅延UPDATEしてもINSERTはしません。クリップ取得と同じキュー順を使います。`RCHistoryUseTests` で設定4通り×自動ペーストON/OFF、送信成功mock、取消、失敗、テンプレート、旧hash、停止・消去・通知時刻を確認しました。
+
+## 2. 同一ミリ秒と時計の巻き戻り
+
+基準側でAを挿入→Bを挿入→Bと同時刻でAを再利用すると、Bが先頭になり、件数1への整理でAが消えることを再現しました。時計の巻き戻りでも利用順が逆転しました。
+
+`RCDatabaseManager` のINSERT／UPDATE一文内で、`max(要求したepochミリ秒, 保持中の最大update_time + 1)` を保存します。SELECTと書き込みの間に他の接続を挟まず、再起動後もDBの最大値から続けます。DB形式・保存ファイル・既存行を一括変更しません。従来の同時刻行は `id DESC` を決定的な補助順として維持します。64bit上限なら安全に書き込み失敗とし、既存行を変更しません。
+
+`RCHistoryRetentionTests` でA/B/A、時計巻き戻り、DB再オープン、後続挿入、表示順、保持対象、上限時の非変更を確認しました。通知する時刻も保存後の行から読み直します（既存のスクリーンショット保存経路を含む）。
+
+**制約:** 更新日時を後退させないため、大きい時計巻き戻りでは期限削除が実時間より遅れる場合があります。件数整理は最後の更新順を守ります。期限用と順序用の別スキーマ導入は今回行いません。この制約は両READMEにも記載しています。
+
+## 3. 再現・回帰の実行結果
+
+| 実行 | 結果 | 証拠 |
+| --- | --- | --- |
+| 基準a36の製品コード＋最小再現テスト | 14件実行、6メソッドで15アサーション失敗。復元並び替え、再コピー設定、同一ms、巻き戻り等を再現 | `revclip-followup-red.log` / receipt / `baseline-tests/` |
+| 関連Release | 40件成功、9.116秒 | `revclip-followup-focused.log` / receipt / `focused.xcresult` |
+| Release全体（長い比較実験は別実行） | 288件成功、44.641秒 | `revclip-followup-release.log` / receipt / `release.xcresult` |
+| Debug全体（同上） | 288件成功、43.124秒 | `revclip-followup-debug.log` / receipt / `debug.xcresult` |
+| Release監視比較 | 54試行、実験テスト成功、166.477秒 | `revclip-followup-polling.log` / receipt / `polling.xcresult` |
+
+各harness receiptで実行中のソース変更なしを確認。新しい候補の全体試験には、前回の暗号化・内部世代・処理順・貼り付け先・終了・消去回帰も含みます。初回の271件成功だけを今回の根拠として使いません。差分の独立レビューでは具体的なP0/P1指摘なしですが、実機の未知問題が存在しないという意味ではありません。
+
+## 4. 500ms監視の同条件比較
+
+製品コードの監視間隔は500msを維持しました。**試験専用のサブクラス**で既存タイマーの間隔を変更し、取得処理は現行コードを通します。3案とも名前付きOSペーストボード、同じ合成文字列、コピー6回、開始位相73/137/311ms、終了待ち600msで比較しました。保存境界はメモリ上の記録で、暗号化ディスク保存の性能試験ではありません。
+
+- 固定500ms。
+- 変化を取得した後だけ250msへ短縮。
+- 変化を取得した後だけ100msへ短縮。
+- 短縮案は最後の観測から1秒、連続最大2秒。その後は最低1秒500msへ戻す。コピー生成側からのヒント・新規権限なし。
+- 3秒アイドルも各案3回。実行順を位相ごとに回転。CPU/RSSはXCTestホスト全体（計測処理込み）。
+
+### 捕捉数（各セル18回生成、3位相合算）
+
+| コピー間隔 | 固定500ms | 短時間250ms案 | 短時間100ms案 |
+| --- | ---: | ---: | ---: |
+| 1000ms | 18 | 18 | 18 |
+| 500ms | 18 | 18 | 18 |
+| 250ms | 11 | 16 | 17 |
+| 100ms | 6 | 7 | 11 |
+| 50ms | 4 | 4 | 4 |
+
+全案合計270生成 = 188観測・処理 + **82観測前の上書き**。停止時未観測0、**取得後の処理欠落0**。処理済みはディスク永続化済みという意味ではありません。
+
+### 呼び出しと負荷
+
+| 案 | コピー試行の監視回数 | 同CPU時間 / 経過時間 | 3秒×3アイドルの監視回数 / CPU時間 |
+| --- | ---: | --- | --- |
+| 固定500ms | 82 | 263.087ms / 46.295s | 18 / 30.974ms |
+| 短時間250ms | 131 | 277.836ms / 46.503s | 18 / 32.265ms |
+| 短時間100ms | 287 | 297.556ms / 46.464s | 17 / 30.794ms |
+
+RSSのサンプルピークは全案約73.9MiB。同じプロセスのウォーム状態・計測自体を含むため、案ごとのメモリ差や常駐消費電力を証明しません。各試行の取得待ちP50/P95、実時刻、CPU/RSSは `polling-comparison.json` と `polling-comparison.md` に保存しています。取得待ちはメニュー表示や原本読み込みを含む貼り付け時間ではありません。
+
+**判断:** 250/100ms間隔では改善が見られる一方、50msでは改善なし。50ms試行の監視回数だけが4→8→18へ増えています。初回観測より前に終わるコピー列は、観測後の短縮では回収できません。今回の短い合成結果だけで短縮案を既定採用しません。製品へ適用するなら、通常Releaseでの常駐・混合負荷確認と既定動作変更の承認を別途必要とします。常時極短間隔への変更や権限追加はしていません。
+
+## 5. 配布候補と未実施の実機受入
+
+通常ReleaseはDeveloper ID、DemoはApple Development署名で生成し、両方のarm64/x86_64、Hardened Runtime、ネストした署名、テスト用鍵注入シンボル・テストバンドルの不在を確認。108資源中107は同一で、残りのCLIは署名が異なりますが両アーキテクチャのコード部分は一致しました。ID・保存先・更新フィードの差は意図どおりです。
+
+候補DMGのチェックサム、読み取り専用マウント後の署名、内包アプリ171ファイルと元ビルドの一致を確認し、アンマウントしました。DMG SHA-256は `c3c8b983356b2f9434584a645396ed2e600828a4c1bb61dcd3979619c4cf2e85`。詳細は候補manifestに記録します。公証・Gatekeeper・インストール・Sparkle更新は未実施です。
+
+| 実機項目 | 今回の状態 |
+| --- | --- |
+| 通常Releaseの実挿入・対象切替・連続コピー・終了再起動 | 未実施：専用セッションなし |
+| メニュー開始→表示、項目選択→原本読込→対象への挿入のP50/P95 | 未測定 |
+| 10分アイドルCPU/RSS、30分混合操作 | 未測定 |
+| Intel実機・最低対応OS | 未確認 |
+
+再開に必要な本人操作は、専用Mac／VM、またはmacOSの「システム設定 → ユーザとグループ」でテスト用標準ユーザーを用意し、そのユーザーでログインすることです。そのセッションで作業環境を開き、必要なアクセシビリティ等のOS許可を本人が与えてから、合成データ・空の検証文書だけで通常Releaseを検証します。普段のセッションのクリップボード退避や権限変更で代替しません。候補SHAとmanifestを引き継ぎ、開始前に再確認します。
+
+## 6. 証拠・再実行
+
+今回の証拠は `.local/quality/20260916-followup/`（Git対象外）。初回の `.local/quality/20260916/` と混ぜません。比較用のテスト原本、log、receipt、xcresult、候補manifestを保存します。結果SHAとPR CIの結論もmanifestに記録します。実行指示Markdownは未追跡のままで、コミット・pushに含めません。
+
+```sh
+make -C src/Revclip setup
+# 隔離Release全体。長い比較実験は次の呼び出しで単独実行する。
+xcodebuild -project src/Revclip/Revclip.xcodeproj -scheme Revclip \
+  -configuration Release -destination 'platform=macOS' \
+  -derivedDataPath .local/quality/recheck \
+  ENABLE_TESTABILITY=YES SWIFT_ACTIVE_COMPILATION_CONDITIONS=RC_TESTING \
+  'GCC_PREPROCESSOR_DEFINITIONS=$(inherited) RC_TESTING=1' \
+  CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO \
+  -skip-testing:RevclipTests/RCClipboardPollingTests/testBoundedAdaptivePoliciesAgainstFixed500ms test
+# 上のskip-testingを以下へ差し替えると比較実験だけを実行できる:
+# -only-testing:RevclipTests/RCClipboardPollingTests/testBoundedAdaptivePoliciesAgainstFixed500ms
+python3 scripts/tests/polling_comparison.py PATH_TO_EXPERIMENT_LOG
+python3 scripts/check_demo_parity.py
+```
+
+以下は初回修正時の測定を残した記録です。今回のSHA・候補の実機受入や新たな性能改善の証拠へ流用しません。
+
+---
+
+# 初回修正の検証記録（a36c71e、追補前）
+
+## 初回記録の結論
 
 **条件付きの候補です。公開Release・タグ・更新配信は実施していません。**
 取得・保存・貼り付け待機・終了・履歴の同一性を修正しました。新機能やUI再設計はありません。隔離したRelease XCTestでは全271件が成功しましたが、通常Releaseによる実際の入力先への挿入、長時間の常駐性能、配布後の更新までを合格にしたものではありません。

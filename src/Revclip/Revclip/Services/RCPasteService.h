@@ -21,6 +21,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)pasteClipData:(RCClipData *)clipData
       toApplication:(nullable NSRunningApplication *)application;
 
+// History selection only: successful clipboard restoration counts as use even
+// with automatic paste disabled or a later key-event cancellation. Templates
+// must use the overload without historyDataHash.
+- (void)pasteClipData:(RCClipData *)clipData
+       toApplication:(nullable NSRunningApplication *)application
+     historyDataHash:(nullable NSString *)historyDataHash;
+
 // プレーンテキストとしてペースト
 - (void)pastePlainText:(NSString *)text;
 - (void)pastePlainText:(NSString *)text

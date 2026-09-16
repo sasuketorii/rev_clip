@@ -59,6 +59,14 @@ The default history limit is 30 items. When a new copy exceeds the configured co
 
 If you are concerned about retained copies, choose **Clear History** in the menu. It deletes Revclip’s history rows, saved archives, and thumbnails while preserving templates and settings. Neither automatic eviction nor Clear History guarantees secure erasure of backups, snapshots, or physical SSD remnants. Clear History does not empty the current macOS clipboard; new copies can be recorded after monitoring resumes, according to your settings.
 
+### History ordering in the unpublished 0.1.7 candidate
+
+This is candidate behavior, not a claim about the published 0.1.6 binary. External copies of the same content follow **Overwrite same history**; selecting an existing history item follows **Reorder after pasting**. With both off neither action changes order; with only overwrite on only external recopy moves the item; with only reorder on only history use moves it; with both on both do.
+
+History use is recorded when restoring the clipboard succeeds, including when automatic paste is off. Canceling later key delivery does not undo a successful restore. Failed writes do not update recency, and template use does not count as history use.
+
+Stored update times advance by at least 1ms beyond the retained maximum to preserve last-use order across same-millisecond operations and clock rollback. A large clock rollback can delay age-based expiry; count-based retention still follows last-update order. The default polling interval remains 500ms and cannot recover every copy overwritten before observation. See the [quality report](docs/QUALITY_REPORT.md) for measurements and unverified runtime acceptance.
+
 ### Bug-report privacy
 
 Bug reports require explicit consent to collect and send source information: IP address, region, network, language, timezone, app/OS versions, and User-Agent. Reports go through Cloudflare to the developer's Telegram group. History, templates, clipboard contents, logs, and screenshots are not automatically attached. Contact details are optional; failed submissions preserve the input and are not automatically retried. A timeout does not prove that the report was not delivered. The bot token stays in server-side secrets, not in the app.

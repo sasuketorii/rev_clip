@@ -78,6 +78,10 @@ static NSTimeInterval const kRCPasteActivationTimeout = 0.5;
 // One main-thread write and one resulting count; there is no time-window skip.
 // A failed write may still clear the board, so register its changed count too.
 - (void)performWrite:(BOOL (^ _Nullable)(NSPasteboard *))writer toApplication:(NSRunningApplication *)application {
+    [self performWrite:writer toApplication:application historyDataHash:nil];
+}
+- (void)performWrite:(BOOL (^ _Nullable)(NSPasteboard *))writer
+       toApplication:(NSRunningApplication *)application historyDataHash:(NSString *)historyDataHash {
     // One deadline covers preparation, the menu-close delay and activation.
     // Synchronous OS calls cannot be interrupted; recheck when they return.
     NSTimeInterval deadline = [self pasteClock] + kRCPasteMenuCloseDelay + kRCPasteActivationTimeout;
@@ -98,6 +102,9 @@ static NSTimeInterval const kRCPasteActivationTimeout = 0.5;
     BOOL wrote = writer ? writer(board) : YES;
     NSInteger count = board.changeCount;
     if (writer && (wrote || count != before)) [[self clipboardService] recordInternalPasteboardChangeCount:count];
+    // Use belongs to a successful restoration, not to eventual Cmd+V delivery.
+    if (writer && wrote && historyDataHash.length)
+        [[self clipboardService] recordHistoryUseWithDataHash:historyDataHash];
     if (!wrote || !send || !target || !allowedFront || !preparedBeforeDeadline || [self pasteClock] >= deadline) return;
     self.pendingPasteboard = board;
     self.expectedPasteboardChangeCount = count;
@@ -113,14 +120,25 @@ static NSTimeInterval const kRCPasteActivationTimeout = 0.5;
 }
 - (void)pasteClipData:(RCClipData *)clipData { [self pasteClipData:clipData toApplication:nil]; }
 - (void)pasteClipData:(RCClipData *)clipData toApplication:(NSRunningApplication *)application {
+    [self pasteClipData:clipData toApplication:application historyDataHash:nil];
+}
+- (void)pasteClipData:(RCClipData *)clipData toApplication:(NSRunningApplication *)application
+     historyDataHash:(NSString *)historyDataHash {
     if (!clipData) return;
+    NSString *selectedHash = [historyDataHash copy];
     if (!NSThread.isMainThread) {
-        dispatch_async(dispatch_get_main_queue(), ^{ [self pasteClipData:clipData toApplication:application]; }); return;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self pasteClipData:clipData toApplication:application historyDataHash:selectedHash];
+        });
+        return;
     }
     BOOL plain = [self boolPreferenceForKey:kRCBetaPastePlainText defaultValue:YES] && clipData.stringValue.length &&
         [self isPressedModifier:[self integerPreferenceForKey:kRCBetaPastePlainTextModifier defaultValue:0]];
-    if (plain) { [self pastePlainText:clipData.stringValue toApplication:application]; return; }
-    [self performWrite:^BOOL(NSPasteboard *board) { return [clipData writeToPasteboard:board]; } toApplication:application];
+    [self performWrite:^BOOL(NSPasteboard *board) {
+        if (!plain) return [clipData writeToPasteboard:board];
+        [board clearContents];
+        return [board setString:clipData.stringValue forType:NSPasteboardTypeString];
+    } toApplication:application historyDataHash:selectedHash];
 }
 - (void)pastePlainText:(NSString *)text { [self pastePlainText:text toApplication:nil]; }
 - (void)pastePlainText:(NSString *)text toApplication:(NSRunningApplication *)application {

@@ -22,6 +22,12 @@ NS_ASSUME_NONNULL_BEGIN
 // Only that generation is excluded; subsequent external copies remain eligible.
 - (void)recordInternalPasteboardChangeCount:(NSInteger)changeCount;
 
+// Main-thread history-selection context after a successful restore. Updates an
+// existing row only when reorder-after-pasting is enabled; shares capture's
+// acquisition/persistence ordering. Stop rejects new admissions; accepted use
+// survives stop and completes before clear/quit drain. Never captures payload.
+- (void)recordHistoryUseWithDataHash:(NSString *)dataHash;
+
 // 手動での最新クリップ取得
 - (void)captureCurrentClipboard;
 
