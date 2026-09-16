@@ -50,6 +50,14 @@
 - (BOOL)clipboardMayResumeAfterCancelledTermination { return self.mayResume; }
 @end
 
+// Keep the production timeout scheduler for the modal-loop regression. Only
+// the resume policy is injected, so no panic/clipboard singleton is consulted.
+@interface RCTerminationRealTimeoutDelegate : RCAppDelegate
+@end
+@implementation RCTerminationRealTimeoutDelegate
+- (BOOL)clipboardMayResumeAfterCancelledTermination { return YES; }
+@end
+
 @interface RCAppTerminationTests : XCTestCase
 @property(nonatomic, strong) RCTerminationDelegate *delegate;
 @property(nonatomic, strong) RCTerminationApplication *application;
@@ -154,5 +162,68 @@
     XCTAssertEqual(self.delegate.timeouts.count, 0u);
     XCTAssertEqual(self.application.replies.count, 0u);
     XCTAssertEqual(self.clipboard.stops, 0u);
+}
+// Do not use XCTest waits inside this loop: they could service the main queue
+// differently from AppKit's nested termination loop. A timer keeps the requested
+// mode alive; the monotonic deadline bounds the test even on the broken product.
+- (void)runNestedMode:(NSRunLoopMode)mode untilReplyOrTimeout:(NSTimeInterval)budget {
+    XCTAssertTrue(NSThread.isMainThread);
+    NSTimer *tick = [NSTimer timerWithTimeInterval:0.01 repeats:YES block:^(NSTimer *timer) {}];
+    [NSRunLoop.mainRunLoop addTimer:tick forMode:mode];
+    NSTimeInterval deadline = NSProcessInfo.processInfo.systemUptime + budget;
+    @try {
+        while (!self.application.replies.count && NSProcessInfo.processInfo.systemUptime < deadline) {
+            CFRunLoopRunInMode((__bridge CFStringRef)mode, 0.01, true);
+        }
+    } @finally { [tick invalidate]; }
+}
+- (void)testBackgroundDrainRepliesInsideNestedRunLoopHeldByMainDispatchBlock {
+    XCTestExpectation *outerReturned = [self expectationWithDescription:@"outer main block returned"];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        __block BOOL queuedMainBlockRan = NO;
+        dispatch_async(dispatch_get_main_queue(), ^{ queuedMainBlockRan = YES; });
+        XCTAssertEqual([self.delegate beginClipboardTerminationForApplication:(id)self.application
+                                                                   clipboard:(id)self.clipboard], NSTerminateLater);
+        XCTAssertEqual(self.application.replies.count, 0u);
+        dispatch_block_t drained = self.clipboard.completions.firstObject;
+        dispatch_semaphore_t submitted = dispatch_semaphore_create(0);
+        dispatch_async(dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0), ^{
+            drained();
+            dispatch_semaphore_signal(submitted);
+        });
+        // The drain callback must enqueue a reply and return without waiting
+        // for main; waiting here cannot invoke any UI or clipboard operation.
+        long completed = dispatch_semaphore_wait(submitted, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC));
+        XCTAssertEqual(completed, 0L, @"Background drain must not synchronously wait for main");
+        [self runNestedMode:NSModalPanelRunLoopMode untilReplyOrTimeout:1.0];
+        XCTAssertFalse(queuedMainBlockRan, @"Fixture must retain main-queue non-reentrancy");
+        XCTAssertEqualObjects(self.application.replies, (@[@YES]),
+                              @"Reply must arrive before the outer main dispatch block can return");
+        XCTAssertEqual(self.clipboard.starts, 0u);
+        [outerReturned fulfill];
+    });
+    [self waitForExpectations:@[outerReturned] timeout:4];
+    [self settle]; // allow the baseline's stranded reply to drain before teardown
+}
+- (void)testProductionTimeoutRepliesInsideModalRunLoopHeldByMainDispatchBlock {
+    RCTerminationRealTimeoutDelegate *delegate = [RCTerminationRealTimeoutDelegate new];
+    XCTestExpectation *outerReturned = [self expectationWithDescription:@"outer modal block returned"];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        __block BOOL queuedMainBlockRan = NO;
+        dispatch_async(dispatch_get_main_queue(), ^{ queuedMainBlockRan = YES; });
+        XCTAssertEqual([delegate beginClipboardTerminationForApplication:(id)self.application
+                                                               clipboard:(id)self.clipboard], NSTerminateLater);
+        XCTAssertEqual(self.application.replies.count, 0u);
+        // Leave the synthetic drain pending. Exercise the real five-second
+        // scheduler, including its run-loop mode, with a bounded test deadline.
+        [self runNestedMode:NSModalPanelRunLoopMode untilReplyOrTimeout:6.5];
+        XCTAssertFalse(queuedMainBlockRan, @"Modal reply must not rely on dispatch-main reentrancy");
+        XCTAssertEqualObjects(self.application.replies, (@[@NO]),
+                              @"Timeout must cancel while the modal termination loop is still running");
+        XCTAssertEqual(self.clipboard.starts, 1u);
+        [outerReturned fulfill];
+    });
+    [self waitForExpectations:@[outerReturned] timeout:9];
+    [self settle];
 }
 @end

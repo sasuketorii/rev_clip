@@ -151,7 +151,10 @@ static UTType *RCSnippetImportExportContentType(void) {
 }
 
 - (void)scheduleClipboardTerminationTimeout:(dispatch_block_t)timeout {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC), dispatch_get_main_queue(), timeout);
+    // terminate: can hold a main-dispatch block while AppKit runs its modal
+    // termination loop. The watchdog must not wait behind that same block.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC),
+                   dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), timeout);
 }
 
 - (BOOL)clipboardMayResumeAfterCancelledTermination {
@@ -173,7 +176,12 @@ static UTType *RCSnippetImportExportContentType(void) {
     void (^finish)(BOOL) = ^(BOOL drained) {
         // Even a synchronous test completion must reply after NSTerminateLater
         // has returned to AppKit. A late completion cannot approve another quit.
-        dispatch_async(dispatch_get_main_queue(), ^{
+        // A main-queue dispatch cannot reenter the block that called terminate:.
+        // Deliver through the run loop, explicitly including AppKit's deferred
+        // termination mode. Keep the asynchronous return and generation guard.
+        CFRunLoopRef mainRunLoop = CFRunLoopGetMain();
+        CFRunLoopPerformBlock(mainRunLoop,
+                              (__bridge CFArrayRef)@[NSRunLoopCommonModes, NSModalPanelRunLoopMode], ^{
             typeof(self) self = weakSelf;
             if (!self || !self.clipboardTerminationPending ||
                 self.clipboardTerminationGeneration != generation) return;
@@ -185,6 +193,7 @@ static UTType *RCSnippetImportExportContentType(void) {
             // succeeded. Timeout never cancels or discards accepted queue work.
             [application replyToApplicationShouldTerminate:drained];
         });
+        CFRunLoopWakeUp(mainRunLoop);
     };
     [self scheduleClipboardTerminationTimeout:^{ finish(NO); }];
     [clipboard flushQueueWithCompletion:^{ finish(YES); }];
