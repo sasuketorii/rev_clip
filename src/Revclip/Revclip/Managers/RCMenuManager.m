@@ -1509,7 +1509,7 @@ static os_log_t RCMenuManagerLog(void) {
 
 - (void)pasteClipWithDataHash:(NSString *)dataHash
             targetApplication:(nullable NSRunningApplication *)application {
-    if (dataHash.length == 0) {
+    if (dataHash.length == 0 || self.historyClearInProgress) {
         return;
     }
 
@@ -1530,7 +1530,7 @@ static os_log_t RCMenuManagerLog(void) {
         return;
     }
 
-    [[RCPasteService shared] pasteClipData:clipData toApplication:application];
+    [[RCPasteService shared] pasteClipData:clipData toApplication:application historyDataHash:dataHash];
 }
 
 #pragma mark - Actions

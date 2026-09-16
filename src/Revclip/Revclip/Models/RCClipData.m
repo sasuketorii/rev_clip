@@ -29,6 +29,46 @@ static NSString * const kRCClipDataTIFFDataKey = @"TIFFData";
 static NSString * const kRCClipDataPrimaryTypeKey = @"primaryType";
 static NSUInteger const kRCClipDataMaximumCollectionCount = 10000;
 
+static void RCIdentityWriteUInt64(CC_SHA256_CTX *context, uint64_t value) {
+    uint64_t encoded = CFSwapInt64HostToBig(value);
+    CC_SHA256_Update(context, &encoded, (CC_LONG)sizeof(encoded));
+}
+
+static void RCIdentityWriteData(CC_SHA256_CTX *context, NSData *data) {
+    RCIdentityWriteUInt64(context, (uint64_t)data.length);
+    const unsigned char *bytes = data.bytes;
+    NSUInteger remaining = data.length;
+    while (remaining > 0) {
+        CC_LONG chunk = (CC_LONG)MIN(remaining, (NSUInteger)UINT32_MAX);
+        CC_SHA256_Update(context, bytes, chunk);
+        bytes += chunk;
+        remaining -= chunk;
+    }
+}
+
+static void RCIdentityWriteString(CC_SHA256_CTX *context, NSString *value) {
+    RCIdentityWriteData(context, [value dataUsingEncoding:NSUTF8StringEncoding]);
+}
+
+static void RCIdentityWriteField(CC_SHA256_CTX *context, NSString *tag, NSData *value) {
+    RCIdentityWriteString(context, tag);
+    RCIdentityWriteUInt64(context, value != nil);
+    RCIdentityWriteData(context, value);
+}
+
+static void RCIdentityWriteArray(CC_SHA256_CTX *context, NSString *tag, NSArray *values, BOOL URLs) {
+    RCIdentityWriteString(context, tag);
+    RCIdentityWriteUInt64(context, values != nil);
+    RCIdentityWriteUInt64(context, (uint64_t)values.count);
+    for (id value in values) {
+        RCIdentityWriteString(context, URLs ? [(NSURL *)value absoluteString] : value);
+    }
+}
+
+static BOOL RCIdentityValuesEqual(id left, id right) {
+    return left == right || [left isEqual:right];
+}
+
 static os_log_t RCClipDataLog(void) {
     static os_log_t logger = nil;
     static dispatch_once_t onceToken;
@@ -153,6 +193,33 @@ static os_log_t RCClipDataLog(void) {
 #pragma mark - Hash / Title
 
 - (NSString *)dataHash {
+    if (self.stringValue == nil && self.HTMLData == nil && self.RTFData == nil
+        && self.RTFDData == nil && self.PDFData == nil && self.TIFFData == nil
+        && self.fileNames == nil && self.fileURLs == nil && self.URLString == nil
+        && self.primaryType == nil) {
+        return @"";
+    }
+
+    CC_SHA256_CTX context;
+    CC_SHA256_Init(&context);
+    RCIdentityWriteString(&context, @"Revclip.ClipIdentity.v2");
+    RCIdentityWriteField(&context, @"stringValue", [self.stringValue dataUsingEncoding:NSUTF8StringEncoding]);
+    RCIdentityWriteField(&context, @"HTMLData", self.HTMLData);
+    RCIdentityWriteField(&context, @"RTFData", self.RTFData);
+    RCIdentityWriteField(&context, @"RTFDData", self.RTFDData);
+    RCIdentityWriteField(&context, @"PDFData", self.PDFData);
+    RCIdentityWriteField(&context, @"TIFFData", self.TIFFData);
+    RCIdentityWriteArray(&context, @"fileNames", self.fileNames, NO);
+    RCIdentityWriteArray(&context, @"fileURLs", self.fileURLs, YES);
+    RCIdentityWriteField(&context, @"URLString", [self.URLString dataUsingEncoding:NSUTF8StringEncoding]);
+    RCIdentityWriteField(&context, @"primaryType", [self.primaryType dataUsingEncoding:NSUTF8StringEncoding]);
+
+    unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+    CC_SHA256_Final(digest, &context);
+    return [[self class] sha256HexForDigest:digest];
+}
+
+- (NSString *)legacyDataHash {
     CC_SHA256_CTX context;
     CC_SHA256_Init(&context);
 
@@ -228,8 +295,32 @@ static os_log_t RCClipDataLog(void) {
     if (![object isKindOfClass:[RCClipData class]]) {
         return NO;
     }
-    RCClipData *other = (RCClipData *)object;
-    return [[self dataHash] isEqualToString:[other dataHash]];
+    return [self hasSamePayloadAsClipData:(RCClipData *)object];
+}
+
+- (BOOL)hasSamePayloadAsClipData:(RCClipData *)other {
+    if (![other isKindOfClass:[RCClipData class]]) {
+        return NO;
+    }
+    if (!RCIdentityValuesEqual(self.stringValue, other.stringValue)
+        || !RCIdentityValuesEqual(self.HTMLData, other.HTMLData)
+        || !RCIdentityValuesEqual(self.RTFData, other.RTFData)
+        || !RCIdentityValuesEqual(self.RTFDData, other.RTFDData)
+        || !RCIdentityValuesEqual(self.PDFData, other.PDFData)
+        || !RCIdentityValuesEqual(self.TIFFData, other.TIFFData)
+        || !RCIdentityValuesEqual(self.fileNames, other.fileNames)
+        || !RCIdentityValuesEqual(self.URLString, other.URLString)
+        || !RCIdentityValuesEqual(self.primaryType, other.primaryType)
+        || (self.fileURLs == nil) != (other.fileURLs == nil)
+        || self.fileURLs.count != other.fileURLs.count) {
+        return NO;
+    }
+    for (NSUInteger index = 0; index < self.fileURLs.count; index++) {
+        if (!RCIdentityValuesEqual(self.fileURLs[index].absoluteString, other.fileURLs[index].absoluteString)) {
+            return NO;
+        }
+    }
+    return YES;
 }
 
 - (NSUInteger)hash {

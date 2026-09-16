@@ -10,6 +10,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class RCClipData;
+@class RCClipboardService;
 
 @interface RCPasteService : NSObject
 
@@ -20,6 +21,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)pasteClipData:(RCClipData *)clipData
       toApplication:(nullable NSRunningApplication *)application;
 
+// History selection only: successful clipboard restoration counts as use even
+// with automatic paste disabled or a later key-event cancellation. Templates
+// must use the overload without historyDataHash.
+- (void)pasteClipData:(RCClipData *)clipData
+       toApplication:(nullable NSRunningApplication *)application
+     historyDataHash:(nullable NSString *)historyDataHash;
+
 // プレーンテキストとしてペースト
 - (void)pastePlainText:(NSString *)text;
 - (void)pastePlainText:(NSString *)text
@@ -27,6 +35,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Cmd+Vキーイベントを送信
 - (void)sendPasteKeyStroke;
+
+// Overridable process/IO boundaries. Production calls and scheduled callbacks
+// run on main; tests replace all of these with in-memory fakes.
+- (NSPasteboard *)pasteboard;
+- (RCClipboardService *)clipboardService;
+- (nullable NSRunningApplication *)frontmostApplication;
+- (nullable id)focusedElementForApplication:(NSRunningApplication *)application;
+- (BOOL)activateApplication:(NSRunningApplication *)application;
+- (NSTimeInterval)pasteClock;
+- (void)scheduleAfterDelay:(NSTimeInterval)delay block:(dispatch_block_t)block;
 
 @end
 

@@ -30,8 +30,15 @@ NS_ASSUME_NONNULL_BEGIN
 // NSPasteboardからの作成
 + (instancetype)clipDataFromPasteboard:(NSPasteboard *)pasteboard;
 
-// データハッシュ生成（SHA256）
+// Version 2 identity (domain-separated SHA256, 64 hex characters).
+// Includes field presence, type, length and ordered collection boundaries.
+// An entirely unset payload returns an empty string.
 - (NSString *)dataHash;
+// Original identity for lookup of existing rows only; never trust it as equality.
+- (NSString *)legacyDataHash;
+// Compares every represented field directly, including primaryType and presence.
+// File URLs are compared by absoluteString, as in dataHash.
+- (BOOL)hasSamePayloadAsClipData:(nullable RCClipData *)other;
 
 // タイトル文字列（メニュー表示用）
 - (NSString *)title;

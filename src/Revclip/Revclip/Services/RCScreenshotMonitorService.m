@@ -394,10 +394,11 @@ static os_log_t RCScreenshotMonitorServiceLog(void) {
     NSDictionary *existingClipDict = [databaseManager clipItemWithDataHash:dataHash];
     if (existingClipDict != nil) {
         if ([databaseManager updateClipItemUpdateTime:dataHash time:updateTime]) {
-            NSMutableDictionary *updatedDict = [existingClipDict mutableCopy];
-            updatedDict[@"update_time"] = @(updateTime);
-            RCClipItem *updatedItem = [[RCClipItem alloc] initWithDictionary:updatedDict];
-            [self postClipboardDidChangeNotificationWithClipItem:updatedItem];
+            NSDictionary *stored = [databaseManager clipItemWithDataHash:dataHash];
+            if (stored) {
+                RCClipItem *updatedItem = [[RCClipItem alloc] initWithDictionary:stored];
+                [self postClipboardDidChangeNotificationWithClipItem:updatedItem];
+            }
         }
         return;
     }
@@ -474,9 +475,12 @@ static os_log_t RCScreenshotMonitorServiceLog(void) {
         return;
     }
 
-    RCClipItem *clipItem = [[RCClipItem alloc] initWithDictionary:clipDictionary];
     [[RCDataCleanService shared] scheduleDebouncedCleanup];
-    [self postClipboardDidChangeNotificationWithClipItem:clipItem];
+    NSDictionary *stored = [databaseManager clipItemWithDataHash:dataHash];
+    if (stored) {
+        RCClipItem *clipItem = [[RCClipItem alloc] initWithDictionary:stored];
+        [self postClipboardDidChangeNotificationWithClipItem:clipItem];
+    }
 }
 
 - (NSString *)generateThumbnailForImage:(NSImage *)image

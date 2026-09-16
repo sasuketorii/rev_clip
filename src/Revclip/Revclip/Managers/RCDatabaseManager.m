@@ -313,8 +313,11 @@ static os_log_t RCDatabaseManagerLog(void) {
 
     __block BOOL inserted = NO;
     [self.databaseQueue inDatabase:^(FMDatabase * _Nonnull db) {
-        inserted = [db executeUpdate:@"INSERT INTO clip_items (data_path, title, data_hash, primary_type, update_time, thumbnail_path, is_color_code) VALUES (?, ?, ?, ?, ?, ?, ?)"
-                     withArgumentsInArray:@[dataPath, title, dataHash, primaryType, updateTime, thumbnailPath, isColorCode]];
+        // Allocate recency in the write statement itself: another connection
+        // cannot interleave a write between reading MAX and storing the row.
+        // NULL on overflow deliberately fails the existing NOT NULL constraint.
+        inserted = [db executeUpdate:@"INSERT INTO clip_items (data_path, title, data_hash, primary_type, update_time, thumbnail_path, is_color_code) VALUES (?, ?, ?, ?, (SELECT CASE WHEN MAX(update_time) = 9223372036854775807 THEN NULL WHEN MAX(update_time) >= ? THEN MAX(update_time) + 1 ELSE ? END FROM clip_items), ?, ?)"
+                     withArgumentsInArray:@[dataPath, title, dataHash, primaryType, updateTime, updateTime, thumbnailPath, isColorCode]];
         if (!inserted) {
             int errorCode = db.lastErrorCode;
             int extendedErrorCode = db.lastExtendedErrorCode;
@@ -342,8 +345,8 @@ static os_log_t RCDatabaseManagerLog(void) {
 
     __block BOOL updated = NO;
     [self.databaseQueue inDatabase:^(FMDatabase * _Nonnull db) {
-        updated = [db executeUpdate:@"UPDATE clip_items SET update_time = ? WHERE data_hash = ?"
-               withArgumentsInArray:@[@(updateTime), dataHash]];
+        updated = [db executeUpdate:@"UPDATE clip_items SET update_time = (SELECT CASE WHEN MAX(update_time) = 9223372036854775807 THEN NULL WHEN MAX(update_time) >= ? THEN MAX(update_time) + 1 ELSE ? END FROM clip_items) WHERE data_hash = ?"
+               withArgumentsInArray:@[@(updateTime), @(updateTime), dataHash]];
         if (!updated) {
             [self logDatabaseError:db context:@"Failed to update clip_items.update_time"];
         } else if (db.changes == 0) {
@@ -438,7 +441,7 @@ static os_log_t RCDatabaseManagerLog(void) {
 
     __block NSMutableArray<NSDictionary *> *rows = [NSMutableArray array];
     [self.databaseQueue inDatabase:^(FMDatabase * _Nonnull db) {
-        FMResultSet *resultSet = [db executeQuery:@"SELECT id, data_path, title, data_hash, primary_type, update_time, thumbnail_path, is_color_code FROM clip_items ORDER BY update_time DESC LIMIT ?"
+        FMResultSet *resultSet = [db executeQuery:@"SELECT id, data_path, title, data_hash, primary_type, update_time, thumbnail_path, is_color_code FROM clip_items ORDER BY update_time DESC, id DESC LIMIT ?"
                              withArgumentsInArray:@[@(limit)]];
         if (!resultSet) {
             [self logDatabaseError:db context:@"Failed to fetch clip_items list"];

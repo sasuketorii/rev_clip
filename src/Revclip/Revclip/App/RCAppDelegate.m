@@ -39,9 +39,15 @@ static UTType *RCSnippetImportExportContentType(void) {
 }
 
 @interface RCAppDelegate ()
+@property(nonatomic) BOOL clipboardTerminationPending;
+@property(nonatomic) NSUInteger clipboardTerminationGeneration;
 
 - (void)presentSnippetImportExportError:(NSError *)error title:(NSString *)title;
 - (BOOL)promptMergeOptionReturningMerge:(BOOL *)merge;
+- (NSApplicationTerminateReply)beginClipboardTerminationForApplication:(NSApplication *)application
+                                                            clipboard:(RCClipboardService *)clipboard;
+- (void)scheduleClipboardTerminationTimeout:(dispatch_block_t)timeout;
+- (BOOL)clipboardMayResumeAfterCancelledTermination;
 
 @end
 
@@ -135,14 +141,58 @@ static UTType *RCSnippetImportExportContentType(void) {
 }
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
-    (void)sender;
+    if (NSClassFromString(@"XCTestCase") != nil) return NSTerminateNow;
+    if (self.clipboardTerminationPending) return NSTerminateLater;
     if ([RCPanicEraseService shared].isPanicInProgress) {
         return [RCPanicEraseService shared].isEraseAttemptActive ? NSTerminateCancel : NSTerminateNow;
     }
-    return [[RCSnippetEditorWindowController shared] saveChangesIfLoaded] ? NSTerminateNow : NSTerminateCancel;
+    if (![[RCSnippetEditorWindowController shared] saveChangesIfLoaded]) return NSTerminateCancel;
+    return [self beginClipboardTerminationForApplication:sender clipboard:RCClipboardService.shared];
+}
+
+- (void)scheduleClipboardTerminationTimeout:(dispatch_block_t)timeout {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC), dispatch_get_main_queue(), timeout);
+}
+
+- (BOOL)clipboardMayResumeAfterCancelledTermination {
+    return !RCPanicEraseService.shared.isPanicInProgress;
+}
+
+// Inject both boundaries so lifecycle tests never terminate their XCTest host or
+// start a production clipboard singleton. All state and replies live on main.
+- (NSApplicationTerminateReply)beginClipboardTerminationForApplication:(NSApplication *)application
+                                                            clipboard:(RCClipboardService *)clipboard {
+    if (!NSThread.isMainThread || !application || !clipboard) return NSTerminateCancel;
+    if (self.clipboardTerminationPending) return NSTerminateLater;
+    self.clipboardTerminationPending = YES;
+    NSUInteger generation = ++self.clipboardTerminationGeneration;
+    BOOL wasMonitoring = clipboard.isMonitoring;
+    [clipboard stopMonitoring];
+
+    __weak typeof(self) weakSelf = self;
+    void (^finish)(BOOL) = ^(BOOL drained) {
+        // Even a synchronous test completion must reply after NSTerminateLater
+        // has returned to AppKit. A late completion cannot approve another quit.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            typeof(self) self = weakSelf;
+            if (!self || !self.clipboardTerminationPending ||
+                self.clipboardTerminationGeneration != generation) return;
+            self.clipboardTerminationPending = NO;
+            if (!drained && wasMonitoring && [self clipboardMayResumeAfterCancelledTermination]) {
+                [clipboard startMonitoring];
+            }
+            // Flush is only a queue-drain barrier, not a claim that every write
+            // succeeded. Timeout never cancels or discards accepted queue work.
+            [application replyToApplicationShouldTerminate:drained];
+        });
+    };
+    [self scheduleClipboardTerminationTimeout:^{ finish(NO); }];
+    [clipboard flushQueueWithCompletion:^{ finish(YES); }];
+    return NSTerminateLater;
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
+    if (NSClassFromString(@"XCTestCase") != nil) return;
     [[RCSnippetCLIService shared] stop];
     (void)notification;
     [[RCScreenshotMonitorService shared] stopMonitoring];

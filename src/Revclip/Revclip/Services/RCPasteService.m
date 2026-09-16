@@ -6,9 +6,7 @@
 //
 
 #import "RCPasteService.h"
-
 #import <ApplicationServices/ApplicationServices.h>
-
 #import "RCAccessibilityService.h"
 #import "RCClipboardService.h"
 #import "RCClipData.h"
@@ -19,25 +17,19 @@ static NSTimeInterval const kRCPasteActivationPollInterval = 0.01;
 static NSTimeInterval const kRCPasteActivationTimeout = 0.5;
 
 @interface RCPasteService ()
-
-@property (nonatomic, assign) NSUInteger pasteGeneration;
-
+@property NSUInteger pasteGeneration;
+@property NSTimeInterval requestDeadline;
+@property NSInteger expectedPasteboardChangeCount;
+@property pid_t initialFrontPID;
+@property(strong) NSPasteboard *pendingPasteboard;
+@property(strong) NSRunningApplication *pendingTarget;
+@property(strong) id expectedFocusedElement;
 - (BOOL)isPressedModifier:(NSInteger)flag;
 - (BOOL)boolPreferenceForKey:(NSString *)key defaultValue:(BOOL)defaultValue;
 - (NSInteger)integerPreferenceForKey:(NSString *)key defaultValue:(NSInteger)defaultValue;
-- (void)writePlainTextToPasteboard:(NSString *)text;
-- (void)sendPasteKeyStrokeToApplication:(nullable NSRunningApplication *)application
-                        pasteGeneration:(NSUInteger)pasteGeneration;
-- (void)sendPasteKeyStrokeWhenApplicationIsReady:(nullable NSRunningApplication *)application
-                                        timeoutAt:(CFAbsoluteTime)timeoutAt
-                                  pasteGeneration:(NSUInteger)pasteGeneration;
-- (void)clearPastingInternallyFlagImmediatelyForGeneration:(NSUInteger)pasteGeneration;
-- (nullable NSRunningApplication *)pasteTargetResolvingApplication:(nullable NSRunningApplication *)application;
-
 @end
 
 @implementation RCPasteService
-
 + (instancetype)shared {
     static RCPasteService *sharedService = nil;
     static dispatch_once_t onceToken;
@@ -47,95 +39,165 @@ static NSTimeInterval const kRCPasteActivationTimeout = 0.5;
     return sharedService;
 }
 
-- (void)pasteClipData:(RCClipData *)clipData {
-    [self pasteClipData:clipData toApplication:nil];
+- (NSPasteboard *)pasteboard { return NSPasteboard.generalPasteboard; }
+- (RCClipboardService *)clipboardService { return RCClipboardService.shared; }
+- (NSRunningApplication *)frontmostApplication { return NSWorkspace.sharedWorkspace.frontmostApplication; }
+- (NSTimeInterval)pasteClock { return NSProcessInfo.processInfo.systemUptime; }
+- (void)scheduleAfterDelay:(NSTimeInterval)delay block:(dispatch_block_t)block {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_main_queue(), block);
+}
+- (BOOL)activateApplication:(NSRunningApplication *)application { return [application activateWithOptions:0]; }
+- (id)focusedElementForApplication:(NSRunningApplication *)application {
+    if (!application || application.terminated || application.processIdentifier <= 0) return nil;
+    AXUIElementRef app = AXUIElementCreateApplication(application.processIdentifier);
+    if (!app) return nil;
+    AXUIElementSetMessagingTimeout(app, 0.05f);
+    CFTypeRef focused = NULL;
+    AXError error = AXUIElementCopyAttributeValue(app, kAXFocusedUIElementAttribute, &focused);
+    CFRelease(app);
+    if (error != kAXErrorSuccess || !focused) { if (focused) CFRelease(focused); return nil; }
+    return CFBridgingRelease(focused);
+}
+- (BOOL)isUsableTarget:(NSRunningApplication *)target {
+    return target && !target.terminated && target.processIdentifier > 0 &&
+        target.processIdentifier != NSProcessInfo.processInfo.processIdentifier &&
+        ![target.bundleIdentifier isEqualToString:NSBundle.mainBundle.bundleIdentifier];
+}
+- (NSRunningApplication *)pasteTargetResolvingApplication:(NSRunningApplication *)application {
+    NSRunningApplication *target = application ?: [self frontmostApplication];
+    return [self isUsableTarget:target] ? target : nil;
+}
+- (void)finishGeneration:(NSUInteger)generation {
+    if (generation != self.pasteGeneration) return;
+    ++self.pasteGeneration;
+    self.pendingPasteboard = nil;
+    self.pendingTarget = nil;
+    self.expectedFocusedElement = nil;
 }
 
-- (void)pasteClipData:(RCClipData *)clipData
-      toApplication:(nullable NSRunningApplication *)application {
-    if (clipData == nil) {
-        return;
-    }
-
-    // G3-013: メインスレッド保証。メインスレッド以外から呼ばれた場合は dispatch_async で回す。
-    if (![NSThread isMainThread]) {
+// One main-thread write and one resulting count; there is no time-window skip.
+// A failed write may still clear the board, so register its changed count too.
+- (void)performWrite:(BOOL (^ _Nullable)(NSPasteboard *))writer toApplication:(NSRunningApplication *)application {
+    [self performWrite:writer toApplication:application historyDataHash:nil];
+}
+- (void)performWrite:(BOOL (^ _Nullable)(NSPasteboard *))writer
+       toApplication:(NSRunningApplication *)application historyDataHash:(NSString *)historyDataHash {
+    // One deadline covers preparation, the menu-close delay and activation.
+    // Synchronous OS calls cannot be interrupted; recheck when they return.
+    NSTimeInterval deadline = [self pasteClock] + kRCPasteMenuCloseDelay + kRCPasteActivationTimeout;
+    NSUInteger generation = ++self.pasteGeneration;
+    self.requestDeadline = deadline;
+    self.pendingTarget = nil; self.pendingPasteboard = nil; self.expectedFocusedElement = nil;
+    BOOL send = !writer || [self boolPreferenceForKey:kRCPrefInputPasteCommandKey defaultValue:YES];
+    NSRunningApplication *front = send ? [self frontmostApplication] : nil;
+    NSRunningApplication *target = send ? [self pasteTargetResolvingApplication:application ?: front] : nil;
+    // A stale menu target must not steal focus from a different external app.
+    BOOL allowedFront = front && (front.processIdentifier == target.processIdentifier ||
+        front.processIdentifier == NSProcessInfo.processInfo.processIdentifier);
+    id focus = target && allowedFront && [self pasteClock] < deadline
+        ? [self focusedElementForApplication:target] : nil;
+    BOOL preparedBeforeDeadline = [self pasteClock] < deadline;
+    NSPasteboard *board = [self pasteboard];
+    NSInteger before = board.changeCount;
+    BOOL wrote = writer ? writer(board) : YES;
+    NSInteger count = board.changeCount;
+    if (writer && (wrote || count != before)) [[self clipboardService] recordInternalPasteboardChangeCount:count];
+    // Use belongs to a successful restoration, not to eventual Cmd+V delivery.
+    if (writer && wrote && historyDataHash.length)
+        [[self clipboardService] recordHistoryUseWithDataHash:historyDataHash];
+    if (!wrote || !send || !target || !allowedFront || !preparedBeforeDeadline || [self pasteClock] >= deadline) return;
+    self.pendingPasteboard = board;
+    self.expectedPasteboardChangeCount = count;
+    self.pendingTarget = target;
+    self.expectedFocusedElement = focus;
+    self.initialFrontPID = front.processIdentifier;
+    [self scheduleAfterDelay:kRCPasteMenuCloseDelay block:^{
+        if (![self pendingGenerationIsValid:generation target:target]) { [self finishGeneration:generation]; return; }
+        if ([self pasteClock] >= deadline) { [self finishGeneration:generation]; return; }
+        if (!target.active && ![self activateApplication:target]) { [self finishGeneration:generation]; return; }
+        [self sendPasteKeyStrokeWhenApplicationIsReady:target timeoutAt:deadline pasteGeneration:generation];
+    }];
+}
+- (void)pasteClipData:(RCClipData *)clipData { [self pasteClipData:clipData toApplication:nil]; }
+- (void)pasteClipData:(RCClipData *)clipData toApplication:(NSRunningApplication *)application {
+    [self pasteClipData:clipData toApplication:application historyDataHash:nil];
+}
+- (void)pasteClipData:(RCClipData *)clipData toApplication:(NSRunningApplication *)application
+     historyDataHash:(NSString *)historyDataHash {
+    if (!clipData) return;
+    NSString *selectedHash = [historyDataHash copy];
+    if (!NSThread.isMainThread) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self pasteClipData:clipData toApplication:application];
+            [self pasteClipData:clipData toApplication:application historyDataHash:selectedHash];
         });
         return;
     }
-
-    // G3-004: 内部ペースト操作中フラグをセット（ClipboardService のポーリングで重複登録を防ぐ）
-    [RCClipboardService shared].isPastingInternally = YES;
-    NSUInteger currentPasteGeneration = ++self.pasteGeneration;
-
-    BOOL shouldSendPasteCommand = [self boolPreferenceForKey:kRCPrefInputPasteCommandKey defaultValue:YES];
-    BOOL pastePlainTextEnabled = [self boolPreferenceForKey:kRCBetaPastePlainText defaultValue:YES];
-    NSInteger plainTextModifier = [self integerPreferenceForKey:kRCBetaPastePlainTextModifier defaultValue:0];
-    if (pastePlainTextEnabled
-        && clipData.stringValue.length > 0
-        && [self isPressedModifier:plainTextModifier]) {
-        [self writePlainTextToPasteboard:clipData.stringValue];
-        if (!shouldSendPasteCommand) {
-            [self clearPastingInternallyFlagImmediatelyForGeneration:currentPasteGeneration];
-            return;
-        }
-        [self sendPasteKeyStrokeToApplication:[self pasteTargetResolvingApplication:application]
-                              pasteGeneration:currentPasteGeneration];
-        return;
-    }
-
-    BOOL wrote = [clipData writeToPasteboard:[NSPasteboard generalPasteboard]];
-    if (!wrote) {
-        [self clearPastingInternallyFlagAfterDelayForGeneration:currentPasteGeneration];
-        return;
-    }
-
-    if (!shouldSendPasteCommand) {
-        [self clearPastingInternallyFlagImmediatelyForGeneration:currentPasteGeneration];
-        return;
-    }
-
-    [self sendPasteKeyStrokeToApplication:[self pasteTargetResolvingApplication:application]
-                          pasteGeneration:currentPasteGeneration];
+    BOOL plain = [self boolPreferenceForKey:kRCBetaPastePlainText defaultValue:YES] && clipData.stringValue.length &&
+        [self isPressedModifier:[self integerPreferenceForKey:kRCBetaPastePlainTextModifier defaultValue:0]];
+    [self performWrite:^BOOL(NSPasteboard *board) {
+        if (!plain) return [clipData writeToPasteboard:board];
+        [board clearContents];
+        return [board setString:clipData.stringValue forType:NSPasteboardTypeString];
+    } toApplication:application historyDataHash:selectedHash];
 }
-
-- (void)pastePlainText:(NSString *)text {
-    [self pastePlainText:text toApplication:nil];
+- (void)pastePlainText:(NSString *)text { [self pastePlainText:text toApplication:nil]; }
+- (void)pastePlainText:(NSString *)text toApplication:(NSRunningApplication *)application {
+    if (!NSThread.isMainThread) {
+        dispatch_async(dispatch_get_main_queue(), ^{ [self pastePlainText:text toApplication:application]; }); return;
+    }
+    [self performWrite:^BOOL(NSPasteboard *board) {
+        [board clearContents];
+        return [board setString:text ?: @"" forType:NSPasteboardTypeString];
+    } toApplication:application];
 }
-
-- (void)pastePlainText:(NSString *)text
-       toApplication:(nullable NSRunningApplication *)application {
-    // G3-013: メインスレッド保証
-    if (![NSThread isMainThread]) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self pastePlainText:text toApplication:application];
-        });
+- (BOOL)pendingGenerationIsValid:(NSUInteger)generation target:(NSRunningApplication *)target {
+    if (generation != self.pasteGeneration || [self pasteClock] >= self.requestDeadline || self.pendingTarget != target || ![self isUsableTarget:target] ||
+        !self.pendingPasteboard || self.pendingPasteboard.changeCount != self.expectedPasteboardChangeCount) return NO;
+    NSRunningApplication *front = [self frontmostApplication];
+    if (!front || front.terminated || (front.processIdentifier != target.processIdentifier && front.processIdentifier != self.initialFrontPID)) return NO;
+    if ([self pasteClock] >= self.requestDeadline) return NO;
+    id focus = [self focusedElementForApplication:target];
+    if ([self pasteClock] >= self.requestDeadline) return NO;
+    // Some applications do not expose an AX focused element. Preserve their
+    // existing app-level paste support; compare element identity when available.
+    BOOL focusMatches = !self.expectedFocusedElement || (focus &&
+        CFEqual((__bridge CFTypeRef)focus, (__bridge CFTypeRef)self.expectedFocusedElement));
+    front = [self frontmostApplication];
+    return focusMatches && generation == self.pasteGeneration &&
+        self.pendingPasteboard.changeCount == self.expectedPasteboardChangeCount &&
+        front && !front.terminated && (front.processIdentifier == target.processIdentifier ||
+                                      front.processIdentifier == self.initialFrontPID) &&
+        [self pasteClock] < self.requestDeadline;
+}
+- (void)sendPasteKeyStrokeWhenApplicationIsReady:(NSRunningApplication *)application
+                                    timeoutAt:(CFAbsoluteTime)timeoutAt pasteGeneration:(NSUInteger)generation {
+    if ([self pasteClock] >= timeoutAt || ![self pendingGenerationIsValid:generation target:application]) { [self finishGeneration:generation]; return; }
+    if (application.active && [self frontmostApplication].processIdentifier == application.processIdentifier) {
+        // AX and workspace queries can take time; check the board again after them.
+        if (self.pendingPasteboard.changeCount == self.expectedPasteboardChangeCount && generation == self.pasteGeneration
+            && [self pasteClock] < self.requestDeadline)
+            [self sendPasteKeyStroke];
+        [self finishGeneration:generation];
         return;
     }
-
-    // G3-004: 内部ペースト操作中フラグをセット
-    [RCClipboardService shared].isPastingInternally = YES;
-    NSUInteger currentPasteGeneration = ++self.pasteGeneration;
-
-    BOOL shouldSendPasteCommand = [self boolPreferenceForKey:kRCPrefInputPasteCommandKey defaultValue:YES];
-
-    [self writePlainTextToPasteboard:text];
-
-    if (!shouldSendPasteCommand) {
-        [self clearPastingInternallyFlagImmediatelyForGeneration:currentPasteGeneration];
-        return;
-    }
-
-    [self sendPasteKeyStrokeToApplication:[self pasteTargetResolvingApplication:application]
-                          pasteGeneration:currentPasteGeneration];
+    if ([self pasteClock] >= timeoutAt) { [self finishGeneration:generation]; return; }
+    [self scheduleAfterDelay:kRCPasteActivationPollInterval block:^{
+        [self sendPasteKeyStrokeWhenApplicationIsReady:application timeoutAt:timeoutAt pasteGeneration:generation];
+    }];
 }
-
 - (void)sendPasteKeyStroke {
     if (![NSThread isMainThread]) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self sendPasteKeyStroke];
         });
+        return;
+    }
+
+    // A direct call uses the same bounded target/count checks, without writing
+    // or registering an internal clipboard change. The ready callback has a
+    // pending target and proceeds to event creation exactly once.
+    if (!self.pendingTarget) {
+        [self performWrite:nil toApplication:nil];
         return;
     }
 
@@ -155,12 +217,19 @@ static NSTimeInterval const kRCPasteActivationTimeout = 0.5;
 
     // G3-005: 両方のイベント作成が成功した場合のみ post する。
     // 片方だけ post するとキー入力が不完全になる。
-    if (keyDown != NULL && keyUp != NULL) {
+    NSRunningApplication *target = self.pendingTarget;
+    if (keyDown != NULL && keyUp != NULL
+        && [self pendingGenerationIsValid:self.pasteGeneration target:target]
+        && target.active
+        && [self frontmostApplication].processIdentifier == target.processIdentifier
+        && self.pendingPasteboard.changeCount == self.expectedPasteboardChangeCount) {
         CGEventSetFlags(keyDown, kCGEventFlagMaskCommand);
         CGEventSetFlags(keyUp, kCGEventFlagMaskCommand);
-        CGEventPost(kCGAnnotatedSessionEventTap, keyDown);
-        CGEventPost(kCGAnnotatedSessionEventTap, keyUp);
-    } else {
+        if ([self pasteClock] < self.requestDeadline) {
+            CGEventPost(kCGAnnotatedSessionEventTap, keyDown);
+            CGEventPost(kCGAnnotatedSessionEventTap, keyUp);
+        }
+    } else if (keyDown == NULL || keyUp == NULL) {
         NSLog(@"[RCPasteService] Failed to create keyboard events for paste keystroke.");
     }
 
@@ -175,77 +244,6 @@ static NSTimeInterval const kRCPasteActivationTimeout = 0.5;
 }
 
 #pragma mark - Private
-
-- (nullable NSRunningApplication *)pasteTargetResolvingApplication:(nullable NSRunningApplication *)application {
-    NSRunningApplication *target = application;
-    if (target == nil) {
-        target = [NSWorkspace sharedWorkspace].frontmostApplication;
-    }
-    if ([target.bundleIdentifier isEqualToString:NSBundle.mainBundle.bundleIdentifier]) {
-        return nil;
-    }
-    return target;
-}
-
-- (void)sendPasteKeyStrokeToApplication:(nullable NSRunningApplication *)application
-                        pasteGeneration:(NSUInteger)pasteGeneration {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kRCPasteMenuCloseDelay * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(), ^{
-        if (pasteGeneration != self.pasteGeneration) { return; }
-        CFAbsoluteTime timeoutAt = CFAbsoluteTimeGetCurrent() + kRCPasteActivationTimeout;
-        if (application != nil && !application.terminated) {
-            [application activateWithOptions:0];
-        }
-        [self sendPasteKeyStrokeWhenApplicationIsReady:application
-                                             timeoutAt:timeoutAt
-                                       pasteGeneration:pasteGeneration];
-    });
-}
-
-- (void)sendPasteKeyStrokeWhenApplicationIsReady:(nullable NSRunningApplication *)application
-                                        timeoutAt:(CFAbsoluteTime)timeoutAt
-                                  pasteGeneration:(NSUInteger)pasteGeneration {
-    if (pasteGeneration != self.pasteGeneration) { return; }
-    if (application == nil || application.terminated) {
-        [self clearPastingInternallyFlagImmediatelyForGeneration:pasteGeneration];
-        return;
-    }
-    if (application.active) {
-        [self sendPasteKeyStroke];
-        [self clearPastingInternallyFlagAfterDelayForGeneration:pasteGeneration];
-        return;
-    }
-
-    if (CFAbsoluteTimeGetCurrent() >= timeoutAt) {
-        [self clearPastingInternallyFlagImmediatelyForGeneration:pasteGeneration];
-        return;
-    }
-
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kRCPasteActivationPollInterval * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(), ^{
-        [self sendPasteKeyStrokeWhenApplicationIsReady:application
-                                             timeoutAt:timeoutAt
-                                       pasteGeneration:pasteGeneration];
-    });
-}
-
-// G3-004: ペースト操作完了後に isPastingInternally フラグをクリアする。
-// ClipboardService のポーリング間隔 (0.5s) より長い遅延で解除して
-// ポーリングが確実にスキップされるようにする。
-- (void)clearPastingInternallyFlagImmediatelyForGeneration:(NSUInteger)pasteGeneration {
-    if (self.pasteGeneration == pasteGeneration) {
-        [RCClipboardService shared].isPastingInternally = NO;
-    }
-}
-
-- (void)clearPastingInternallyFlagAfterDelayForGeneration:(NSUInteger)pasteGeneration {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(), ^{
-        if (self.pasteGeneration == pasteGeneration) {
-            [RCClipboardService shared].isPastingInternally = NO;
-        }
-    });
-}
 
 - (BOOL)isPressedModifier:(NSInteger)flag {
     NSEventModifierFlags flags = [NSEvent modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask;
@@ -283,13 +281,6 @@ static NSTimeInterval const kRCPasteActivationTimeout = 0.5;
         return [(NSString *)rawValue integerValue];
     }
     return defaultValue;
-}
-
-- (void)writePlainTextToPasteboard:(NSString *)text {
-    NSString *safeText = text ?: @"";
-    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-    [pasteboard clearContents];
-    [pasteboard setString:safeText forType:NSPasteboardTypeString];
 }
 
 @end
