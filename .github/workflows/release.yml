@@ -342,6 +342,14 @@ jobs:
             ${{ env.APPCAST_PATH }}
           generate_release_notes: true
 
+      - name: Verify public release delivery
+        run: |
+          set -euo pipefail
+          BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "${APP_PATH}/Contents/Info.plist")
+          python3 scripts/verify_release_delivery.py \
+            --tag "${GITHUB_REF_NAME}" --build "${BUILD_NUMBER}" --sha "${GITHUB_SHA}" \
+            --output "${RUNNER_TEMP}/release-delivery.json"
+
       - name: Cleanup temporary keychain
         if: always()
         run: |

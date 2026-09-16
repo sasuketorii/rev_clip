@@ -19,6 +19,8 @@ jobs:
         run: command -v xcodegen || brew install xcodegen
       - name: Audit demo feature parity
         run: python3 scripts/check_demo_parity.py
+      - name: Test release delivery guard
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p test_release_delivery.py -v
       - name: Test agent installer and CLI
         run: |
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -p test_agent_install.py -v
