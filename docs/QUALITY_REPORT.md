@@ -12,7 +12,9 @@ v0.1.7を利用者の通常環境へインストール後、「終了できず�
 - 関連Release試験31件成功、全体Release試験290件成功（50.580秒）。既定監視と54条件の追加比較は前回から変更しておらず、今回のローカル全体試験では長時間の追加比較のみ除外。配布CIでは通常の全体検証を実行します。
 - Finderプレビュー修正はv0.1.6から含まれ、画像読込実装はv0.1.7でも同一。関連7件は成功していますが、今回の表示報告が終了待ち停止の結果か、別条件での不具合かは未確認です。
 
-今回の証拠は`.local/quality/20260916-termination/`と`revclip-termination-*.json`のreceiptです。v0.1.8 / build 41に通常版・Demo共通で適用します。下記はv0.1.7時点の記録で、同版を不具合なしと保証するものではありません。
+今回の証拠は`.local/quality/20260916-termination/manifest.json`と同ディレクトリのlog・receiptです。[mainのCI](https://github.com/sasuketorii/rev_clip/actions/runs/35057122868)と[Releaseワークフロー](https://github.com/sasuketorii/rev_clip/actions/runs/35057124900)は同じ対象SHAで成功しました。修正SHAは`b57676b3b9173f82a1e10761552a1bff1364d480`、公開タグは[v0.1.8](https://github.com/sasuketorii/rev_clip/releases/tag/v0.1.8)。通常版・Demoを0.1.8 / build 41へ更新しました。通常版は公証済み公開DMGから差し替え、起動後に読み取り専用の設定問い合わせへの応答を確認しました。停止中の旧通常版プロセスは、同じ終了待ちと保存キュー非実行を再採取した後にSIGTERMで終了。データの初期化・履歴の閲覧は行っていません。
+
+公開DMG SHA-256: `5a958f0c2119a167f7125a4c03fe558e546c845f186f2e8c15d35ef762db03f7`。公証チケット、Gatekeeper、内包署名、既存公開鍵によるSparkle署名、公開フィードのURL・サイズ・版を確認しました。署名済みバンドルと各インストール先の全ファイルも一致しています。利用者によるFinderプレビュー・コピー・終了の確認は別途必要です。下記はv0.1.7時点の記録で、同版を不具合なしと保証するものではありません。
 
 ## v0.1.7時点の結論と対象
 
