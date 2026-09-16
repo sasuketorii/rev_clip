@@ -54,6 +54,11 @@ static os_log_t RCMenuManagerLog(void) {
 @interface RCMenuManager () <NSMenuDelegate>
 @property (nonatomic, strong) NSHashTable<NSMenu *> *trackingMenus;
 @property BOOL pendingMenuRebuild;
+// Main-thread-owned; a newer hotkey request supersedes an unpresented one.
+@property (nonatomic) NSUInteger presentationRequest;
+// Main-thread-owned; advances each time the status menu's root opens, so a
+// preflight completion can only refresh the session that started it.
+@property (nonatomic) NSUInteger statusMenuSession;
 @property (nonatomic, copy) NSDictionary *menuPreferences;
 
 @property (nonatomic, strong, nullable) NSStatusItem *statusItem;
@@ -116,7 +121,13 @@ static os_log_t RCMenuManagerLog(void) {
                           image:(nullable NSImage *)image
                 submenuChevron:(BOOL)submenuChevron;
 - (void)setToolTip:(nullable NSString *)toolTip onMenuItem:(NSMenuItem *)item;
+- (nullable NSRunningApplication *)frontmostApplication;
 - (void)capturePasteTargetApplication;
+- (void)populateStatusMenuContents;
+- (void)prepareVisibleItemsOfOpenedMenu:(NSMenu *)menu;
+- (BOOL)statusMenuHasHighlightedItem;
+- (NSTimeInterval)secondsSinceLastUserInput;
+- (void)refreshStatusMenuAfterClipboardSynchronization;
 - (void)configureClipMenuItem:(NSMenuItem *)item clipItem:(RCClipItem *)clipItem loadThumbnail:(BOOL)loadThumbnail;
 - (nullable NSImage *)templateSymbolNamed:(NSString *)symbolName;
 
@@ -356,30 +367,123 @@ static os_log_t RCMenuManagerLog(void) {
 - (void)popUpStatusMenuFromHotKey {
     [self performOnMainThread:^{
         [self capturePasteTargetApplication];
-        [self applyStatusItemPreference];
+        [self presentHistoryAfterClipboardSynchronization:^{
+            [self applyStatusItemPreference];
 
-        if (self.statusItem != nil) {
-            [self rebuildMenuInternal];
-            NSPoint mouseLocation = [NSEvent mouseLocation];
-            [self.statusMenu popUpMenuPositioningItem:nil atLocation:[self popupLocationForMenu:self.statusMenu mouse:mouseLocation] inView:nil];
-        } else {
-            NSMenu *fallbackMenu = [self buildStandaloneMenu];
-            NSPoint mouseLocation = [NSEvent mouseLocation];
-            [fallbackMenu popUpMenuPositioningItem:nil atLocation:[self popupLocationForMenu:fallbackMenu mouse:mouseLocation] inView:nil];
-        }
+            if (self.statusItem != nil) {
+                [self rebuildMenuInternal];
+                [self popUpMenuAtMouseLocation:self.statusMenu];
+            } else {
+                [self popUpMenuAtMouseLocation:[self buildStandaloneMenu]];
+            }
+        }];
     }];
 }
 
 - (void)popUpHistoryMenuFromHotKey {
     [self performOnMainThread:^{
         [self capturePasteTargetApplication];
-        [self applyStatusItemPreference];
-        NSMenu *menu = [self menuWithTitle:@"History"];
-        [self appendClipHistorySectionToMenu:menu];
-        [menu addItem:[NSMenuItem separatorItem]];
-        [self appendApplicationSectionToMenu:menu];
-        [self popUpTransientMenu:menu];
+        [self presentHistoryAfterClipboardSynchronization:^{
+            [self applyStatusItemPreference];
+            NSMenu *menu = [self menuWithTitle:@"History"];
+            [self appendClipHistorySectionToMenu:menu];
+            [menu addItem:[NSMenuItem separatorItem]];
+            [self appendApplicationSectionToMenu:menu];
+            [self popUpTransientMenu:menu];
+        }];
     }];
+}
+
+// Copy immediately followed by the hotkey: the polling timer may not have
+// observed the new generation yet, and an open menu is never rebuilt (rows keep
+// their identity and position until it closes). So observe and persist the
+// current generation first, then build the list from the database.
+//
+// The completion is delivered through the run loop, not the main dispatch
+// queue: the pop-up runs AppKit's tracking loop, which must keep servicing
+// main-queue work (hover previews, favicons) and cannot do so from inside a
+// main-queue block. A request superseded by a newer press, or completing while
+// another menu already tracks, is dropped rather than stacking pop-ups; the
+// capture itself is never dropped. Nothing here waits on the main thread.
+- (void)presentHistoryAfterClipboardSynchronization:(dispatch_block_t)present {
+    NSUInteger request = ++self.presentationRequest;
+    NSTimeInterval requestedAt = NSProcessInfo.processInfo.systemUptime;
+    NSRunningApplication *invocationFront = [self frontmostApplication];
+    RCClipboardService *clipboard = [RCClipboardService shared];
+    NSUInteger lifecycle = clipboard.monitoringGeneration;
+    __weak typeof(self) weakSelf = self;
+    [clipboard observePendingClipboardChangeWithCompletion:^{
+        CFRunLoopRef mainRunLoop = CFRunLoopGetMain();
+        CFRunLoopPerformBlock(mainRunLoop,
+                              (__bridge CFArrayRef)@[NSRunLoopCommonModes, NSModalPanelRunLoopMode], ^{
+            typeof(self) self = weakSelf;
+            if (self == nil || request != self.presentationRequest || self.trackingMenus.count) return;
+            // Monitoring stops only for quit drain, clear history and panic
+            // erase. A stop, or a stop+restart, since the request invalidates it.
+            if (!clipboard.isMonitoring || clipboard.monitoringGeneration != lifecycle ||
+                self.historyClearInProgress) return;
+            // The application in front at the hotkey is the paste target. If the
+            // user moved on (or it quit) while the preflight ran, the intent is
+            // stale: never present, and never paste, to a switched application.
+            NSRunningApplication *front = [self frontmostApplication];
+            if (invocationFront.terminated || front.processIdentifier != invocationFront.processIdentifier) return;
+            // Escape, typing or a click after the hotkey (possible while a slow
+            // save runs) means the user moved on: never surface a late menu.
+            NSTimeInterval elapsed = NSProcessInfo.processInfo.systemUptime - requestedAt;
+            if ([self secondsSinceLastUserInput] < elapsed) return;
+            present();
+        });
+        CFRunLoopWakeUp(mainRunLoop);
+    }];
+}
+
+// Age of the newest key-down or mouse-down anywhere in the login session.
+// Session-wide event ages are permission-free and need no event monitor or tap;
+// the hotkey's own key-down predates the request it created.
+- (NSTimeInterval)secondsSinceLastUserInput {
+    CGEventType types[] = { kCGEventKeyDown, kCGEventLeftMouseDown, kCGEventRightMouseDown, kCGEventOtherMouseDown };
+    NSTimeInterval age = DBL_MAX;
+    for (size_t index = 0; index < sizeof(types) / sizeof(types[0]); index++) {
+        age = MIN(age, CGEventSourceSecondsSinceLastEventType(kCGEventSourceStateCombinedSessionState, types[index]));
+    }
+    return age;
+}
+
+// Native status-bar click. AppKit opens statusItem.menu synchronously on
+// mouse-down, before any preflight can run, so the native open, anchor,
+// geometry, press-drag-release, right-click and accessibility wiring are kept
+// untouched. Instead the same poll+persist preflight starts when the root
+// status menu opens. If a save landed while this same session is still open,
+// the list is refreshed in place, but only while nothing is highlighted and
+// no submenu tracks (nothing under the cursor or keyboard focus can move).
+// Otherwise the refresh stays deferred to close, exactly as before. A session
+// that closed, a stopped or restarted monitor, or a clear in progress leaves
+// the completion ignored; nothing here reopens or cancels a menu.
+- (void)refreshStatusMenuAfterClipboardSynchronization {
+    NSUInteger session = ++self.statusMenuSession;
+    RCClipboardService *clipboard = [RCClipboardService shared];
+    NSUInteger lifecycle = clipboard.monitoringGeneration;
+    __weak typeof(self) weakSelf = self;
+    [clipboard observePendingClipboardChangeWithCompletion:^{
+        // Main-queue delivery is ordered behind the save notification that set
+        // pendingMenuRebuild; the tracking loop of a natively opened menu
+        // services it. No nested loop runs from here.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            typeof(self) self = weakSelf;
+            if (self == nil || session != self.statusMenuSession || !self.pendingMenuRebuild) return;
+            if (!clipboard.isMonitoring || clipboard.monitoringGeneration != lifecycle ||
+                self.historyClearInProgress) return;
+            if (self.trackingMenus.count != 1 || ![self.trackingMenus containsObject:self.statusMenu] ||
+                [self statusMenuHasHighlightedItem]) return;
+            self.pendingMenuRebuild = NO;
+            [self populateStatusMenuContents];
+            [self prepareVisibleItemsOfOpenedMenu:self.statusMenu];
+        });
+    }];
+}
+
+- (BOOL)statusMenuHasHighlightedItem {
+    return self.statusMenu.highlightedItem != nil;
 }
 
 - (void)popUpSnippetMenuFromHotKey {
@@ -459,6 +563,11 @@ static os_log_t RCMenuManagerLog(void) {
 
     [self capturePasteTargetApplication];
     [self configureMenuForSimpleTransparentBackground:menu];
+    [self popUpMenuAtMouseLocation:menu];
+}
+
+// Every hotkey pop-up enters AppKit's tracking session here.
+- (void)popUpMenuAtMouseLocation:(NSMenu *)menu {
     NSPoint mouseLocation = [NSEvent mouseLocation];
     [menu popUpMenuPositioningItem:nil atLocation:[self popupLocationForMenu:menu mouse:mouseLocation] inView:nil];
 }
@@ -471,8 +580,16 @@ static os_log_t RCMenuManagerLog(void) {
     if (self.statusItem == nil) {
         return;
     }
-
     [self configureMenuForSimpleTransparentBackground:self.statusMenu];
+    [self populateStatusMenuContents];
+    self.statusItem.menu = self.statusMenu;
+}
+
+// Replaces the status menu's items only. It never touches the native status
+// item, the menu's appearance or attachment, so it is also safe for the
+// in-place refresh of a menu AppKit is tracking (callers guarantee that no
+// tracking menu has an active selection).
+- (void)populateStatusMenuContents {
     [self.statusMenu removeAllItems];
     [self appendClipHistorySectionToMenu:self.statusMenu];
     [self.statusMenu addItem:[NSMenuItem separatorItem]];
@@ -495,7 +612,6 @@ static os_log_t RCMenuManagerLog(void) {
 
     [self.statusMenu addItem:[NSMenuItem separatorItem]];
     [self appendApplicationSectionToMenu:self.statusMenu];
-    self.statusItem.menu = self.statusMenu;
 }
 
 - (NSMenu *)buildStandaloneMenu {
@@ -874,9 +990,18 @@ static os_log_t RCMenuManagerLog(void) {
         [self capturePasteTargetApplication];
     }
     [self configureMenuForSimpleTransparentBackground:menu];
+    [self prepareVisibleItemsOfOpenedMenu:menu];
+    if (menu == self.statusMenu) {
+        [self refreshStatusMenuAfterClipboardSynchronization];
+    }
+}
+
+// On-open treatment of a menu's direct children: native style, favicons and
+// thumbnails. Only the opened menu's direct children need thumbnails. Closed
+// history folders and startup menu construction perform no payload/thumbnail
+// I/O. The in-place refresh reuses this because menuWillOpen: is not re-sent.
+- (void)prepareVisibleItemsOfOpenedMenu:(NSMenu *)menu {
     [RCMenuStyle refreshMenu:menu];
-    // Only the opened menu's direct children need thumbnails. Closed history
-    // folders and startup menu construction perform no payload/thumbnail I/O.
     for (NSMenuItem *item in menu.itemArray) {
         [self loadFaviconForMenuItem:item];
         RCClipItem *clipItem = [self.clipItemsByMenuItem objectForKey:item];
@@ -900,8 +1025,12 @@ static os_log_t RCMenuManagerLog(void) {
     }];
 }
 
+- (nullable NSRunningApplication *)frontmostApplication {
+    return [NSWorkspace sharedWorkspace].frontmostApplication;
+}
+
 - (void)capturePasteTargetApplication {
-    NSRunningApplication *front = [NSWorkspace sharedWorkspace].frontmostApplication;
+    NSRunningApplication *front = [self frontmostApplication];
     NSString *ownBundle = NSBundle.mainBundle.bundleIdentifier;
     self.pasteTargetApplication = (front != nil && !front.terminated &&
         ![front.bundleIdentifier isEqualToString:ownBundle]) ? front : nil;

@@ -55,7 +55,7 @@ static os_log_t RCClipboardServiceLog(void) {
 @property (nonatomic, strong) dispatch_queue_t fileOperationQueue;
 @property (nonatomic, strong) dispatch_queue_t persistenceQueue;
 @property (atomic, assign) BOOL captureSuspended;
-@property (atomic, assign) NSUInteger monitoringGeneration;
+@property (atomic, readwrite, assign) NSUInteger monitoringGeneration;
 // Main-thread-owned pasteboard generation state.
 @property (nonatomic, strong, nullable) NSNumber *internalChangeCount;
 // Guarded by pendingCondition; includes the currently executing save.
@@ -185,6 +185,17 @@ static os_log_t RCClipboardServiceLog(void) {
 
 - (void)flushQueueWithCompletion:(void(^)(void))completion {
     dispatch_async(self.monitoringQueue, ^{
+        dispatch_async(self.persistenceQueue, ^{
+            if (completion) completion();
+        });
+    });
+}
+
+- (void)observePendingClipboardChangeWithCompletion:(void(^)(void))completion {
+    dispatch_async(self.monitoringQueue, ^{
+        // Same poll as the timer: honours stop, internal-generation exclusion and
+        // the cached generation, and keeps acquisition order ahead of persistence.
+        [self pollPasteboardOnMonitoringQueue];
         dispatch_async(self.persistenceQueue, ^{
             if (completion) completion();
         });

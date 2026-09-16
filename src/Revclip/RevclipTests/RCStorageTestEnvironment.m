@@ -85,8 +85,14 @@ static NSPasteboard *gRCTestPasteboard;
 - (void)setVolatileDomain:(NSDictionary *)domain forName:(NSString *)name { [self setPersistentDomain:domain forName:name]; }
 - (void)removeVolatileDomainForName:(NSString *)name { [self removePersistentDomainForName:name]; }
 - (NSArray *)volatileDomainNames { return [self persistentDomainNames]; }
-- (void)addSuiteNamed:(NSString *)name { (void)name; abort(); }
-- (void)removeSuiteNamed:(NSString *)name { (void)name; abort(); }
+// System frameworks running inside the test host (observed: HIToolbox's
+// IMKClient during input-method activation while a text field is being
+// edited) add their own "com.apple.*" suites to the standard defaults. Every
+// accessor above is answered from memory, so such a suite can never reach
+// CFPreferences or the signed-in user's domains; ignore it. Any other suite is
+// an isolation breach by product or test code and still fails closed.
+- (void)addSuiteNamed:(NSString *)name { if (![name hasPrefix:@"com.apple."]) abort(); }
+- (void)removeSuiteNamed:(NSString *)name { if (![name hasPrefix:@"com.apple."]) abort(); }
 - (BOOL)synchronize { return YES; }
 - (BOOL)objectIsForcedForKey:(NSString *)key { (void)key; return NO; }
 - (BOOL)objectIsForcedForKey:(NSString *)key inDomain:(NSString *)domain { (void)key; (void)domain; return NO; }
