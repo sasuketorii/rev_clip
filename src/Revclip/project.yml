@@ -29,9 +29,13 @@ configs:
 settings:
   configs:
     Release:
+      ENABLE_CODE_COVERAGE: NO
       CLANG_ENABLE_CODE_COVERAGE: NO
+      CLANG_COVERAGE_MAPPING: NO
     Demo:
+      ENABLE_CODE_COVERAGE: NO
       CLANG_ENABLE_CODE_COVERAGE: NO
+      CLANG_COVERAGE_MAPPING: NO
 
 targets:
   Revclip:

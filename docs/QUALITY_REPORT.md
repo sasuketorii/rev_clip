@@ -17,7 +17,7 @@
 
 ## 0.1.9 (42) ユーザーテスト候補：コピー直後のメニュー表示の修正
 
-候補起動の確認では、ローカルビルドにカバレッジ計測が混ざり、CLI終了時に`default.profraw`が生成される問題も検出しました。Release・Demo構成の`CLANG_ENABLE_CODE_COVERAGE`を明示的に無効にし、配布候補から計測用コードを除外します。これは暗号化・検証・プレビューを省略する高速化ではありません。合成回帰の計測値と、計測なしの候補に対する実機受入は区別します。
+候補起動の確認では、ローカルビルドにカバレッジ計測が混ざり、CLI終了時に`default.profraw`が生成される問題も検出しました。Release・Demo構成の`ENABLE_CODE_COVERAGE`・`CLANG_ENABLE_CODE_COVERAGE`・`CLANG_COVERAGE_MAPPING`を明示的に無効にし、SwiftとObjective-Cの両方から計測用コードを除外します。これは暗号化・検証・プレビューを省略する高速化ではありません。合成回帰の計測値と、計測なしの候補に対する実機受入は区別します。
 
 上の診断を受け、`4c918a17dbc4444dea2ff84a6424dc2f8de7fed2`を基準に修正しました。Fable 5.1による実装に対し、クリック経路・取消・生存期間・プレビュー処理を追加レビューしています。候補の対象SHA、通常版とDemo版の署名・バイナリハッシュ、インストール状態は`.local/quality/20260916-copy-latency/candidate-manifest.json`に記録します。この候補を公開Release・公証済み配布物・実機受入済みとは扱いません。
 
