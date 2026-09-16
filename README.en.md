@@ -23,7 +23,7 @@ A clipboard for working with agents: ask an agent to create, edit, or delete reu
 
 This README describes **v0.1.6 (build 39, September 16, 2026)**: bundled agent setup, 35 CLI settings, SVG previews, and consent-based bug reports. See [Releases](https://github.com/sasuketorii/rev_clip/releases) for distribution history.
 
-See the [quality verification report](docs/QUALITY_REPORT.md) for the unpublished maintenance candidate, measured results, and remaining acceptance checks.
+See the [quality verification report](docs/QUALITY_REPORT.md) for the 0.1.7 maintenance release, measured results, and remaining acceptance checks.
 
 ## A small app for everyday copying
 
@@ -59,9 +59,9 @@ The default history limit is 30 items. When a new copy exceeds the configured co
 
 If you are concerned about retained copies, choose **Clear History** in the menu. It deletes Revclip’s history rows, saved archives, and thumbnails while preserving templates and settings. Neither automatic eviction nor Clear History guarantees secure erasure of backups, snapshots, or physical SSD remnants. Clear History does not empty the current macOS clipboard; new copies can be recorded after monitoring resumes, according to your settings.
 
-### History ordering in the unpublished 0.1.7 candidate
+### History ordering in 0.1.7
 
-This is candidate behavior, not a claim about the published 0.1.6 binary. External copies of the same content follow **Overwrite same history**; selecting an existing history item follows **Reorder after pasting**. With both off neither action changes order; with only overwrite on only external recopy moves the item; with only reorder on only history use moves it; with both on both do.
+Starting with 0.1.7, recopying content and using history are handled separately. External copies of the same content follow **Overwrite same history**; selecting an existing history item follows **Reorder after pasting**. With both off neither action changes order; with only overwrite on only external recopy moves the item; with only reorder on only history use moves it; with both on both do.
 
 History use is recorded when restoring the clipboard succeeds, including when automatic paste is off. Canceling later key delivery does not undo a successful restore. Failed writes do not update recency, and template use does not count as history use.
 
