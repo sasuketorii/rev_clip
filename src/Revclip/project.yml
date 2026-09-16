@@ -24,6 +24,15 @@ configs:
   Release: release
   Demo: release
 
+# Distribution and local user-test builds must not collect runtime coverage.
+# XCTest can opt in explicitly when a coverage report is required.
+settings:
+  configs:
+    Release:
+      CLANG_ENABLE_CODE_COVERAGE: NO
+    Demo:
+      CLANG_ENABLE_CODE_COVERAGE: NO
+
 targets:
   Revclip:
     type: application
