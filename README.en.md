@@ -208,4 +208,6 @@ The [customization guide](docs/CUSTOMIZATION.md) covers data separation and upda
 
 ## License
 
-[AGPL-3.0-only](LICENSE) · [MIT (through v0.0.32)](LICENSE-MIT-LEGACY) © sasuke torii and Revclip contributors. Bundled libraries retain their respective licenses.
+Current Revclip releases (v0.1.0 onward) use **[AGPL-3.0-only](LICENSE)**, not a dual AGPL/MIT license. The [legacy notice](docs/notices/legacy-mit.txt) is retained for code published through v0.0.32. Bundled libraries retain their respective licenses.
+
+© sasuke torii and Revclip contributors.

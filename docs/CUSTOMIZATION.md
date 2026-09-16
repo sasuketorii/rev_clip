@@ -44,7 +44,7 @@ Demo版は `com.revclip.revclip-demo`、`revclip-demo` の保存領域、専用�
 4. Sparkleの `SUFeedURL` と `SUPublicEDKey` を自分の配信先・公開鍵に変更します。秘密鍵はコードに含めません。独自版に公式版の更新を上書き適用しないよう、配布前に必ず設定してください。
 5. `make -C src/Revclip setup` で再生成します。
 
-再配布では[MITライセンス](../LICENSE)と[第三者ライセンス](../THIRD_PARTY_NOTICES.md)を保持してください。署名・公証・更新配信は[リリース手順](RELEASING.md)を参照してください。
+再配布では[AGPL-3.0-onlyライセンス](../LICENSE)と[第三者ライセンス](../THIRD_PARTY_NOTICES.md)を保持してください。署名・公証・更新配信は[リリース手順](RELEASING.md)を参照してください。
 
 ### Demo image templates
 

@@ -3,7 +3,7 @@
 Revclip is developed publicly at https://github.com/sasuketorii/rev_clip.
 Version 0.1.0 onward is licensed as a whole under AGPL-3.0-only; see LICENSE.
 Previously published code through v0.0.32 retains the terms in
-LICENSE-MIT-LEGACY. Third-party components keep their original licenses.
+[the legacy notice](notices/legacy-mit.txt). Third-party components keep their original licenses.
 
 The original repository identity, releases, tags and signing settings are
 retained. The update feed continues at:

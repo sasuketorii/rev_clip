@@ -1,7 +1,7 @@
 # Third-party notices
 
 Revclip v0.1.0 and later as a whole are licensed under [AGPL-3.0-only](LICENSE).
-Code published through v0.0.32 retains its [MIT license](LICENSE-MIT-LEGACY).
+The [legacy MIT notice](docs/notices/legacy-mit.txt) is retained only for code published through v0.0.32. It is not an alternative license for current Revclip releases. Source headers distinguish these legacy portions from the current project license.
 Vendored dependencies retain their original copyright notices and licenses.
 
 | Direct dependency | Included version | Purpose | License |

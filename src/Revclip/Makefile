@@ -1,4 +1,4 @@
-# Copyright (c) 2024-2026 Revclip. Licensed under the MIT License.
+# Copyright (c) 2024-2026 Revclip. Current project: AGPL-3.0-only; legacy portions: MIT. See THIRD_PARTY_NOTICES.md.
 # Revclip Makefile - run all workflows from the terminal.
 
 .PHONY: setup build debug release demo demo-run test clean run sign dmg
