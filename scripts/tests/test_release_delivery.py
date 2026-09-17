@@ -1,8 +1,15 @@
+import contextlib
+import hashlib
 import importlib.util
+import io
+import json
+import os
 from pathlib import Path
 import plistlib
 import tempfile
 import unittest
+import urllib.error
+import urllib.request
 from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location('delivery', Path(__file__).parents[1] / 'verify_release_delivery.py')
@@ -96,3 +103,105 @@ class DeliveryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'both installed apps'):
                 delivery.main()
             network.assert_not_called()
+
+
+TOKEN = 'ghs_test-only_0123456789'
+
+
+class FakeResponse(io.BytesIO):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *unused):
+        self.close()
+
+
+class TokenScopeTests(unittest.TestCase):
+    """The optional token reaches the GitHub API only; delivery is checked anonymously."""
+
+    def run_main(self, output, environment):
+        tag, build, sha = 'v0.1.9', '42', 'a' * 40
+        dmg = b'synthetic artifact'
+        url = f'https://github.com/{delivery.REPO}/releases/download/{tag}/Revclip-{tag}.dmg'
+        release = {'tag_name': tag, 'draft': False, 'prerelease': False, 'html_url': 'https://example.invalid/r',
+                   'assets': [{'name': 'appcast.xml'},
+                              {'name': f'Revclip-{tag}.dmg', 'size': len(dmg), 'browser_download_url': url,
+                               'digest': 'sha256:' + hashlib.sha256(dmg).hexdigest()}]}
+        feed = f'''<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"><channel><item>
+        <sparkle:version>{build}</sparkle:version><sparkle:shortVersionString>0.1.9</sparkle:shortVersionString>
+        <enclosure url="{url}" length="{len(dmg)}" sparkle:edSignature="test-only"/></item></channel></rss>'''
+        api = f'https://api.github.com/repos/{delivery.REPO}'
+        bodies = {f'{api}/git/ref/tags/{tag}': json.dumps({'object': {'type': 'commit', 'sha': sha}}).encode(),
+                  f'{api}/releases/latest': json.dumps(release).encode(),
+                  f'https://github.com/{delivery.REPO}/releases/latest/download/appcast.xml': feed.encode(),
+                  url: dmg}
+        calls = []
+
+        def urlopen(target, timeout=None):
+            request = target if isinstance(target, urllib.request.Request) else urllib.request.Request(target)
+            sent = dict(request.header_items())
+            calls.append((request.full_url, sent.get('Authorization')))
+            return FakeResponse(bodies[request.full_url])
+
+        argv = ['verify_release_delivery.py', '--tag', tag, '--build', build, '--sha', sha, '--output', str(output)]
+        printed = io.StringIO()
+        with patch('sys.argv', argv), patch.dict(os.environ, environment, clear=False), \
+                patch.object(delivery.urllib.request, 'urlopen', urlopen), contextlib.redirect_stdout(printed):
+            if 'GITHUB_TOKEN' not in environment:
+                os.environ.pop('GITHUB_TOKEN', None)
+            delivery.main()
+        return calls, printed.getvalue()
+
+    def test_token_goes_to_the_api_only_and_never_into_output(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'receipt.json'
+            calls, printed = self.run_main(output, {'GITHUB_TOKEN': TOKEN})
+            self.assertEqual(len(calls), 4)
+            for url, authorization in calls:
+                if url.startswith('https://api.github.com/'):
+                    self.assertEqual(authorization, 'Bearer ' + TOKEN)
+                else:
+                    self.assertIsNone(authorization, url)
+            self.assertNotIn(TOKEN, printed)
+            self.assertNotIn(TOKEN, output.read_text())
+            self.assertEqual(json.loads(output.read_text())['status'], 'passed')
+
+    def test_local_run_without_token_stays_anonymous_and_passes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            calls, _ = self.run_main(Path(directory) / 'receipt.json', {})
+            self.assertEqual([authorization for _, authorization in calls], [None] * 4)
+
+    def test_token_is_not_forwarded_to_a_redirect_target(self):
+        request = delivery.api_request(f'https://api.github.com/repos/{delivery.REPO}/releases/latest', TOKEN)
+        self.assertNotIn('Authorization', request.headers)
+        handler = urllib.request.HTTPRedirectHandler()
+        for target in ('https://evil.example/steal', 'https://api.github.com/repositories/1/releases/latest'):
+            followed = handler.redirect_request(request, None, 302, 'Found', {}, target)
+            self.assertNotIn(TOKEN, repr(followed.header_items()))
+            self.assertFalse(followed.has_header('Authorization'))
+
+    def test_only_the_exact_https_api_host_is_an_api_url(self):
+        for url in ('http://api.github.com/repos/x', 'https://api.github.com.evil.example/repos/x',
+                    'https://api.github.com:444/repos/x', 'https://token@api.github.com/repos/x',
+                    'https://API.github.com@evil.example/x', f'https://github.com/{delivery.REPO}/releases/latest'):
+            with self.assertRaisesRegex(ValueError, 'Not a GitHub API URL'):
+                delivery.api_request(url, TOKEN)
+
+    def test_malformed_token_is_rejected_before_any_request(self):
+        with patch.dict(os.environ, {'GITHUB_TOKEN': 'abc\r\nX-Injected: 1'}), \
+                patch.object(delivery.urllib.request, 'urlopen') as network:
+            with self.assertRaisesRegex(ValueError, 'unexpected form'):
+                delivery.fetch_api('https://api.github.com/repos/x')
+            network.assert_not_called()
+
+    def test_rate_limit_is_named_without_the_token(self):
+        def refuse(target, timeout=None):
+            raise urllib.error.HTTPError(target.full_url, 403, 'rate limit exceeded', {}, None)
+        with patch.dict(os.environ, {'GITHUB_TOKEN': TOKEN}), patch.object(delivery.urllib.request, 'urlopen', refuse):
+            with self.assertRaisesRegex(ValueError, 'HTTP 403') as caught:
+                delivery.fetch_api('https://api.github.com/repos/x')
+        self.assertNotIn(TOKEN, str(caught.exception))
+
+
+if __name__ == '__main__':
+    unittest.main()

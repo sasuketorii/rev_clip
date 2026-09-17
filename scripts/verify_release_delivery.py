@@ -7,12 +7,14 @@ Signature presence is checked here; cryptographic and Apple checks remain separa
 import argparse
 import hashlib
 import json
+import os
 import plistlib
 from pathlib import Path
 import re
 import sys
 import tempfile
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -31,6 +33,35 @@ def fetch(url, limit=1024 * 1024):
         data = response.read(limit + 1)
     require(len(data) <= limit, 'Response exceeds size limit')
     return data
+
+
+def api_token():
+    """Optional token for GitHub API metadata only; never for the feed or the artifact."""
+    token = os.environ.get('GITHUB_TOKEN', '').strip()
+    require(not token or bool(re.fullmatch(r'[A-Za-z0-9_.\-]{1,255}', token)), 'GITHUB_TOKEN has an unexpected form')
+    return token
+
+
+def api_request(url, token):
+    """Request for exactly https://api.github.com. The token is an unredirected header:
+    urllib does not copy it to a redirect target, whatever that target is."""
+    parts = urllib.parse.urlsplit(url)
+    require(parts.scheme == 'https' and parts.netloc == 'api.github.com', 'Not a GitHub API URL')
+    request = urllib.request.Request(url, headers={'Accept': 'application/vnd.github+json'})
+    if token:
+        request.add_unredirected_header('Authorization', 'Bearer ' + token)
+    return request
+
+
+def fetch_api(url, limit=1024 * 1024):
+    """Release and tag metadata. Anonymous without GITHUB_TOKEN; what is compared is the same."""
+    try:
+        return fetch(api_request(url, api_token()), limit)
+    except urllib.error.HTTPError as error:
+        if error.code in (403, 429):
+            raise ValueError(f'GitHub API refused the metadata request (HTTP {error.code}, usually the anonymous '
+                             'rate limit of a shared address); set GITHUB_TOKEN for the API lookups') from None
+        raise
 
 
 def verify_feed(data, tag, build, release):
@@ -73,12 +104,12 @@ def verify_app(path, tag, build, demo=False):
 
 def public_tag_sha(tag):
     url = f'https://api.github.com/repos/{REPO}/git/ref/tags/{urllib.parse.quote(tag, safe="")}'
-    obj = json.loads(fetch(url))['object']
+    obj = json.loads(fetch_api(url))['object']
     for _ in range(5):
         if obj['type'] == 'commit':
             return obj['sha']
         require(obj['type'] == 'tag', 'Tag does not resolve to a commit')
-        obj = json.loads(fetch(f'https://api.github.com/repos/{REPO}/git/tags/{obj["sha"]}'))['object']
+        obj = json.loads(fetch_api(f'https://api.github.com/repos/{REPO}/git/tags/{obj["sha"]}'))['object']
     raise ValueError('Excessive tag nesting')
 
 
@@ -98,7 +129,8 @@ def main():
     # Remove only our requested receipt so a failed check cannot leave a stale PASS.
     args.output.unlink(missing_ok=True)
     require(public_tag_sha(args.tag) == args.sha, 'Public tag points to a different commit')
-    release = json.loads(fetch(f'https://api.github.com/repos/{REPO}/releases/latest'))
+    release = json.loads(fetch_api(f'https://api.github.com/repos/{REPO}/releases/latest'))
+    # The feed and the artifact are always fetched as an anonymous user would get them.
     feed = fetch(f'https://github.com/{REPO}/releases/latest/download/appcast.xml')
     url, expected_size, expected_digest = verify_feed(feed, args.tag, args.build, release)
     digest = hashlib.sha256()
@@ -138,5 +170,9 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as error:
-        print(f'Release delivery FAILED: {error}', file=sys.stderr)
+        message = str(error)
+        secret = os.environ.get('GITHUB_TOKEN', '').strip()
+        if secret:
+            message = message.replace(secret, '***')
+        print(f'Release delivery FAILED: {message}', file=sys.stderr)
         sys.exit(1)

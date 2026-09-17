@@ -343,6 +343,11 @@ jobs:
           generate_release_notes: true
 
       - name: Verify public release delivery
+        env:
+          # GitHub API metadata lookups only (tag, latest release): hosted runners share
+          # addresses, and the anonymous API limit can already be spent. The script never
+          # sends it to the feed or the DMG, which are fetched as an anonymous user.
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "${APP_PATH}/Contents/Info.plist")

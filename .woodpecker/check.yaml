@@ -1,0 +1,24 @@
+# Portable checks. Xcode/AppKit tests and notarization run on macOS in GitHub Actions.
+when:
+  - event: [push, pull_request]
+
+clone:
+  git:
+    image: woodpeckerci/plugin-git:2.10.0@sha256:0f06b03ec33137b556c77538563f66c400339052d0c5199d4c3ad1a2a37e1964
+
+steps:
+  - name: python-contracts
+    image: python:3.14-slim@sha256:cad9a2c871761c413caa6fdd6441c783451e740a48aaeba60ae62a8b53525ef6
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+    commands:
+      - python3 scripts/check_demo_parity.py
+      - python3 -m unittest discover -s scripts/tests -p test_release_delivery.py -v
+      - python3 -m unittest discover -s scripts/tests -p test_agent_install.py -v
+      - python3 -m unittest discover -s scripts/tests -p test_revclip_cli.py -v
+  - name: feedback-relay
+    image: node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553
+    commands:
+      - cd services/feedback
+      - npm ci
+      - npm test
