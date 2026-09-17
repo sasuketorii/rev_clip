@@ -85,6 +85,8 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 @property (nonatomic, strong, nullable) RCPanicPreferencesViewController *panicViewController;
 @property (nonatomic, strong) NSViewController *appearanceViewController;
 @property (nonatomic, strong) RCAgentPreferencesViewController *agentViewController;
+@property (nonatomic, strong) RCOCRPreferencesController *ocrViewController;
+@property (nonatomic, strong) RCPermissionsPreferencesController *permissionsViewController;
 @property (nonatomic, strong, nullable) RCBugReportPreferencesViewController *bugReportViewController;
 @property (nonatomic, assign) BOOL centeredOnFirstShow;
 @property (nonatomic, assign) BOOL refreshScheduled;
@@ -143,6 +145,8 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
         self.appearanceViewController = nil;
         self.appearancePaletteNeedsRefresh = NO;
         self.agentViewController = nil;
+        self.ocrViewController = nil;
+        self.permissionsViewController = nil;
         self.bugReportViewController = nil;
         self.window.title = RCLocalizedString(@"Preferences", nil);
         [self configureSidebar];
@@ -486,6 +490,8 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
         RCPreferencesTabType,
         RCPreferencesTabExclude,
         RCPreferencesTabShortcuts,
+        @"ocr",
+        @"permissions",
         RCPreferencesTabUpdates,
         RCPreferencesTabAgents,
         RCPreferencesTabBugReport,
@@ -494,6 +500,14 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 }
 
 - (nullable NSViewController *)viewControllerForTabIdentifier:(NSString *)tabIdentifier {
+    if ([tabIdentifier isEqualToString:@"permissions"]) {
+        if (!self.permissionsViewController) self.permissionsViewController = [RCPermissionsPreferencesController new];
+        return self.permissionsViewController;
+    }
+    if ([tabIdentifier isEqualToString:@"ocr"]) {
+        if (!self.ocrViewController) self.ocrViewController = [RCOCRPreferencesController new];
+        return self.ocrViewController;
+    }
     if ([tabIdentifier isEqualToString:RCPreferencesTabBugReport]) {
         if (!self.bugReportViewController) self.bugReportViewController = [RCBugReportPreferencesViewController new];
         return self.bugReportViewController;
@@ -562,6 +576,8 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 }
 
 - (NSString *)titleForTabIdentifier:(NSString *)tabIdentifier {
+    if ([tabIdentifier isEqualToString:@"permissions"]) return RCLocalizedString(@"Permission Status", nil);
+    if ([tabIdentifier isEqualToString:@"ocr"]) return @"faster OCR";
     if ([tabIdentifier isEqualToString:RCPreferencesTabBugReport]) return RCLocalizedString(@"Bug Report", nil);
     if ([tabIdentifier isEqualToString:RCPreferencesTabAgents]) return RCLocalizedString(@"Agent Settings", nil);
     if ([tabIdentifier isEqualToString:RCPreferencesTabAppearance]) return RCLocalizedString(@"Appearance", nil);
@@ -590,6 +606,8 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 }
 
 - (NSString *)symbolNameForTabIdentifier:(NSString *)tabIdentifier {
+    if ([tabIdentifier isEqualToString:@"permissions"]) return @"checkmark.shield";
+    if ([tabIdentifier isEqualToString:@"ocr"]) return @"viewfinder";
     if ([tabIdentifier isEqualToString:RCPreferencesTabBugReport]) {
         for (NSString *name in @[@"bubble.left.and.exclamationmark", @"ladybug", @"exclamationmark.triangle"]) {
             if ([NSImage imageWithSystemSymbolName:name accessibilityDescription:nil]) return name;

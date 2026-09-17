@@ -139,8 +139,9 @@ independent backups or promise forensic erasure on SSDs.
 `settings-schema` is the authority for supported keys, types, ranges, enum values,
 and actions. A settings file is a UTF-8 JSON object; `--file -` reads stdin.
 Duplicate JSON keys and non-finite numbers are rejected by the client. The app
-validates all requested settings before writing. Unknown keys, shortcuts, and
-Panic are rejected; arbitrary defaults mutation is not available.
+validates all requested settings before writing. Unknown keys and Panic are
+rejected; arbitrary defaults mutation is not available. Through 0.1.9 shortcuts are
+rejected as well; see the 0.2.0 candidate section below.
 
 Settings use the existing services and storage; open preferences refresh after
 changes. The response includes applied keys and read-back values. Retention
@@ -149,6 +150,47 @@ is not awaited. A multi-service write is not a database transaction: login item
 registration is attempted first and may require macOS approval. `app-action`
 returns `queued`; permission and update UI must be completed by the user. This
 is not proof that permission was granted or that an update was installed.
+
+## faster OCR settings and shortcuts (0.2.0 candidate, unreleased)
+
+`settings-schema` lists 44 settings: the 35 above, four faster OCR settings and five
+shortcuts. `excluded_groups` is `["panic"]`. No operation starts faster OCR, captures
+the screen or returns recognized text (`ocr_boundary` in the schema says so).
+
+```sh
+"$APP/Contents/Helpers/revclip" --app Revclip settings-get --key shortcut_ocr
+"$APP/Contents/Helpers/revclip" --app Revclip settings-set --json '{"ocr_language":"ja-en","ocr_save_history":false}'
+"$APP/Contents/Helpers/revclip" --app Revclip settings-set --json '{"shortcut_ocr":{"key_code":19,"modifiers":["command","shift"]}}'
+"$APP/Contents/Helpers/revclip" --app Revclip settings-set --json '{"shortcut_clear_history":{}}'
+"$APP/Contents/Helpers/revclip" --app Revclip settings-set --json '{"shortcut_main":{"default":true}}'
+```
+
+| Key | Type | Notes |
+| --- | --- | --- |
+| `ocr_enabled` | boolean | Turning it on is refused when this macOS, or the stored `ocr_language`, cannot be used. Turning it off is always accepted. |
+| `ocr_save_history` | boolean | Recognized text is stored only while clipboard access is always allowed and the usual history rules permit it; otherwise it is copied only. |
+| `ocr_language_correction` | boolean | Apple Vision language correction. Off keeps URLs, identifiers and code as recognized. |
+| `ocr_language` | string | `auto`, `ja-en`, or a language this macOS reports. `allowed_values` in the schema is the list for the running system; other values are rejected, never replaced. |
+| `shortcut_main`, `shortcut_history`, `shortcut_snippet`, `shortcut_clear_history`, `shortcut_ocr` | object | `{"key_code": 0-127, "modifiers": [...]}` with at least one of `command`, `shift`, `option`, `control`. On macOS 15 and later `option` needs `command` or `control`. `{}` clears; `{"default": true}` restores the default. |
+
+`settings-get` also returns `display` (for example `⇧⌘2`). It is read-only: `settings-set`
+accepts and ignores it, so a value that was read can be written back unchanged.
+
+Shortcuts use the same contract as the preferences window:
+
+- The request is judged against the state it would leave, so two shortcuts can be
+  exchanged in one `settings-set`. Each of them alone would be refused.
+- A refusal names what Revclip can know: another Revclip shortcut (by key), an enabled
+  macOS keyboard shortcut (macOS reports no name), or an OS registration failure with
+  its `OSStatus`. **Other applications using the same keys cannot be detected**: hot
+  keys are registered non-exclusively and macOS reports no owner, so both applications
+  react. Revclip does not register exclusively and does not inspect other applications.
+- New combinations are registered before anything else changes. If that, or a login
+  item change in the same request, fails, only the registrations prepared for this
+  request are released; previous registrations, stored shortcuts and the other settings
+  in the request are left as they were. `transactional` stays `false` in the schema:
+  this is an ordering of fallible steps, not a transaction across services.
+- `ocr_enabled` in the same request decides whether `shortcut_ocr` is registered.
 
 ## Standalone SVG previews (v0.1.6)
 

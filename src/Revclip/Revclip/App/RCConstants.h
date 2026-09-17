@@ -28,6 +28,10 @@ extern NSString * const kRCPrefStoreTypesKey;                  // Default: all t
 extern NSString * const kRCPrefOverwriteSameHistory;           // Default: YES
 extern NSString * const kRCPrefCopySameHistory;                // Default: YES
 extern NSString * const kRCCollectCrashReport;                 // Default: YES
+// Written immediately before Revclip relaunches itself (update, move to Applications).
+extern NSString * const kRCSelfRelaunchStampKey;
+// Launch argument for scripts: `open -g <app> --args -suppressLaunchMenu YES`.
+extern NSString * const kRCSuppressLaunchMenuKey;
 extern NSString * const kRCLoginItem;                              // Default: YES
 extern NSString * const kRCSuppressAlertForLoginItem;              // Default: NO
 
@@ -58,6 +62,13 @@ extern NSString * const kRCPanicButtonKeyCombo;
 extern NSString * const kRCFolderKeyCombos;
 extern NSString * const kRCMigrateNewKeyCombo;
 extern NSString * const kRCPrefHotKeysKey;
+
+// faster OCR. Storage keys keep their original names for compatibility.
+extern NSString * const kRCOCREnabledKey;        // Default: YES
+extern NSString * const kRCOCRSaveHistoryKey;    // Default: YES
+extern NSString * const kRCOCRCorrectionKey;     // Default: NO
+extern NSString * const kRCOCRLanguageKey;       // Default: "auto"
+extern NSString * const kRCOCRKeyComboKey;       // Default: Command-Shift-2
 
 // Updates
 extern NSString * const kRCEnableAutomaticCheckKey;     // Default: YES

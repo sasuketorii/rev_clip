@@ -1,3 +1,4 @@
+#import "RCHotKeyRecorderView.h"
 #import "RCMenuStyle.h"
 
 @interface RCStyledMenuRow : NSView
@@ -8,6 +9,8 @@
 @property(nonatomic, strong) NSColor *arrowColor;
 @property(nonatomic, strong) NSImage *arrowImage;
 @end
+static BOOL (^RCMenuStyleSelectionInterceptor)(NSMenuItem *);
+
 @implementation RCStyledMenuRow
 - (BOOL)isFlipped { return YES; }
 // Submenu tracking stays native; leaf views explicitly dispatch their existing action.
@@ -15,6 +18,8 @@
 - (BOOL)activateItem {
     NSMenuItem *item = self.item;
     if (!item.enabled || item.hasSubmenu || !item.action) { return NO; }
+    BOOL (^interceptor)(NSMenuItem *) = RCMenuStyleSelectionInterceptor;
+    if (interceptor != nil && interceptor(item)) { [item.menu cancelTracking]; return YES; }
     [item.menu cancelTracking];
     dispatch_async(dispatch_get_main_queue(), ^{ [NSApp sendAction:item.action to:item.target from:item]; });
     return YES;
@@ -82,7 +87,9 @@
     if (imageSlot) { leading += imageSlot + 8; }
     NSDictionary *attributes = @{NSFontAttributeName:font, NSForegroundColorAttributeName:text};
     CGFloat height = [item.title sizeWithAttributes:attributes].height;
-    [item.title drawInRect:NSMakeRect(leading,(NSHeight(self.bounds)-height)/2,NSWidth(self.bounds)-leading-(item.hasSubmenu || item.keyEquivalent.length ? 32 : 16),height) withAttributes:attributes];
+    NSString *shortcut = [RCHotKeyRecorderView displayStringForKeyEquivalent:item.keyEquivalent modifiers:item.keyEquivalentModifierMask];
+    CGFloat trailingWidth = item.hasSubmenu ? 32 : shortcut.length ? [shortcut sizeWithAttributes:attributes].width + 24 : 16;
+    [item.title drawInRect:NSMakeRect(leading,(NSHeight(self.bounds)-height)/2,NSWidth(self.bounds)-leading-trailingWidth,height) withAttributes:attributes];
     if (item.hasSubmenu) {
         if (![self.arrowColor isEqual:text]) {
             self.arrowColor = text;
@@ -92,7 +99,7 @@
         }
         [self.arrowImage drawInRect:NSMakeRect(NSWidth(self.bounds)-20,(NSHeight(self.bounds)-10)/2,6,10) fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1 respectFlipped:YES hints:nil];
     } else if (item.keyEquivalent.length) {
-        NSString *key = [@"⌘" stringByAppendingString:item.keyEquivalent.uppercaseString];
+        NSString *key = shortcut;
         [key drawAtPoint:NSMakePoint(NSWidth(self.bounds)-[key sizeWithAttributes:attributes].width-12,(NSHeight(self.bounds)-height)/2) withAttributes:attributes];
     }
 }
@@ -130,6 +137,9 @@
         item.view = row;
     }
     row.needsDisplay = YES;
+}
++ (void)setSelectionInterceptor:(BOOL (^)(NSMenuItem *))interceptor {
+    RCMenuStyleSelectionInterceptor = [interceptor copy];
 }
 + (void)refreshMenu:(NSMenu *)menu {
     for (NSMenuItem *item in menu.itemArray) { [self applyToItem:item]; }

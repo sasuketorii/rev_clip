@@ -9,6 +9,29 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef NS_ENUM(NSInteger, RCOCRCommitResult) {
+    RCOCRCommitResultHistoryStored,
+    RCOCRCommitResultHistorySkipped,
+    RCOCRCommitResultHistoryFailed,
+    RCOCRCommitResultClipboardChanged,
+    RCOCRCommitResultClipboardWriteFailed,
+    RCOCRCommitResultCancelled,
+};
+
+// Why no ticket was issued. Each reason has its own wording; an unknown source is
+// still refused, because its exclusion setting cannot be evaluated.
+typedef NS_ENUM(NSInteger, RCOCRRefusal) {
+    RCOCRRefusalNone = 0,
+    RCOCRRefusalUnknownSource,
+    RCOCRRefusalExcludedSource,
+    RCOCRRefusalStopped,
+};
+
+// One-shot, in-memory admission ticket; no pasteboard payload is read.
+@interface RCOCRCommitContext : NSObject
+@property(nonatomic, readonly) NSUInteger monitoringGeneration;
+@end
+
 @interface RCClipboardService : NSObject
 
 + (instancetype)shared;
@@ -20,6 +43,18 @@ NS_ASSUME_NONNULL_BEGIN
 // Advances on every start and stop. A caller that recorded it before deferred
 // work can detect stop, or stop+restart, that happened in between.
 @property (atomic, readonly) NSUInteger monitoringGeneration;
+
+- (nullable RCOCRCommitContext *)beginOCRFromApplication:(NSString *)bundleIdentifier
+                                         saveToHistory:(BOOL)saveToHistory;
+- (nullable RCOCRCommitContext *)beginOCRFromApplication:(NSString *)bundleIdentifier
+                                         saveToHistory:(BOOL)saveToHistory
+                                               refusal:(nullable RCOCRRefusal *)refusal;
+- (void)cancelOCRContext:(RCOCRCommitContext *)context;
+- (void)disableHistoryForOCRContext:(RCOCRCommitContext *)context;
+// Main only. Copy and admission are synchronous; completion is always on main,
+// after accepted persistence. The caller must invalidate its own UI generation.
+- (void)commitRecognizedText:(NSString *)text context:(RCOCRCommitContext *)context
+                 completion:(void (^)(RCOCRCommitResult result))completion;
 
 // Call on main immediately after a synchronous internal pasteboard write.
 // Only that generation is excluded; subsequent external copies remain eligible.
@@ -49,5 +84,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 // 通知名
 extern NSString * const RCClipboardDidChangeNotification;
+extern NSString * const RCClipboardLifecycleDidStopNotification;
 
 NS_ASSUME_NONNULL_END

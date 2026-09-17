@@ -12,9 +12,8 @@
 #import "RCConstants.h"
 #import "RCHotKeyRecorderView.h"
 #import "RCHotKeyService.h"
+#import "RCSettingsCLIService.h"
 
-static UInt32 const kRCDefaultKeyCodeV = 9;
-static UInt32 const kRCDefaultKeyCodeB = 11;
 
 @interface RCShortcutsPreferencesViewController () <RCHotKeyRecorderViewDelegate>
 
@@ -24,13 +23,6 @@ static UInt32 const kRCDefaultKeyCodeB = 11;
 @property (nonatomic, weak) IBOutlet RCHotKeyRecorderView *clearHistoryRecorderView;
 
 - (void)reloadRecordersFromDefaults;
-- (nullable NSString *)userDefaultsKeyForRecorderView:(RCHotKeyRecorderView *)recorderView;
-- (RCKeyCombo)keyComboForDefaultsKey:(NSString *)defaultsKey;
-- (RCKeyCombo)defaultKeyComboForDefaultsKey:(NSString *)defaultsKey;
-- (BOOL)isUnsetKeyCombo:(RCKeyCombo)combo;
-- (void)saveUnsetKeyComboForDefaultsKey:(NSString *)defaultsKey;
-- (void)applyExplicitlyClearedHotKeys;
-- (void)reloadHotKeysAndRecorders;
 - (void)resetHotKeysToDefaults;
 
 @end
@@ -48,6 +40,19 @@ static UInt32 const kRCDefaultKeyCodeB = 11;
 
     [self reloadRecordersFromDefaults];
     [self arrangeSettingsPage];
+}
+
+// The CLI can change the same shortcuts while this page is open or hidden.
+- (void)viewWillAppear {
+    [super viewWillAppear];
+    [self reloadRecordersFromDefaults];
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(reloadRecordersFromDefaults)
+                                               name:RCSettingsDidChangeNotification object:nil];
+}
+
+- (void)viewWillDisappear {
+    [super viewWillDisappear];
+    [NSNotificationCenter.defaultCenter removeObserver:self name:RCSettingsDidChangeNotification object:nil];
 }
 
 #pragma mark - Actions
@@ -85,131 +90,50 @@ static UInt32 const kRCDefaultKeyCodeB = 11;
 #pragma mark - RCHotKeyRecorderViewDelegate
 
 - (void)hotKeyRecorderView:(RCHotKeyRecorderView *)recorderView didRecordKeyCombo:(RCKeyCombo)keyCombo {
-    NSString *defaultsKey = [self userDefaultsKeyForRecorderView:recorderView];
-    if (defaultsKey.length == 0) {
-        return;
-    }
-
-    [RCHotKeyService saveKeyCombo:keyCombo toUserDefaults:defaultsKey];
-    [self reloadHotKeysAndRecorders];
+    NSString *slot = [self slotForRecorderView:recorderView];
+    if (slot == nil) { return; }
+    [self applyAssignments:@[[RCHotKeyAssignment assignmentSettingSlot:slot combo:keyCombo]]];
 }
 
 - (void)hotKeyRecorderViewDidClearKeyCombo:(RCHotKeyRecorderView *)recorderView {
-    NSString *defaultsKey = [self userDefaultsKeyForRecorderView:recorderView];
-    if (defaultsKey.length == 0) {
-        return;
-    }
+    NSString *slot = [self slotForRecorderView:recorderView];
+    if (slot == nil) { return; }
+    [self applyAssignments:@[[RCHotKeyAssignment assignmentClearingSlot:slot]]];
+}
 
-    [self saveUnsetKeyComboForDefaultsKey:defaultsKey];
-    [self reloadHotKeysAndRecorders];
+// Validation, registration and storage are one service contract shared with the
+// faster OCR page and the CLI. A refused shortcut leaves the previous one working,
+// and the recorder shows that previous value again.
+- (void)applyAssignments:(NSArray<RCHotKeyAssignment *> *)assignments {
+    RCHotKeyAssignmentResult *result = [[RCHotKeyService shared] applyAssignments:assignments];
+    [self reloadRecordersFromDefaults];
+    [RCHotKeyRecorderView presentAssignmentResult:result window:self.view.window];
+}
+
+- (nullable NSString *)slotForRecorderView:(RCHotKeyRecorderView *)recorderView {
+    if (recorderView == self.mainMenuRecorderView) { return RCHotKeySlotMain; }
+    if (recorderView == self.historyMenuRecorderView) { return RCHotKeySlotHistory; }
+    if (recorderView == self.snippetMenuRecorderView) { return RCHotKeySlotSnippet; }
+    if (recorderView == self.clearHistoryRecorderView) { return RCHotKeySlotClearHistory; }
+    return nil;
 }
 
 #pragma mark - Private
 
 - (void)reloadRecordersFromDefaults {
-    self.mainMenuRecorderView.keyCombo = [self keyComboForDefaultsKey:kRCHotKeyMainKeyCombo];
-    self.historyMenuRecorderView.keyCombo = [self keyComboForDefaultsKey:kRCHotKeyHistoryKeyCombo];
-    self.snippetMenuRecorderView.keyCombo = [self keyComboForDefaultsKey:kRCHotKeySnippetKeyCombo];
-    self.clearHistoryRecorderView.keyCombo = [self keyComboForDefaultsKey:kRCClearHistoryKeyCombo];
-}
-
-- (nullable NSString *)userDefaultsKeyForRecorderView:(RCHotKeyRecorderView *)recorderView {
-    if (recorderView == self.mainMenuRecorderView) {
-        return kRCHotKeyMainKeyCombo;
-    }
-    if (recorderView == self.historyMenuRecorderView) {
-        return kRCHotKeyHistoryKeyCombo;
-    }
-    if (recorderView == self.snippetMenuRecorderView) {
-        return kRCHotKeySnippetKeyCombo;
-    }
-    if (recorderView == self.clearHistoryRecorderView) {
-        return kRCClearHistoryKeyCombo;
-    }
-    return nil;
-}
-
-- (RCKeyCombo)keyComboForDefaultsKey:(NSString *)defaultsKey {
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    if ([defaults objectForKey:defaultsKey] == nil) {
-        return [self defaultKeyComboForDefaultsKey:defaultsKey];
-    }
-
-    RCKeyCombo combo = [RCHotKeyService keyComboFromUserDefaults:defaultsKey];
-    if ([self isUnsetKeyCombo:combo]) {
-        return RCInvalidKeyCombo();
-    }
-
-    if (RCIsValidKeyCombo(combo)) {
-        return combo;
-    }
-
-    return RCInvalidKeyCombo();
-}
-
-- (RCKeyCombo)defaultKeyComboForDefaultsKey:(NSString *)defaultsKey {
-    if ([defaultsKey isEqualToString:kRCHotKeyMainKeyCombo]) {
-        return RCMakeKeyCombo(kRCDefaultKeyCodeV, cmdKey | shiftKey);
-    }
-    if ([defaultsKey isEqualToString:kRCHotKeyHistoryKeyCombo]) {
-        return RCMakeKeyCombo(kRCDefaultKeyCodeV, cmdKey | controlKey);
-    }
-    if ([defaultsKey isEqualToString:kRCHotKeySnippetKeyCombo]) {
-        return RCMakeKeyCombo(kRCDefaultKeyCodeB, cmdKey | shiftKey);
-    }
-    return RCInvalidKeyCombo();
-}
-
-- (void)reloadHotKeysAndRecorders {
-    [[RCHotKeyService shared] loadAndRegisterHotKeysFromDefaults];
-    [self applyExplicitlyClearedHotKeys];
-    [self reloadRecordersFromDefaults];
+    RCHotKeyService *service = [RCHotKeyService shared];
+    self.mainMenuRecorderView.keyCombo = [service configuredKeyComboForSlot:RCHotKeySlotMain];
+    self.historyMenuRecorderView.keyCombo = [service configuredKeyComboForSlot:RCHotKeySlotHistory];
+    self.snippetMenuRecorderView.keyCombo = [service configuredKeyComboForSlot:RCHotKeySlotSnippet];
+    self.clearHistoryRecorderView.keyCombo = [service configuredKeyComboForSlot:RCHotKeySlotClearHistory];
 }
 
 - (void)resetHotKeysToDefaults {
-    [RCHotKeyService saveKeyCombo:[self defaultKeyComboForDefaultsKey:kRCHotKeyMainKeyCombo]
-                   toUserDefaults:kRCHotKeyMainKeyCombo];
-    [RCHotKeyService saveKeyCombo:[self defaultKeyComboForDefaultsKey:kRCHotKeyHistoryKeyCombo]
-                   toUserDefaults:kRCHotKeyHistoryKeyCombo];
-    [RCHotKeyService saveKeyCombo:[self defaultKeyComboForDefaultsKey:kRCHotKeySnippetKeyCombo]
-                   toUserDefaults:kRCHotKeySnippetKeyCombo];
-    [[NSUserDefaults standardUserDefaults] removeObjectForKey:kRCClearHistoryKeyCombo];
-
-    [self reloadHotKeysAndRecorders];
-}
-
-- (BOOL)isUnsetKeyCombo:(RCKeyCombo)combo {
-    return combo.keyCode == 0 && combo.modifiers == 0;
-}
-
-- (void)saveUnsetKeyComboForDefaultsKey:(NSString *)defaultsKey {
-    if (defaultsKey.length == 0) {
-        return;
-    }
-
-    NSDictionary *unsetCombo = @{
-        @"keyCode": @0,
-        @"modifiers": @0,
-    };
-    [[NSUserDefaults standardUserDefaults] setObject:unsetCombo forKey:defaultsKey];
-}
-
-- (void)applyExplicitlyClearedHotKeys {
-    RCHotKeyService *hotKeyService = [RCHotKeyService shared];
-    RCKeyCombo invalidCombo = RCInvalidKeyCombo();
-
-    if ([self isUnsetKeyCombo:[RCHotKeyService keyComboFromUserDefaults:kRCHotKeyMainKeyCombo]]) {
-        [hotKeyService registerMainHotKey:invalidCombo];
-    }
-    if ([self isUnsetKeyCombo:[RCHotKeyService keyComboFromUserDefaults:kRCHotKeyHistoryKeyCombo]]) {
-        [hotKeyService registerHistoryHotKey:invalidCombo];
-    }
-    if ([self isUnsetKeyCombo:[RCHotKeyService keyComboFromUserDefaults:kRCHotKeySnippetKeyCombo]]) {
-        [hotKeyService registerSnippetHotKey:invalidCombo];
-    }
-    if ([self isUnsetKeyCombo:[RCHotKeyService keyComboFromUserDefaults:kRCClearHistoryKeyCombo]]) {
-        [hotKeyService registerClearHistoryHotKey:invalidCombo];
-    }
+    // One batch: the defaults are checked against each other and applied together.
+    [self applyAssignments:@[[RCHotKeyAssignment assignmentRestoringDefaultForSlot:RCHotKeySlotMain],
+                             [RCHotKeyAssignment assignmentRestoringDefaultForSlot:RCHotKeySlotHistory],
+                             [RCHotKeyAssignment assignmentRestoringDefaultForSlot:RCHotKeySlotSnippet],
+                             [RCHotKeyAssignment assignmentRestoringDefaultForSlot:RCHotKeySlotClearHistory]]];
 }
 
 - (void)arrangeSettingsPage {

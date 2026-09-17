@@ -7,6 +7,8 @@
 #import "RCAccessibilityService.h"
 #import "RCLocalization.h"
 #import "RCSnippetEditorWindowController.h"
+#import "RCHotKeyService.h"
+#import "RCHotKeyRecorderView.h"
 #import "Revclip-Swift.h"
 #import <CoreFoundation/CoreFoundation.h>
 #import <math.h>
@@ -20,6 +22,25 @@ static BOOL RCSettingsBoolean(id value) {
 }
 static NSArray *RCSettingsTypeNames(void) { return @[@"HTML", @"String", @"RTF", @"RTFD", @"PDF", @"Filenames", @"URL", @"TIFF"]; }
 static NSArray *RCSettingsColorNames(void) { return @[@"primary", @"text", @"background", @"hoverText", @"hoverBackground"]; }
+// Public names, in the order macOS writes them. Option is "option" on both sides.
+static NSArray<NSString *> *RCSettingsModifierNames(void) { return @[@"control", @"option", @"shift", @"command"]; }
+static UInt32 RCSettingsCarbonModifier(NSString *name) {
+    if ([name isEqual:@"command"]) return cmdKey;
+    if ([name isEqual:@"shift"]) return shiftKey;
+    if ([name isEqual:@"option"]) return optionKey;
+    if ([name isEqual:@"control"]) return controlKey;
+    return 0;
+}
+static NSDictionary<NSString *, NSString *> *RCSettingsShortcutSlots(void) {
+    return @{@"shortcut_main": RCHotKeySlotMain, @"shortcut_history": RCHotKeySlotHistory, @"shortcut_snippet": RCHotKeySlotSnippet,
+             @"shortcut_clear_history": RCHotKeySlotClearHistory, @"shortcut_ocr": RCHotKeySlotOCR};
+}
+static NSDictionary *RCSettingsShortcutObject(RCKeyCombo combo) {
+    if (!RCIsValidKeyCombo(combo)) return @{};
+    NSMutableArray *modifiers = [NSMutableArray array];
+    for (NSString *name in RCSettingsModifierNames()) if (combo.modifiers & RCSettingsCarbonModifier(name)) [modifiers addObject:name];
+    return @{@"key_code": @(combo.keyCode), @"modifiers": modifiers, @"display": [RCHotKeyRecorderView displayStringForKeyCombo:combo]};
+}
 
 // Bounds/defaults mirror General/Menu/Type/Updates controllers, RCUtilities and
 // RCAppearanceController. Only these entries can reach a defaults setter.
@@ -72,6 +93,22 @@ static NSDictionary<NSString *, NSDictionary *> *RCSettingsDefinitions(void) {
             add(key, dark ? @"RCMenuCustomColors" : @"RCMenuCustomColorsLight", @"object", fallback, @"appearance",
                 @{@"allowed_properties":RCSettingsColorNames(), @"value_type":@"string", @"pattern":@"^#[0-9A-Fa-f]{6}$", @"write_semantics":@"replace; omitted colors use defaults; empty object resets palette", @"normalization":@"trim whitespace, optional #, uppercase"});
         }
+        add(@"ocr_enabled", kRCOCREnabledKey, @"boolean", @YES, @"ocr", @{@"description":@"faster OCR on or off. Turning it on is refused when this macOS or the stored ocr_language cannot be used. No CLI operation captures the screen or returns recognized text."});
+        add(@"ocr_save_history", kRCOCRSaveHistoryKey, @"boolean", @YES, @"ocr", @{@"description":@"Recognized text is stored only while clipboard access is always allowed and the usual history rules permit it; otherwise it is copied only."});
+        add(@"ocr_language_correction", kRCOCRCorrectionKey, @"boolean", @NO, @"ocr", @{@"description":@"Apple Vision language correction. Off keeps URLs, identifiers and code as recognized."});
+        add(@"ocr_language", kRCOCRLanguageKey, @"string", @"auto", @"ocr", @{@"enum_source":@"runtime", @"always_allowed":@[@"auto", @"ja-en"],
+            @"description":@"auto, ja-en, or a recognition language this macOS reports; allowed_values in this schema is the list for the running system. An unsupported value is rejected, never replaced."});
+        for (NSString *key in RCSettingsShortcutSlots()) {
+            RCKeyCombo fallback = [RCHotKeyService defaultKeyComboForSlot:RCSettingsShortcutSlots()[key]];
+            add(key, nil, @"shortcut", RCSettingsShortcutObject(fallback), @"shortcuts", @{
+                @"slot": RCSettingsShortcutSlots()[key],
+                @"properties": @{@"key_code": @{@"type":@"integer", @"minimum":@0, @"maximum":@127, @"description":@"macOS virtual key code"},
+                                 @"modifiers": @{@"type":@"array", @"items":@{@"enum":RCSettingsModifierNames()}, @"minItems":@1, @"uniqueItems":@YES},
+                                 @"display": @{@"type":@"string", @"read_only":@YES, @"description":@"Returned by settings-get; accepted and ignored by settings-set, so a read value can be written back."},
+                                 @"default": @{@"type":@"boolean", @"const":@YES, @"description":@"{\"default\":true} restores the default; it cannot be combined with other properties."}},
+                @"write_semantics": @"{} clears the shortcut. key_code and modifiers are required together. On macOS 15 and later option needs command or control.",
+            });
+        }
         NSMutableDictionary *types = [NSMutableDictionary dictionary];
         for (NSString *name in RCSettingsTypeNames()) types[name] = @YES;
         add(@"store_types", kRCPrefStoreTypesKey, @"object", types, @"type", @{@"allowed_properties":RCSettingsTypeNames(), @"value_type":@"boolean", @"write_semantics":@"merge; omitted types retain current values"});
@@ -117,6 +154,19 @@ static NSDictionary<NSString *, NSDictionary *> *RCSettingsDefinitions(void) {
     if (values[@"automatic_update_check"]) RCUpdateService.shared.automaticallyChecksForUpdates = [values[@"automatic_update_check"] boolValue];
 }
 - (void)applyAppearance { [RCAppearanceController applySavedAppearance]; }
+- (NSArray<NSString *> *)ocrSupportedLanguages { return [RCOCRCoordinator supportedRecognitionLanguages]; }
+- (NSString *)ocrEnableRefusalForLanguage:(NSString *)language { return [RCOCRCoordinator enableRefusalKeyForLanguage:language]; }
+- (RCKeyCombo)configuredShortcutForSlot:(NSString *)slot { return [RCHotKeyService.shared configuredKeyComboForSlot:slot]; }
+- (RCHotKeyAssignmentResult *)prepareShortcuts:(NSArray<RCHotKeyAssignment *> *)assignments ocrEnabled:(NSNumber *)ocrEnabled transaction:(id *)transaction {
+    return [RCHotKeyService.shared prepareAssignments:assignments ocrEnabledAfterCommit:ocrEnabled transaction:transaction];
+}
+- (void)commitShortcuts:(id)transaction { [RCHotKeyService.shared commitPreparedAssignments:transaction]; }
+- (void)discardShortcuts:(id)transaction { [RCHotKeyService.shared discardPreparedAssignments:transaction]; }
+- (NSArray<NSString *> *)ocrAllowedLanguages {
+    NSMutableOrderedSet *allowed = [NSMutableOrderedSet orderedSetWithArray:@[@"auto", @"ja-en"]];
+    [allowed addObjectsFromArray:[self ocrSupportedLanguages]];
+    return allowed.array;
+}
 - (void)scheduleCleanup { [RCDataCleanService.shared performCleanup]; }
 - (void)performUIAction:(NSString *)action {
     [NSApp activateIgnoringOtherApps:YES];
@@ -152,7 +202,32 @@ static NSDictionary<NSString *, NSDictionary *> *RCSettingsDefinitions(void) {
         return @([value integerValue]);
     }
     if ([type isEqual:@"string"]) {
-        return [value isKindOfClass:NSString.class] && [definition[@"enum"] containsObject:value] ? [value copy] : nil;
+        NSArray *allowed = [key isEqual:@"ocr_language"] ? [self ocrAllowedLanguages] : definition[@"enum"];
+        return [value isKindOfClass:NSString.class] && [value length] <= 64 && [allowed containsObject:value] ? [value copy] : nil;
+    }
+    if ([type isEqual:@"shortcut"]) {
+        if (![value isKindOfClass:NSDictionary.class] || [value count] > 3) return nil;
+        for (id name in value) if (![@[@"key_code", @"modifiers", @"display", @"default"] containsObject:name]) return nil;
+        id display = value[@"display"];
+        if (display && (![display isKindOfClass:NSString.class] || [display length] > 64)) return nil;
+        if (value[@"default"]) {
+            if (!RCSettingsBoolean(value[@"default"]) || ![value[@"default"] boolValue] || value[@"key_code"] || value[@"modifiers"]) return nil;
+            return @{@"kind": @"default"};
+        }
+        if (!value[@"key_code"] && !value[@"modifiers"]) return @{@"kind": @"clear"};
+        id code = value[@"key_code"], names = value[@"modifiers"];
+        if (![code isKindOfClass:NSNumber.class] || RCSettingsBoolean(code) || ![names isKindOfClass:NSArray.class] || [names count] > 4) return nil;
+        double number = [code doubleValue];
+        if (!isfinite(number) || floor(number) != number || number < 0 || number > 127) return nil;
+        UInt32 modifiers = 0;
+        for (id name in names) {
+            UInt32 flag = [name isKindOfClass:NSString.class] ? RCSettingsCarbonModifier(name) : 0;
+            if (flag == 0 || (modifiers & flag)) return nil;
+            modifiers |= flag;
+        }
+        RCKeyCombo combo = RCMakeKeyCombo((UInt32)number, modifiers);
+        if (![RCHotKeyService isAssignableKeyCombo:combo]) return nil;
+        return @{@"kind": @"set", @"key_code": @(combo.keyCode), @"carbon_modifiers": @(combo.modifiers)};
     }
     if ([type isEqual:@"array"]) {
         if (![value isKindOfClass:NSArray.class] || [value count] > 1024) return nil;
@@ -187,11 +262,39 @@ static NSDictionary<NSString *, NSDictionary *> *RCSettingsDefinitions(void) {
     return [normalized copy];
 }
 
+- (NSString *)shortcutFailureMessage:(RCHotKeyAssignmentResult *)result keyBySlot:(NSDictionary<NSString *, NSString *> *)keyBySlot {
+    NSString *(^name)(NSString *) = ^NSString *(NSString *slot) {
+        if ([slot hasPrefix:RCHotKeySlotFolderPrefix]) return @"a template folder shortcut";
+        for (NSString *key in RCSettingsShortcutSlots()) if ([RCSettingsShortcutSlots()[key] isEqual:slot]) return key;
+        return slot ?: @"a shortcut";
+    };
+    NSString *failed = keyBySlot[result.failedSlot ?: @""] ?: name(result.failedSlot);
+    NSString *kept = @"Previous shortcuts and settings unchanged";
+    switch (result.status) {
+        case RCHotKeyAssignmentStatusInternalConflict:
+            return [NSString stringWithFormat:@"%@ would use the same keys as %@; change one of them. %@", failed, name(result.conflictingSlot), kept];
+        case RCHotKeyAssignmentStatusSystemReserved:
+            return [NSString stringWithFormat:@"%@ is an enabled macOS keyboard shortcut. %@", failed, kept];
+        case RCHotKeyAssignmentStatusRegistrationFailed:
+            return [NSString stringWithFormat:@"macOS did not register %@ (OSStatus %d). %@. Other applications using the same keys cannot be detected", failed, (int)result.osStatus, kept];
+        case RCHotKeyAssignmentStatusUnavailable:
+            return [NSString stringWithFormat:@"Shortcuts cannot change while history is being erased. %@", kept];
+        default:
+            return [NSString stringWithFormat:@"Invalid value for %@; see settings-schema", failed];
+    }
+}
+
 - (id)valueForSetting:(NSString *)key {
     NSDictionary *definition = RCSettingsDefinitions()[key];
     if ([key isEqual:@"login_at_startup"]) return @([self loginEnabled]);
     if ([key isEqual:@"language"]) return [self language];
     if ([key isEqual:@"excluded_applications"]) return [self excludedApplications];
+    if ([definition[@"type"] isEqual:@"shortcut"]) return RCSettingsShortcutObject([self configuredShortcutForSlot:definition[@"slot"]]);
+    if ([key isEqual:@"ocr_language"]) {
+        // Reported as stored, even when this macOS no longer supports it.
+        id language = [self.defaults objectForKey:kRCOCRLanguageKey];
+        return [language isKindOfClass:NSString.class] && [language length] ? language : definition[@"default"];
+    }
     id value = [self.defaults objectForKey:definition[@"defaults_key"]];
     if ([definition[@"type"] isEqual:@"object"]) {
         NSMutableDictionary *merged = [definition[@"default"] mutableCopy];
@@ -226,7 +329,11 @@ static NSDictionary<NSString *, NSDictionary *> *RCSettingsDefinitions(void) {
     for (id field in request) if (![fields[op] containsObject:field]) return RCSettingsFailure(@"Unknown request field");
     NSDictionary *definitions = RCSettingsDefinitions();
     if ([op isEqual:@"settings-schema"]) {
-        return RCSettingsSuccess(@{@"schema_version":@1, @"settings":definitions,
+        NSMutableDictionary *described = [definitions mutableCopy];
+        NSMutableDictionary *language = [definitions[@"ocr_language"] mutableCopy];
+        language[@"allowed_values"] = [self ocrAllowedLanguages];
+        described[@"ocr_language"] = language;
+        return RCSettingsSuccess(@{@"schema_version":@1, @"settings":described,
             @"security_boundary":@{@"history_readable":@NO, @"clipboard_readable":@NO,
                 @"list_get_scope":@"user-created templates only",
                 @"bug_report_auto_collects_clipboard":@NO, @"bug_report_auto_collects_history":@NO,
@@ -244,7 +351,13 @@ static NSDictionary<NSString *, NSDictionary *> *RCSettingsDefinitions(void) {
                 @"timeout_semantics":@"Delivery may be unknown if submission started; no automatic retry."}},
             @"actions":@{@"update-check":@{@"status":@"queued", @"description":@"Attempt a check through the normal update service; queued does not mean started. Busy/setup failure and later completion are not returned by this request."}, @"permissions":@{@"status":@"queued", @"scope":@"accessibility", @"description":@"Open normal permission guidance when permission is missing; queued does not mean permission granted."}},
             @"unsupported_actions":@{@"restart":@"No existing safe saved-editor and confirmation implementation."},
-            @"excluded_groups":@[@"shortcuts",@"panic"],
+            @"excluded_groups":@[@"panic"],
+            @"shortcut_semantics":@{
+                @"validated_against":@"the final state of the whole request, so two shortcuts may be exchanged in one settings-set",
+                @"conflicts_detected":@[@"another Revclip shortcut (named in the error)", @"an enabled macOS keyboard shortcut", @"an OS registration failure"],
+                @"not_detectable":@"other applications using the same keys: hot keys are registered non-exclusively and macOS reports no owner",
+                @"on_failure":@"previous registrations and stored shortcuts are kept; registrations prepared for this request are released"},
+            @"ocr_boundary":@{@"capture_operation":@NO, @"result_readable":@NO},
             @"set_semantics":@{@"validate_all_before_mutation":@YES, @"transactional":@NO, @"retention_confirmation_required":@NO, @"cleanup":@"scheduled after all settings writes; completion not awaited", @"login":@"registration is attempted first; OS approval may remain required", @"ui_refresh":@"RCSettingsDidChangeNotification on main after writes; userInfo.keys contains applied setting names"}});
     }
     if ([op isEqual:@"app-action"]) {
@@ -284,10 +397,48 @@ static NSDictionary<NSString *, NSDictionary *> *RCSettingsDefinitions(void) {
         [palette addEntriesFromDictionary:values[key]];
         values[key] = [palette copy];
     }
+    // faster OCR is only switched on, or given a language while on, when this macOS can
+    // run it with that language. Judged on the state the request leaves, before any write.
+    BOOL ocrEnabledAfter = values[@"ocr_enabled"] ? [values[@"ocr_enabled"] boolValue] : [[self valueForSetting:@"ocr_enabled"] boolValue];
+    if (ocrEnabledAfter && (values[@"ocr_enabled"] || values[@"ocr_language"])) {
+        NSString *refusal = [self ocrEnableRefusalForLanguage:values[@"ocr_language"] ?: [self valueForSetting:@"ocr_language"]];
+        if ([refusal isEqual:@"OCR OS Unsupported"]) return RCSettingsFailure(@"faster OCR is not available on this macOS version; settings unchanged");
+        if (refusal) return RCSettingsFailure(@"ocr_language is not supported by this macOS, so faster OCR cannot be on; choose a value from settings-schema allowed_values. Settings unchanged");
+    }
+    // Shortcuts, and the registration the faster OCR switch implies, go through the one
+    // hot key contract as a single batch.
+    NSMutableArray<RCHotKeyAssignment *> *assignments = [NSMutableArray array];
+    NSMutableDictionary<NSString *, NSString *> *keyBySlot = [NSMutableDictionary dictionary];
+    for (NSString *key in keys) {
+        NSString *slot = RCSettingsShortcutSlots()[key];
+        if (!slot) continue;
+        NSDictionary *shortcut = values[key];
+        keyBySlot[slot] = key;
+        if ([shortcut[@"kind"] isEqual:@"set"]) {
+            [assignments addObject:[RCHotKeyAssignment assignmentSettingSlot:slot combo:RCMakeKeyCombo([shortcut[@"key_code"] unsignedIntValue], [shortcut[@"carbon_modifiers"] unsignedIntValue])]];
+        } else if ([shortcut[@"kind"] isEqual:@"default"]) {
+            [assignments addObject:[RCHotKeyAssignment assignmentRestoringDefaultForSlot:slot]];
+        } else {
+            [assignments addObject:[RCHotKeyAssignment assignmentClearingSlot:slot]];
+        }
+    }
+    if (values[@"ocr_enabled"] && !values[@"shortcut_ocr"]) [assignments addObject:[RCHotKeyAssignment assignmentKeepingSlot:RCHotKeySlotOCR]];
     // Preserve pending editor edits before broadcasting a UI language change.
     if (values[@"language"] && ![values[@"language"] isEqual:[self language]] && ![self saveEditor]) return RCSettingsFailure(@"Could not save editor; settings unchanged");
-    // Only fallible setting service runs before any defaults writes or cleanup.
-    if (values[@"login_at_startup"] && ![self setLoginEnabled:[values[@"login_at_startup"] boolValue]]) return RCSettingsFailure(@"Login item registration failed; settings defaults unchanged");
+    // Fallible services run before any defaults write or cleanup. Hot keys are prepared
+    // first because preparation can be discarded; a login item change cannot.
+    id shortcutTransaction = nil;
+    if (assignments.count) {
+        RCHotKeyAssignmentResult *prepared = [self prepareShortcuts:assignments ocrEnabled:values[@"ocr_enabled"] transaction:&shortcutTransaction];
+        if (!prepared.succeeded) return RCSettingsFailure([self shortcutFailureMessage:prepared keyBySlot:keyBySlot]);
+    }
+    if (values[@"login_at_startup"] && ![self setLoginEnabled:[values[@"login_at_startup"] boolValue]]) {
+        if (shortcutTransaction) [self discardShortcuts:shortcutTransaction];
+        return RCSettingsFailure(@"Login item registration failed; settings defaults unchanged");
+    }
+    // Registrations become final before ocr_enabled is stored, so the observer of that
+    // write finds the hot key already in its final state.
+    if (shortcutTransaction) [self commitShortcuts:shortcutTransaction];
     NSInteger previousLimit = [[self valueForSetting:@"max_history_size"] integerValue];
     if (values[@"store_types"]) {
         NSMutableDictionary *types = [[self valueForSetting:@"store_types"] mutableCopy];
@@ -295,6 +446,7 @@ static NSDictionary<NSString *, NSDictionary *> *RCSettingsDefinitions(void) {
     }
     for (NSString *key in keys) {
         if ([@[@"language",@"excluded_applications",@"automatic_update_check",@"update_check_interval"] containsObject:key]) continue;
+        if (RCSettingsShortcutSlots()[key]) continue; // stored by the hot key service on commit
         [self.defaults setObject:values[key] forKey:definitions[key][@"defaults_key"]];
     }
     if (values[@"excluded_applications"]) [self applyExcludedApplications:values[@"excluded_applications"]];

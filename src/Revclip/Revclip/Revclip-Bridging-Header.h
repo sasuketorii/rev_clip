@@ -15,3 +15,13 @@
 #import "RCSnippetMedia.h"
 
 #import "RCGlassBackground.h"
+
+#import "RCClipboardService.h"
+#import "RCHotKeyRecorderView.h"
+#import "RCPreferencesPage.h"
+
+#import "RCMenuStyle.h"
+
+#import "RCPrivacyService.h"
+#import "RCAccessibilityService.h"
+#import "RCSettingsCLIService.h"

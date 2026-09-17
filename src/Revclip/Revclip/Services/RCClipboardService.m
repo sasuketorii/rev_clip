@@ -25,6 +25,19 @@
 #import "RCUtilities.h"
 #import <os/log.h>
 
+NSString * const RCClipboardLifecycleDidStopNotification = @"RCClipboardLifecycleDidStopNotification";
+
+@interface RCOCRCommitContext ()
+@property(nonatomic, readwrite) NSUInteger monitoringGeneration;
+@property(nonatomic) NSInteger changeCount;
+@property(nonatomic, copy) NSString *source;
+@property(nonatomic) BOOL saveToHistory;
+@property(nonatomic) BOOL consumed;
+@property(nonatomic, weak) RCClipboardService *owner;
+@end
+@implementation RCOCRCommitContext
+@end
+
 NSString * const RCClipboardDidChangeNotification = @"RCClipboardDidChangeNotification";
 
 static NSTimeInterval const kRCClipboardPollingInterval = 0.5;
@@ -158,6 +171,8 @@ static os_log_t RCClipboardServiceLog(void) {
 
 - (void)stopMonitoring {
     dispatch_source_t timer = nil;
+    // Observe the boundary even if already stopped (failed Panic / quit retry).
+    [[NSNotificationCenter defaultCenter] postNotificationName:RCClipboardLifecycleDidStopNotification object:self];
 
     @synchronized (self) {
         self.captureSuspended = YES;
@@ -224,6 +239,89 @@ static os_log_t RCClipboardServiceLog(void) {
                 // independent expiry/deletion must not be undone by a late use.
                 [self updateExistingClipRecencyWithHash:selectedHash time:useTime databaseManager:databaseManager];
             });
+        });
+    }
+}
+
+
+- (RCOCRCommitContext *)beginOCRFromApplication:(NSString *)bundleIdentifier saveToHistory:(BOOL)saveToHistory {
+    return [self beginOCRFromApplication:bundleIdentifier saveToHistory:saveToHistory refusal:NULL];
+}
+
+- (RCOCRCommitContext *)beginOCRFromApplication:(NSString *)bundleIdentifier saveToHistory:(BOOL)saveToHistory
+                                        refusal:(RCOCRRefusal *)refusal {
+    NSAssert(NSThread.isMainThread, @"OCR admission is main-only");
+    @synchronized (self) {
+        RCOCRRefusal reason = RCOCRRefusalNone;
+        // A stopped lifecycle is reported first: it explains the refusal for any source.
+        if (self.captureSuspended || !self.isMonitoring || [RCPanicEraseService shared].isPanicInProgress) reason = RCOCRRefusalStopped;
+        else if (!bundleIdentifier.length) reason = RCOCRRefusalUnknownSource;
+        else if ([self sourceIsExcluded:bundleIdentifier]) reason = RCOCRRefusalExcludedSource;
+        if (refusal != NULL) *refusal = reason;
+        if (reason != RCOCRRefusalNone) return nil;
+        RCOCRCommitContext *context = [RCOCRCommitContext new];
+        context.owner = self;
+        context.monitoringGeneration = self.monitoringGeneration;
+        context.changeCount = NSPasteboard.generalPasteboard.changeCount;
+        context.source = bundleIdentifier;
+        context.saveToHistory = saveToHistory;
+        return context;
+    }
+}
+
+- (void)disableHistoryForOCRContext:(RCOCRCommitContext *)context {
+    NSAssert(NSThread.isMainThread, @"OCR policy is main-only");
+    if (context.owner == self) context.saveToHistory = NO;
+}
+
+- (void)cancelOCRContext:(RCOCRCommitContext *)context {
+    NSAssert(NSThread.isMainThread, @"OCR cancellation is main-only");
+    context.consumed = YES;
+}
+
+- (void)commitRecognizedText:(NSString *)text context:(RCOCRCommitContext *)context
+                 completion:(void (^)(RCOCRCommitResult))completion {
+    NSAssert(NSThread.isMainThread, @"OCR commit is main-only");
+    void (^finish)(RCOCRCommitResult) = ^(RCOCRCommitResult result) {
+        dispatch_async(dispatch_get_main_queue(), ^{ completion(result); });
+    };
+    @synchronized (self) {
+        if (context.owner != self || context.consumed) { finish(RCOCRCommitResultCancelled); return; }
+        context.consumed = YES;
+        if (self.captureSuspended || !self.isMonitoring || context.monitoringGeneration != self.monitoringGeneration ||
+            [RCPanicEraseService shared].isPanicInProgress ||
+            ![self boolPreferenceForKey:kRCOCREnabledKey defaultValue:YES] || [self sourceIsExcluded:context.source] ||
+            !text.length || text.length > 1024 * 1024 || [text lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 1024 * 1024 ||
+            ![text stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].length) {
+            finish(RCOCRCommitResultCancelled); return;
+        }
+        NSPasteboard *board = NSPasteboard.generalPasteboard;
+        RCClipData *clip = [RCClipData new];
+        clip.stringValue = [text copy];
+        clip.primaryType = NSPasteboardTypeString;
+        BOOL save = context.saveToHistory && [self boolPreferenceForKey:kRCOCRSaveHistoryKey defaultValue:YES] &&
+            [[self resolvedPrivacyService] clipboardAccessState] == RCClipboardAccessStateGranted && [self shouldStoreClipData:clip];
+        NSPasteboardItem *item = [NSPasteboardItem new];
+        if (![item setString:text forType:NSPasteboardTypeString] ||
+            ![item setData:NSData.data forType:@"org.nspasteboard.TransientType"]) {
+            finish(RCOCRCommitResultClipboardWriteFailed); return;
+        }
+        // The marker also prevents another distribution / a restart from
+        // re-ingesting an explicit internal admission (or a copy-only result).
+        if (board.changeCount != context.changeCount) { finish(RCOCRCommitResultClipboardChanged); return; }
+        NSInteger cleared = [board clearContents];
+        if (board.changeCount != cleared || ![board writeObjects:@[item]]) {
+            finish(RCOCRCommitResultClipboardWriteFailed); return;
+        }
+        NSInteger written = board.changeCount;
+        if (written != cleared) { finish(RCOCRCommitResultClipboardChanged); return; }
+        [self recordInternalPasteboardChangeCount:written];
+        if (!save) { finish(RCOCRCommitResultHistorySkipped); return; }
+        // Admission happens before stop/clear can enqueue its drain. Never
+        // dispatch_sync to main from persistence, and never reread the board.
+        NSString *source = context.source;
+        dispatch_async(self.monitoringQueue, ^{
+            [self enqueueCapturedClip:clip source:source completion:completion];
         });
     }
 }
@@ -319,6 +417,10 @@ static os_log_t RCClipboardServiceLog(void) {
 }
 
 - (void)enqueueCapturedClip:(RCClipData *)clip source:(NSString *)source {
+    [self enqueueCapturedClip:clip source:source completion:nil];
+}
+
+- (void)enqueueCapturedClip:(RCClipData *)clip source:(NSString *)source completion:(void (^)(RCOCRCommitResult))completion {
     NSUInteger cost = [self pendingCostForClip:clip];
     static const NSUInteger byteBudget = 100 * 1024 * 1024;
     // Production acquisition is serial and off-main. Backpressure keeps the
@@ -336,7 +438,14 @@ static os_log_t RCClipboardServiceLog(void) {
     [self.pendingCondition unlock];
     dispatch_async(self.persistenceQueue, ^{
         @autoreleasepool {
-            @try { [self processClipDataOnMonitoringQueue:clip sourceBundleIdentifier:source]; }
+            @try {
+                if (completion) {
+                    RCOCRCommitResult result = [self persistClipData:clip sourceBundleIdentifier:source];
+                    dispatch_async(dispatch_get_main_queue(), ^{ completion(result); });
+                } else {
+                    [self processClipDataOnMonitoringQueue:clip sourceBundleIdentifier:source];
+                }
+            }
             @finally {
                 [self.pendingCondition lock];
                 self.pendingCaptureCount--; self.pendingCaptureBytes -= cost;
@@ -368,30 +477,34 @@ static os_log_t RCClipboardServiceLog(void) {
 
 - (void)processClipDataOnMonitoringQueue:(RCClipData *)clipData
                     sourceBundleIdentifier:(NSString *)sourceBundleIdentifier {
+    [self persistClipData:clipData sourceBundleIdentifier:sourceBundleIdentifier];
+}
+
+- (RCOCRCommitResult)persistClipData:(RCClipData *)clipData sourceBundleIdentifier:(NSString *)sourceBundleIdentifier {
     if ([RCPanicEraseService shared].isPanicInProgress) {
-        return;
+        return RCOCRCommitResultHistoryFailed;
     }
 
     if ([[RCExcludeAppService shared] shouldExcludeAppWithBundleIdentifier:sourceBundleIdentifier]) {
-        return;
+        return RCOCRCommitResultHistorySkipped;
     }
 
     if (![self hasClipContent:clipData]) {
-        return;
+        return RCOCRCommitResultHistoryFailed;
     }
 
     if (![self shouldStoreClipData:clipData]) {
-        return;
+        return RCOCRCommitResultHistorySkipped;
     }
 
     NSString *dataHash = [clipData dataHash];
     if (dataHash.length == 0) {
-        return;
+        return RCOCRCommitResultHistoryFailed;
     }
 
     RCDatabaseManager *databaseManager = [RCDatabaseManager shared];
     if (![databaseManager setupDatabase]) {
-        return;
+        return RCOCRCommitResultHistoryFailed;
     }
 
     NSInteger updateTime = [self currentTimestamp];
@@ -411,16 +524,15 @@ static os_log_t RCClipboardServiceLog(void) {
         }
     }
     if (existingClipDict != nil) {
-        [self handleExistingClipWithHash:dataHash
-                            existingDict:existingClipDict
-                              updateTime:updateTime
-                         databaseManager:databaseManager];
-        return;
+        // One implementation for ordinary copies and faster OCR; the result only
+        // tells the OCR caller whether the accepted text is in history.
+        return [self handleExistingClipWithHash:dataHash existingDict:existingClipDict updateTime:updateTime
+                                databaseManager:databaseManager] ? RCOCRCommitResultHistoryStored : RCOCRCommitResultHistoryFailed;
     }
 
     NSString *directoryPath = [RCUtilities clipDataDirectoryPath];
     if (![RCUtilities ensureDirectoryExists:directoryPath]) {
-        return;
+        return RCOCRCommitResultHistoryFailed;
     }
 
     NSString *identifier = [NSUUID UUID].UUIDString;
@@ -428,7 +540,7 @@ static os_log_t RCClipboardServiceLog(void) {
     NSString *dataPath = [directoryPath stringByAppendingPathComponent:dataFileName];
 
     if (![self saveClipData:clipData toPath:dataPath]) {
-        return;
+        return RCOCRCommitResultHistoryFailed;
     }
 
     NSString *thumbnailPath = [self generateThumbnailPathForClipData:clipData
@@ -453,7 +565,7 @@ static os_log_t RCClipboardServiceLog(void) {
     if (![databaseManager insertClipItem:clipDictionary]) {
         [self deleteFileAtPath:dataPath];
         [self deleteFileAtPath:thumbnailPath];
-        return;
+        return RCOCRCommitResultHistoryFailed;
     }
 
     NSDictionary *persistedRow = [databaseManager clipItemWithDataHash:dataHash];
@@ -462,27 +574,30 @@ static os_log_t RCClipboardServiceLog(void) {
     // ここでは重複して trimHistoryIfNeeded を呼ばない。
     [[RCDataCleanService shared] scheduleDebouncedCleanup];
     [self postClipboardDidChangeNotificationWithClipItem:clipItem];
+    return RCOCRCommitResultHistoryStored;
 }
 
 // External identical copies obey overwrite only. History selection follows the
 // explicit successful-restore path above and obeys reorder only.
-- (void)handleExistingClipWithHash:(NSString *)dataHash
+// NO only when the recency update was wanted and the database refused it.
+- (BOOL)handleExistingClipWithHash:(NSString *)dataHash
                       existingDict:(NSDictionary *)existingClipDict
                         updateTime:(NSInteger)updateTime
                    databaseManager:(RCDatabaseManager *)databaseManager {
-    if (![self boolPreferenceForKey:kRCPrefOverwriteSameHistory defaultValue:YES]) return;
-    [self updateExistingClipRecencyWithHash:dataHash time:updateTime databaseManager:databaseManager];
+    if (![self boolPreferenceForKey:kRCPrefOverwriteSameHistory defaultValue:YES]) return YES;
+    return [self updateExistingClipRecencyWithHash:dataHash time:updateTime databaseManager:databaseManager];
 }
 
-- (void)updateExistingClipRecencyWithHash:(NSString *)dataHash time:(NSInteger)updateTime
+- (BOOL)updateExistingClipRecencyWithHash:(NSString *)dataHash time:(NSInteger)updateTime
                        databaseManager:(RCDatabaseManager *)databaseManager {
-    if (![databaseManager updateClipItemUpdateTime:dataHash time:updateTime]) return;
+    if (![databaseManager updateClipItemUpdateTime:dataHash time:updateTime]) return NO;
     // The DB can advance time beyond the requested wall clock to preserve order.
     NSDictionary *persistedRow = [databaseManager clipItemWithDataHash:dataHash];
     if (persistedRow) {
         RCClipItem *updatedItem = [[RCClipItem alloc] initWithDictionary:persistedRow];
         [self postClipboardDidChangeNotificationWithClipItem:updatedItem];
     }
+    return YES;
 }
 
 #pragma mark - Private: Filtering

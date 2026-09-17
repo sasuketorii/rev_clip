@@ -47,6 +47,7 @@ typedef NS_ENUM(NSInteger, RCSparkleErrorCode) {
 - (void)updater:(id)updater didFindValidUpdate:(id)item;
 - (void)updaterDidNotFindUpdate:(id)updater error:(NSError *)error;
 - (void)updater:(id)updater didFinishUpdateCycleForUpdateCheck:(NSInteger)updateCheck error:(nullable NSError *)error;
+- (void)updaterWillRelaunchApplication:(id)updater;
 @end
 
 @protocol RCSPUStandardUpdaterController <NSObject>
@@ -252,6 +253,12 @@ typedef NS_ENUM(NSInteger, RCSparkleErrorCode) {
 }
 
 #pragma mark - RCSPUUpdaterDelegate
+
+// The relaunch after an update is not the user opening Revclip: no menu for it.
+- (void)updaterWillRelaunchApplication:(id)updater {
+    (void)updater;
+    [NSUserDefaults.standardUserDefaults setDouble:NSDate.date.timeIntervalSinceReferenceDate forKey:kRCSelfRelaunchStampKey];
+}
 
 - (void)updater:(id)updater didFindValidUpdate:(id)item {
     (void)updater;

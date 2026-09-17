@@ -7,6 +7,7 @@
 //
 
 #import "RCMoveToApplicationsService.h"
+#import "RCConstants.h"
 #import <Cocoa/Cocoa.h>
 
 static NSString * const kRCMoveToApplicationsErrorDomain = @"com.revclip.movetoapplications";
@@ -151,6 +152,7 @@ static NSString * const kRCMoveToApplicationsErrorDomain = @"com.revclip.movetoa
     NSTask *openTask = [[NSTask alloc] init];
     openTask.executableURL = [NSURL fileURLWithPath:@"/usr/bin/open"];
     openTask.arguments = @[@"-n", applicationPath];
+    [NSUserDefaults.standardUserDefaults setDouble:NSDate.date.timeIntervalSinceReferenceDate forKey:kRCSelfRelaunchStampKey];
 
     openTask.terminationHandler = ^(NSTask *task) {
         dispatch_async(dispatch_get_main_queue(), ^{

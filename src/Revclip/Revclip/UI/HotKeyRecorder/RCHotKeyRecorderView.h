@@ -27,6 +27,17 @@ IB_DESIGNABLE
 @property (nonatomic, assign) RCKeyCombo keyCombo;
 @property (nonatomic, readonly) BOOL isRecording;
 
++ (NSString *)displayStringForKeyCombo:(RCKeyCombo)combo;
++ (NSString *)keyEquivalentForKeyCombo:(RCKeyCombo)combo;
++ (NSString *)displayStringForKeyEquivalent:(NSString *)key modifiers:(NSEventModifierFlags)modifiers;
+
+// Shared wording for a refused shortcut, used by every recorder page. Names only what
+// Revclip can know: its own feature, an enabled macOS shortcut, or an OS refusal.
++ (NSString *)localizedNameForSlot:(NSString *)slot;
++ (NSString *)messageForAssignmentResult:(RCHotKeyAssignmentResult *)result;
++ (nullable NSString *)preferencesTabForSlot:(nullable NSString *)slot;
++ (void)presentAssignmentResult:(RCHotKeyAssignmentResult *)result window:(nullable NSWindow *)window;
+
 - (void)startRecording;
 - (void)stopRecording;
 - (void)clearKeyCombo;

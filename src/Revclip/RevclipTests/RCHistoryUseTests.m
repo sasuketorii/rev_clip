@@ -20,8 +20,6 @@
 @end
 @interface RCClipboardService (HistoryUseTesting)
 - (void)enqueueCapturedClip:(RCClipData *)clip source:(NSString *)source;
-- (void)handleExistingClipWithHash:(NSString *)hash existingDict:(NSDictionary *)row
-                      updateTime:(NSInteger)time databaseManager:(RCDatabaseManager *)db;
 @end
 
 @interface RCHistoryUseBoard : NSObject
@@ -232,8 +230,9 @@
 - (void)testExternalRecopyReordersOnlyByOverwriteForAllFourSettings {
     for (NSNumber *overwrite in @[@NO, @YES]) for (NSNumber *reorder in @[@NO, @YES]) {
         [self seed]; self.capture.overwrite = overwrite.boolValue; self.capture.reorder = reorder.boolValue;
-        [self.capture handleExistingClipWithHash:self.hashA existingDict:[self.db clipItemWithDataHash:self.hashA]
-                                    updateTime:1000 databaseManager:self.db];
+        // Through the product entry (acquisition queue -> persistence), not the helper
+        // it happens to call today: a copy of the path would otherwise go untested.
+        [self queueExternalCopyOfHash:self.hashA]; [self drain];
         [self assertAFirst:overwrite.boolValue];
     }
 }
@@ -265,8 +264,7 @@
 }
 - (void)testRecopyNotificationUsesActualPersistedMonotonicTime {
     [self seed]; self.capture.overwrite = YES;
-    [self.capture handleExistingClipWithHash:self.hashA existingDict:[self.db clipItemWithDataHash:self.hashA]
-                                updateTime:1 databaseManager:self.db];
+    [self queueExternalCopyOfHash:self.hashA]; [self drain];
     XCTAssertEqual(self.capture.notifications.count, 1u);
     XCTAssertEqual(self.capture.notifications.lastObject.updateTime,
                    [[self.db clipItemWithDataHash:self.hashA][@"update_time"] integerValue]);

@@ -29,6 +29,7 @@ configs:
 settings:
   configs:
     Release:
+      CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
       ENABLE_CODE_COVERAGE: NO
       CLANG_ENABLE_CODE_COVERAGE: NO
       CLANG_COVERAGE_MAPPING: NO
@@ -46,6 +47,8 @@ targets:
       - sdk: ApplicationServices.framework
       - sdk: Carbon.framework
       - sdk: CoreFoundation.framework
+      - sdk: ScreenCaptureKit.framework
+      - sdk: Vision.framework
       - sdk: CoreText.framework
       - sdk: Security.framework
       - sdk: ServiceManagement.framework
@@ -58,8 +61,8 @@ targets:
         CFBundleName: "$(PRODUCT_NAME)"
         CFBundleDisplayName: "$(PRODUCT_NAME)"
         CFBundleIdentifier: "$(PRODUCT_BUNDLE_IDENTIFIER)"
-        CFBundleVersion: "42"
-        CFBundleShortVersionString: "0.1.9"
+        CFBundleVersion: "58"
+        CFBundleShortVersionString: "0.2.0"
         CFBundleExecutable: "$(EXECUTABLE_NAME)"
         CFBundlePackageType: "APPL"
         CFBundleSignature: "????"
@@ -75,6 +78,18 @@ targets:
         RCStorageDirectoryName: "$(RC_STORAGE_DIRECTORY_NAME)"
         RCBugReportURL: "https://revclip-feedback.sasuketorii-business.workers.dev/report"
         NSAccessibilityUsageDescription: "Revclip needs accessibility access to paste clipboard items into other applications."
+        # A text-returning service: the requesting app inserts what the user picked from
+        # the Revclip menu. It takes no input, so it is offered in an empty text field.
+        NSServices:
+          - NSMenuItem:
+              default: "$(RC_SERVICE_MENU_TITLE)"
+            NSMessage: "insertFromRevclip"
+            NSPortName: "$(PRODUCT_NAME)"
+            NSReturnTypes:
+              - "NSStringPboardType"
+              - "public.utf8-plain-text"
+            NSRequiredContext: {}
+            NSTimeout: "60000"
     sources:
       - path: Revclip
         excludes:
@@ -103,6 +118,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.revclip.Revclip
         PRODUCT_NAME: Revclip
         RC_STORAGE_DIRECTORY_NAME: Revclip
+        RC_SERVICE_MENU_TITLE: Revclip
         RC_SU_FEED_URL: "https://github.com/sasuketorii/rev_clip/releases/latest/download/appcast.xml"
         RC_SU_PUBLIC_ED_KEY: "jW5CH5/B8IApRFYiwOGot/VUmo0uqvE1LawgUG1igUk="
         MACOSX_DEPLOYMENT_TARGET: "14.0"
@@ -154,6 +170,7 @@ targets:
           PRODUCT_BUNDLE_IDENTIFIER: com.revclip.revclip-demo
           PRODUCT_NAME: revclip-demo
           RC_STORAGE_DIRECTORY_NAME: revclip-demo
+          RC_SERVICE_MENU_TITLE: Revclip Demo
           RC_SU_FEED_URL: ""
           RC_SU_PUBLIC_ED_KEY: ""
           ONLY_ACTIVE_ARCH: false

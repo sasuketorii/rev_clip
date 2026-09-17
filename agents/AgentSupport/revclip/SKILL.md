@@ -68,8 +68,14 @@ values are validated before changes start. Read settings-get after applying chan
 
 History is temporary: changing its limit or expiry as requested can delete older
 history through normal app cleanup. No additional deletion-count approval is needed.
-Shortcuts and Panic are intentionally unavailable through this CLI: direct the user
-to the app for those. OS permission prompts and update UI must be completed by the
+Panic is intentionally unavailable through this CLI: direct the user to the app for
+it. Shortcuts are settings (`shortcut_*`) when the schema lists them: write the object
+shape the schema describes, `{}` to clear, `{"default": true}` to restore. A refusal
+names another Revclip shortcut, an enabled macOS keyboard shortcut, or an OS
+registration failure, and leaves the previous shortcut working. Other applications
+using the same keys cannot be detected; do not claim or guess that they conflict.
+faster OCR has settings only (`ocr_*`): no CLI operation captures the screen or returns
+recognized text. OS permission prompts and update UI must be completed by the
 user; an action being requested is not proof that permission or an update succeeded.
 Do not automate dismissal or approval of those prompts.
 

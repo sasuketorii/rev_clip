@@ -296,10 +296,15 @@
     [controller showTab:@"appearance"];
     NSViewController *appearance = [controller valueForKey:@"appearanceViewController"];
     NSView *shell = controller.window.contentView;
-    // A native field editor exercises the same focus guard as SwiftUI's HEX field.
+    // A native field editor exercises the same focus guard as SwiftUI's HEX field: the
+    // guard looks at the window's first responder only. The field goes into the window's
+    // own content view, not under NSHostingController.view. SwiftUI reports that as a
+    // runtime issue, and XCTest then symbolicates on the main thread, where a slow dSYM
+    // lookup (Spotlight) held the thread past this test's two-second drain.
     NSTextField *field = [NSTextField textFieldWithString:@"#"];
     field.frame = NSMakeRect(0, 0, 100, 24);
-    [appearance.view addSubview:field];
+    [controller.window.contentView addSubview:field];
+    [self addTeardownBlock:^{ [field removeFromSuperview]; }];
     [field selectText:nil];
     NSText *editor = field.currentEditor;
     XCTAssertNotNil(editor);

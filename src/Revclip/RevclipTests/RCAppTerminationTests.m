@@ -9,6 +9,113 @@
 - (BOOL)clipboardMayResumeAfterCancelledTermination;
 @end
 
+@interface RCAppDelegate (UserOpenTesting)
+@property(nonatomic) BOOL userOpenReady;
+- (void)handleUserOpen;
+- (void)handleUserLaunch;
+- (void)applicationDidBecomeActive:(NSNotification *)notification;
+@end
+
+// Opening Revclip from Applications. The menu itself, activation and the clock are
+// replaced, so nothing is shown and no application state is read.
+@interface RCUserOpenDelegate : RCAppDelegate
+@property(nonatomic) BOOL active;
+@property(nonatomic) BOOL modal;
+@property(nonatomic) NSTimeInterval clock;
+@property(nonatomic) NSUInteger menus;
+@property(nonatomic) NSUInteger generation;
+@end
+@implementation RCUserOpenDelegate
+- (instancetype)init { self=[super init]; if (self) { _active=YES; _clock=10; self.userOpenReady=YES; } return self; }
+- (BOOL)userOpenApplicationIsActive { return self.active; }
+- (BOOL)userOpenModalWindowPresent { return self.modal; }
+- (NSTimeInterval)userOpenClock { return self.clock; }
+- (NSUInteger)userOpenMonitoringGeneration { return self.generation; }
+- (void)presentMenuForUserOpen { self.menus++; }
+@end
+
+@interface RCUserOpenTests : XCTestCase
+@end
+@implementation RCUserOpenTests
+- (NSAppleEventDescriptor *)event:(AEEventID)identifier property:(OSType)property keyword:(AEKeyword)keyword {
+    NSAppleEventDescriptor *event = [NSAppleEventDescriptor appleEventWithEventClass:kCoreEventClass eventID:identifier
+        targetDescriptor:nil returnID:kAutoGenerateReturnID transactionID:kAnyTransactionID];
+    if (property) [event setParamDescriptor:[NSAppleEventDescriptor descriptorWithEnumCode:property] forKeyword:keyAEPropData];
+    if (keyword) [event setParamDescriptor:[NSAppleEventDescriptor descriptorWithBoolean:YES] forKeyword:keyword];
+    return event;
+}
+- (void)testOnlyAPlainOpenApplicationEventIsTheUserOpeningRevclip {
+    XCTAssertTrue([RCAppDelegate launchEventIsUserOpen:[self event:kAEOpenApplication property:0 keyword:0]]);
+    XCTAssertFalse([RCAppDelegate launchEventIsUserOpen:[self event:kAEOpenApplication property:keyAELaunchedAsLogInItem keyword:0]]);
+    XCTAssertFalse([RCAppDelegate launchEventIsUserOpen:[self event:kAEOpenApplication property:keyAELaunchedAsServiceItem keyword:0]]);
+    XCTAssertFalse([RCAppDelegate launchEventIsUserOpen:[self event:kAEOpenApplication property:0 keyword:keyAELaunchedAsLogInItem]]);
+    XCTAssertFalse([RCAppDelegate launchEventIsUserOpen:[self event:kAEOpenApplication property:0 keyword:keyAELaunchedAsServiceItem]]);
+    XCTAssertFalse([RCAppDelegate launchEventIsUserOpen:[self event:kAEOpenApplication property:'zzzz' keyword:0]], @"An unknown launch property is not a user's open");
+    XCTAssertFalse([RCAppDelegate launchEventIsUserOpen:[self event:kAEOpenDocuments property:0 keyword:0]]);
+    XCTAssertFalse([RCAppDelegate launchEventIsUserOpen:nil], @"No event: launched by something else");
+}
+- (void)testSelfRelaunchStampCoversOnlyTheNextFewMinutes {
+    XCTAssertTrue([RCAppDelegate selfRelaunchStamp:1000 coversLaunchAt:1002]);
+    XCTAssertFalse([RCAppDelegate selfRelaunchStamp:1000 coversLaunchAt:1301], @"A relaunch that never happened does not silence a later open");
+    XCTAssertFalse([RCAppDelegate selfRelaunchStamp:1000 coversLaunchAt:999]);
+    XCTAssertFalse([RCAppDelegate selfRelaunchStamp:0 coversLaunchAt:100]);
+}
+- (void)testOpenShowsTheMenuOnceOnlyWhenReadyActiveAndNotModal {
+    RCUserOpenDelegate *delegate = [RCUserOpenDelegate new];
+    XCTAssertFalse([delegate applicationShouldHandleReopen:(NSApplication *)NSObject.new hasVisibleWindows:NO]);
+    XCTAssertEqual(delegate.menus, 1u);
+    XCTAssertTrue([delegate applicationShouldHandleReopen:(NSApplication *)NSObject.new hasVisibleWindows:YES], @"An open window comes forward instead");
+    XCTAssertEqual(delegate.menus, 1u);
+    delegate.modal = YES; [delegate handleUserOpen];
+    delegate.modal = NO; delegate.userOpenReady = NO; [delegate handleUserOpen];
+    [delegate applicationDidBecomeActive:[NSNotification notificationWithName:NSApplicationDidBecomeActiveNotification object:nil]];
+    XCTAssertEqual(delegate.menus, 1u, @"Still launching or an alert in front: dropped, not kept for later");
+}
+// An agent application is not activated by its own launch, and -activate did not
+// change that on real launches. The first launch shows the menu without activation,
+// exactly as the main hotkey does.
+- (void)testFirstLaunchShowsTheMenuWithoutActivationButNotWhileLaunchingOrModal {
+    NSNotification *activation = [NSNotification notificationWithName:NSApplicationDidBecomeActiveNotification object:nil];
+    RCUserOpenDelegate *delegate = [RCUserOpenDelegate new];
+    delegate.active = NO;
+    [delegate handleUserLaunch];
+    XCTAssertEqual(delegate.menus, 1u);
+    delegate.active = YES;
+    [delegate applicationDidBecomeActive:activation];
+    XCTAssertEqual(delegate.menus, 1u, @"A later activation does not show it again");
+    delegate.modal = YES; [delegate handleUserLaunch];
+    delegate.modal = NO; delegate.userOpenReady = NO; [delegate handleUserLaunch];
+    XCTAssertEqual(delegate.menus, 1u);
+    // A reopen still needs the activation macOS gives it: `open -g` on a running Revclip.
+    RCUserOpenDelegate *running = [RCUserOpenDelegate new];
+    running.active = NO;
+    [running applicationShouldHandleReopen:(NSApplication *)NSObject.new hasVisibleWindows:NO];
+    XCTAssertEqual(running.menus, 0u);
+}
+- (void)testOpenWithoutActivationWaitsBrieflyAndABackgroundOpenNeverShowsAMenu {
+    NSNotification *activation = [NSNotification notificationWithName:NSApplicationDidBecomeActiveNotification object:nil];
+    RCUserOpenDelegate *delegate = [RCUserOpenDelegate new];
+    delegate.active = NO;
+    [delegate handleUserOpen];
+    XCTAssertEqual(delegate.menus, 0u, @"open -g, login, CLI: not active, no menu");
+    delegate.clock += 0.4; delegate.active = YES;
+    [delegate applicationDidBecomeActive:activation];
+    XCTAssertEqual(delegate.menus, 1u, @"Activation arrived just after the event");
+    [delegate applicationDidBecomeActive:activation];
+    XCTAssertEqual(delegate.menus, 1u, @"Consumed: a later activation shows nothing");
+    // Clear, Panic or a stop and restart while the activation was awaited.
+    delegate.active = NO; [delegate handleUserOpen];
+    delegate.clock += 0.2; delegate.generation++; delegate.active = YES;
+    [delegate applicationDidBecomeActive:activation];
+    XCTAssertEqual(delegate.menus, 1u);
+    // Opened in the background, activated by the user much later for another reason.
+    delegate.active = NO; [delegate handleUserOpen];
+    delegate.clock += 30; delegate.active = YES;
+    [delegate applicationDidBecomeActive:activation];
+    XCTAssertEqual(delegate.menus, 1u);
+}
+@end
+
 // NSObject doubles deliberately avoid NSApplication/RCClipboardService init.
 // No real app termination, clipboard, singleton, persistence or event posting.
 @interface RCTerminationApplication : NSObject

@@ -40,6 +40,9 @@ static UTType *RCSnippetImportExportContentType(void) {
 
 @interface RCAppDelegate ()
 @property(nonatomic) BOOL clipboardTerminationPending;
+@property(nonatomic) BOOL userOpenReady;
+@property(nonatomic) NSTimeInterval userOpenWaitingSince;
+@property(nonatomic) NSUInteger userOpenWaitingGeneration;
 @property(nonatomic) NSUInteger clipboardTerminationGeneration;
 
 - (void)presentSnippetImportExportError:(NSError *)error title:(NSString *)title;
@@ -48,14 +51,111 @@ static UTType *RCSnippetImportExportContentType(void) {
                                                             clipboard:(RCClipboardService *)clipboard;
 - (void)scheduleClipboardTerminationTimeout:(dispatch_block_t)timeout;
 - (BOOL)clipboardMayResumeAfterCancelledTermination;
+- (void)handleUserOpen;
+- (void)handleUserLaunch;
+- (BOOL)userOpenApplicationIsActive;
+- (BOOL)userOpenModalWindowPresent;
+- (NSTimeInterval)userOpenClock;
+- (NSUInteger)userOpenMonitoringGeneration;
+- (void)presentMenuForUserOpen;
 
 @end
 
 @implementation RCAppDelegate
 
+// Whether this launch was caused by a Services request. AERegistry.h only says the
+// keyword is "present in a kAEOpenApplication event". Published code reads it as the
+// enum value of keyAEPropData, the same shape as the long-established login item check
+// (keyAEPropData == keyAELaunchedAsLogInItem); a parameter under the keyword itself is
+// the other literal reading. Both are accepted, and neither is confirmed on a current
+// macOS yet, so the launch log below records the shape that actually arrived. Anything
+// else, including a login item launch, is an ordinary launch and keeps its guidance.
++ (BOOL)launchEventIndicatesService:(NSAppleEventDescriptor *)event {
+    if (event == nil || event.eventClass != kCoreEventClass || event.eventID != kAEOpenApplication) { return NO; }
+    NSAppleEventDescriptor *property = [event paramDescriptorForKeyword:keyAEPropData];
+    if (property != nil && property.enumCodeValue == keyAELaunchedAsServiceItem) { return YES; }
+    return [event paramDescriptorForKeyword:keyAELaunchedAsServiceItem] != nil;
+}
+
++ (BOOL)launchEventIsUserOpen:(NSAppleEventDescriptor *)event {
+    if (event == nil || event.eventClass != kCoreEventClass || event.eventID != kAEOpenApplication) { return NO; }
+    // keyAELaunchedAsLogInItem, keyAELaunchedAsServiceItem, or anything not known here.
+    if ([event paramDescriptorForKeyword:keyAEPropData] != nil) { return NO; }
+    return [event paramDescriptorForKeyword:keyAELaunchedAsLogInItem] == nil &&
+        [event paramDescriptorForKeyword:keyAELaunchedAsServiceItem] == nil;
+}
+
++ (BOOL)selfRelaunchStamp:(NSTimeInterval)stamp coversLaunchAt:(NSTimeInterval)now {
+    return stamp > 0 && now >= stamp && now - stamp <= 300.0;
+}
+
+#pragma mark - Opened by the user
+
+static const NSTimeInterval kRCUserOpenActivationWait = 1.0;
+
+// Opening Revclip from Applications (first launch, or again while it runs) shows the
+// same menu as the main hotkey, through the same entry: that path already drops a
+// request after Clear, Panic or quit, coalesces repeats and never stacks menus. Only a
+// user's own open reaches this. Opened again while running, macOS activates Revclip
+// (seen on a real reopen), so a reopen that leaves it inactive (`open -g`) shows
+// nothing. Activation can arrive just after the event; it is awaited through the
+// activation callback, with a time comparison instead of a timer.
+- (void)handleUserOpen {
+    self.userOpenWaitingSince = 0;
+    if (!self.userOpenReady || self.clipboardTerminationPending || [self userOpenModalWindowPresent]) { return; }
+    if (![self userOpenApplicationIsActive]) {
+        self.userOpenWaitingSince = [self userOpenClock];
+        self.userOpenWaitingGeneration = [self userOpenMonitoringGeneration];
+        return;
+    }
+    [self presentMenuForUserOpen];
+}
+
+// First launch. macOS does not activate an agent application (LSUIElement) when it is
+// opened, and asking with -activate did not activate it either (seen on real launches:
+// active=false, no menu). So the first launch does not wait for activation at all: the
+// main hotkey's menu has always been shown while Revclip is not active, and this is
+// the same call. What keeps other launches out is the launch event (login item,
+// Services), the self-relaunch stamp and, for a script's `open -g`, which sends the
+// same event as a user's open, the -suppressLaunchMenu launch argument.
+- (void)handleUserLaunch {
+    self.userOpenWaitingSince = 0;
+    if (!self.userOpenReady || self.clipboardTerminationPending || [self userOpenModalWindowPresent]) { return; }
+    [self presentMenuForUserOpen];
+}
+
+- (void)applicationDidBecomeActive:(NSNotification *)notification {
+    NSTimeInterval since = self.userOpenWaitingSince;
+    if (since <= 0) { return; }
+    NSTimeInterval waited = [self userOpenClock] - since;
+    self.userOpenWaitingSince = 0;
+    // A Clear, Panic or stop and restart during the wait ends the request: the menu
+    // entry only guards requests from the moment it is called.
+    if (waited >= 0 && waited <= kRCUserOpenActivationWait &&
+        [self userOpenMonitoringGeneration] == self.userOpenWaitingGeneration) { [self handleUserOpen]; }
+}
+
+// A window that is already open keeps AppKit's behaviour (it comes forward).
+- (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)hasVisibleWindows {
+    if (hasVisibleWindows) { return YES; }
+    [self handleUserOpen];
+    return NO;
+}
+
+- (BOOL)userOpenApplicationIsActive { return NSApp.isActive; }
+- (BOOL)userOpenModalWindowPresent { return NSApp.modalWindow != nil; }
+- (NSTimeInterval)userOpenClock { return NSProcessInfo.processInfo.systemUptime; }
+- (NSUInteger)userOpenMonitoringGeneration { return [RCClipboardService shared].monitoringGeneration; }
+- (void)presentMenuForUserOpen { [[RCMenuManager shared] popUpStatusMenuFromHotKey]; }
+
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
     // XCTest hosts must never migrate the signed-in user's store or start capture.
     if (NSClassFromString(@"XCTestCase") != nil) return;
+    // What caused this launch, read once and first: the alerts below run modal loops,
+    // after which the current event can be another one, or none.
+    NSAppleEventDescriptor *launchEvent = NSAppleEventManager.sharedAppleEventManager.currentAppleEvent;
+    BOOL launchedAsService = [RCAppDelegate launchEventIndicatesService:launchEvent];
+    BOOL launchedByUser = [RCAppDelegate launchEventIsUserOpen:launchEvent];
     // 0. Move to Applications check (before any setup).
     [[RCMoveToApplicationsService shared] checkAndMoveIfNeeded];
 
@@ -108,15 +208,25 @@ static UTType *RCSnippetImportExportContentType(void) {
     environment.privacyService = privacyService;
 
     // 5. UI & Services setup
+    [[RCOCRCoordinator shared] startObserving];
     [menuManager setupStatusItem];
     [hotKeyService loadAndRegisterHotKeysFromDefaults];
     [dataCleanService startCleanupTimer];
     [clipboardService startMonitoring];
     [clipboardService captureCurrentClipboard];
-    [privacyService presentClipboardAccessGuidanceIfNeeded];
+    // Launched by macOS to answer a Services request (the first contact for a new
+    // user, from another application's context menu): the modal guidance below would
+    // sit in front of the menu that request is waiting for. It is shown on the next
+    // ordinary launch instead. An ordinary launch is unchanged.
+    if (!launchedAsService) { [privacyService presentClipboardAccessGuidanceIfNeeded]; }
+
+    // Services entry. Registered only now: a request that launched the app is delivered
+    // once a provider exists, and by this point history and templates can be read.
+    NSApp.servicesProvider = menuManager;
+    NSUpdateDynamicServices();
 
     // 6. Accessibility
-    [[RCAccessibilityService shared] checkAndRequestAccessibilityWithAlert];
+    if (!launchedAsService) { [[RCAccessibilityService shared] checkAndRequestAccessibilityWithAlert]; }
 
     // 7. Sparkle updater uses the distribution feed in the bundle metadata.
     [[RCUpdateService shared] setupUpdater];
@@ -132,7 +242,17 @@ static UTType *RCSnippetImportExportContentType(void) {
 
     [[RCSnippetCLIService shared] start];
 
-    NSLog(@"[Revclip] Application did finish launching.");
+    // Last, after every first-run alert: the menu for a launch the user made. Not after
+    // Revclip relaunched itself; the stamp is consumed either way.
+    NSUserDefaults *defaults = NSUserDefaults.standardUserDefaults;
+    BOOL selfRelaunch = [RCAppDelegate selfRelaunchStamp:[defaults doubleForKey:kRCSelfRelaunchStampKey]
+                                          coversLaunchAt:NSDate.date.timeIntervalSinceReferenceDate];
+    [defaults removeObjectForKey:kRCSelfRelaunchStampKey];
+    self.userOpenReady = YES;
+    if (!selfRelaunch && launchedByUser && ![defaults boolForKey:kRCSuppressLaunchMenuKey]) { [self handleUserLaunch]; }
+    NSLog(@"[Revclip] Application did finish launching. event=%@ prdt=%@ svit=%d service=%d",
+          NSFileTypeForHFSTypeCode(launchEvent.eventID), NSFileTypeForHFSTypeCode([launchEvent paramDescriptorForKeyword:keyAEPropData].enumCodeValue),
+          [launchEvent paramDescriptorForKeyword:keyAELaunchedAsServiceItem] != nil, launchedAsService);
 }
 
 - (void)languageDidChange:(NSNotification *)notification {

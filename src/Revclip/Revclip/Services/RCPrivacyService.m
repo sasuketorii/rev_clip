@@ -194,6 +194,17 @@ typedef NS_ENUM(NSInteger, RCPrivacyServiceErrorCode) {
             return;
         }
 
+        [self openClipboardSettings];
+    };
+
+    if ([NSThread isMainThread]) {
+        showAlert();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), showAlert);
+    }
+}
+
+- (void)openClipboardSettings {
         NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
 
         // G3-015: macOS 16+ では新形式のシステム設定 URL を優先して使用
@@ -213,13 +224,6 @@ typedef NS_ENUM(NSInteger, RCPrivacyServiceErrorCode) {
         if (privacySettingsURL != nil) {
             [workspace openURL:privacySettingsURL];
         }
-    };
-
-    if ([NSThread isMainThread]) {
-        showAlert();
-    } else {
-        dispatch_async(dispatch_get_main_queue(), showAlert);
-    }
 }
 
 #pragma mark - Private

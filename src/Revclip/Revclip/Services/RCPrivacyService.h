@@ -45,6 +45,9 @@ typedef NS_ENUM(NSInteger, RCClipboardAccessState) {
 // ユーザーにクリップボードアクセスの許可を促すガイダンスを表示
 - (void)showClipboardAccessGuidance;
 
+// Opens settings without reading clipboard contents or requesting permission.
+- (void)openClipboardSettings;
+
 @end
 
 // 通知名

@@ -1,3 +1,4 @@
+#import "RCHotKeyRecorderView.h"
 #import "RCMenuStyle.h"
 #import "RCLinkPreviewService.h"
 #import "RCSnippetMedia.h"
@@ -54,6 +55,18 @@ static os_log_t RCMenuManagerLog(void) {
 @interface RCMenuManager () <NSMenuDelegate>
 @property (nonatomic, strong) NSHashTable<NSMenu *> *trackingMenus;
 @property BOOL pendingMenuRebuild;
+// Main-thread-owned; one command waiting for every tracking menu to close. It
+// stays set until it actually runs, so a second entry cannot slip in between
+// menuDidClose: and the run loop turn that executes it.
+@property (nonatomic, copy, nullable) dispatch_block_t afterTrackingBlock;
+@property (nonatomic) NSUInteger afterTrackingGeneration;
+@property (nonatomic) BOOL afterTrackingScheduled;
+// Main-thread-owned state of one Services request. While active, choosing an item
+// records it here instead of pasting.
+@property (nonatomic) BOOL serviceSessionActive;
+@property (nonatomic) BOOL serviceSessionTimedOut;
+@property (nonatomic, strong, nullable) NSMenuItem *serviceSelectedItem;
+@property (nonatomic, strong, nullable) NSMenu *serviceMenu;
 // Main-thread-owned; a newer hotkey request supersedes an unpresented one.
 @property (nonatomic) NSUInteger presentationRequest;
 // Main-thread-owned; advances each time the status menu's root opens, so a
@@ -140,6 +153,11 @@ static os_log_t RCMenuManagerLog(void) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         sharedManager = [[self alloc] init];
+        // Only the app's manager gates the OCR hotkey; test managers never do.
+        RCMenuManager *manager = sharedManager;
+        [RCOCRCoordinator shared].menuTrackingGate = ^(dispatch_block_t block) {
+            [manager performAfterMenuTrackingEnds:block];
+        };
     });
     return sharedManager;
 }
@@ -238,7 +256,7 @@ static os_log_t RCMenuManagerLog(void) {
 
 - (NSDictionary *)menuPreferenceSnapshot {
     // Framework/user defaults notifications are not menu configuration changes.
-    NSArray *keys = @[@"RCAppAppearance",kRCAddNumericKeyEquivalentsKey,kRCMaxLengthOfToolTipKey,kRCMenuItemsAreMarkedWithNumbersKey,kRCPrefAddClearHistoryMenuItemKey,kRCPrefMaxHistorySizeKey,kRCPrefMaxMenuItemTitleLengthKey,kRCPrefMenuIconSizeKey,kRCPrefMenuItemsTitleStartWithZeroKey,kRCPrefNumberOfItemsPlaceInlineKey,kRCPrefNumberOfItemsPlaceInsideFolderKey,kRCPrefShowAlertBeforeClearHistoryKey,kRCPrefShowColorPreviewInTheMenu,kRCPrefShowIconInTheMenuKey,kRCPrefShowStatusItemKey,kRCShowImageInTheMenuKey,kRCShowToolTipOnMenuItemKey,kRCThumbnailHeightKey,kRCThumbnailWidthKey];
+    NSArray *keys = @[kRCOCRKeyComboKey, kRCOCREnabledKey, @"RCAppAppearance",kRCAddNumericKeyEquivalentsKey,kRCMaxLengthOfToolTipKey,kRCMenuItemsAreMarkedWithNumbersKey,kRCPrefAddClearHistoryMenuItemKey,kRCPrefMaxHistorySizeKey,kRCPrefMaxMenuItemTitleLengthKey,kRCPrefMenuIconSizeKey,kRCPrefMenuItemsTitleStartWithZeroKey,kRCPrefNumberOfItemsPlaceInlineKey,kRCPrefNumberOfItemsPlaceInsideFolderKey,kRCPrefShowAlertBeforeClearHistoryKey,kRCPrefShowColorPreviewInTheMenu,kRCPrefShowIconInTheMenuKey,kRCPrefShowStatusItemKey,kRCShowImageInTheMenuKey,kRCShowToolTipOnMenuItemKey,kRCThumbnailHeightKey,kRCThumbnailWidthKey];
     NSMutableDictionary *snapshot = [NSMutableDictionary dictionary];
     for (NSString *key in keys) snapshot[key] = [NSUserDefaults.standardUserDefaults objectForKey:key] ?: NSNull.null;
     return snapshot;
@@ -566,10 +584,18 @@ static os_log_t RCMenuManagerLog(void) {
     [self popUpMenuAtMouseLocation:menu];
 }
 
-// Every hotkey pop-up enters AppKit's tracking session here.
+// Every hotkey pop-up enters AppKit's tracking session here. While a Services request
+// waits for its answer, no other menu is opened from here: the snippet and folder
+// hotkeys have no tracking check of their own, and a choice made in a second menu would
+// paste at the same moment the requesting application inserts the answer.
 - (void)popUpMenuAtMouseLocation:(NSMenu *)menu {
+    if (self.serviceSessionActive && menu != self.serviceMenu) { return; }
     NSPoint mouseLocation = [NSEvent mouseLocation];
-    [menu popUpMenuPositioningItem:nil atLocation:[self popupLocationForMenu:menu mouse:mouseLocation] inView:nil];
+    [self trackMenu:menu atLocation:[self popupLocationForMenu:menu mouse:mouseLocation]];
+}
+
+- (void)trackMenu:(NSMenu *)menu atLocation:(NSPoint)location {
+    [menu popUpMenuPositioningItem:nil atLocation:location inView:nil];
 }
 
 #pragma mark - Menu Build
@@ -846,7 +872,48 @@ static os_log_t RCMenuManagerLog(void) {
     }
 }
 
+// A styled row dispatches its action while AppKit is still tearing the menu down,
+// so OCR waits for the tracking session instead of capturing a fading menu.
+- (void)invokeOCR:(id)sender {
+    NSRunningApplication *target = self.pasteTargetApplication;
+    // The coordinator routes every request through performAfterMenuTrackingEnds:.
+    [[RCOCRCoordinator shared] requestFromApplication:target];
+}
+
+- (void)performAfterMenuTrackingEnds:(dispatch_block_t)block {
+    NSAssert(NSThread.isMainThread, @"Menu tracking state is main-only");
+    if (block == nil) { return; }
+    // The menu item's key equivalent and the global hotkey describe one request.
+    // Checked first: a waiting command may already have seen its last menu close.
+    NSArray<NSMenu *> *tracking = self.trackingMenus.allObjects;
+    if (self.afterTrackingBlock != nil) {
+        // Its menus are gone but nothing scheduled it (a menu released without
+        // menuDidClose:). The next request is the event that revives it, so the slot
+        // cannot stay occupied for ever and no timer is needed.
+        if (tracking.count == 0 && !self.afterTrackingScheduled) { [self scheduleAfterTrackingBlock]; }
+        return;
+    }
+    if (tracking.count == 0) { block(); return; }
+    self.afterTrackingBlock = block;
+    self.afterTrackingGeneration++;
+    self.afterTrackingScheduled = NO;
+    os_log_debug(RCMenuManagerLog(), "command deferred until %lu tracking menus close", (unsigned long)tracking.count);
+    for (NSMenu *menu in tracking) {
+        if (menu.supermenu == nil) { [menu cancelTrackingWithoutAnimation]; }
+    }
+}
+
 - (void)appendApplicationSectionToMenu:(NSMenu *)menu {
+    NSMenuItem *ocrItem = [[NSMenuItem alloc] initWithTitle:RCLocalizedString(@"OCR Copy Screen Text", nil) action:@selector(invokeOCR:) keyEquivalent:@""];
+    ocrItem.target = self;
+    // The same default-aware value the preferences and the hot key service use.
+    RCKeyCombo ocrCombo = [[RCHotKeyService shared] configuredKeyComboForSlot:RCHotKeySlotOCR];
+    if (RCIsValidKeyCombo(ocrCombo) && (![NSUserDefaults.standardUserDefaults objectForKey:kRCOCREnabledKey] || [NSUserDefaults.standardUserDefaults boolForKey:kRCOCREnabledKey])) {
+        ocrItem.keyEquivalent = [RCHotKeyRecorderView keyEquivalentForKeyCombo:ocrCombo];
+        ocrItem.keyEquivalentModifierMask = [RCHotKeyService cocoaModifiersFromCarbonModifiers:ocrCombo.modifiers];
+    }
+    [self applyNativeAppearanceToMenuItem:ocrItem title:ocrItem.title number:nil image:[self templateSymbolNamed:@"viewfinder"] submenuChevron:NO];
+    [menu addItem:ocrItem];
     NSMenuItem *preferencesItem = [[NSMenuItem alloc] initWithTitle:RCLocalizedString(@"Preferences...", nil)
                                                               action:@selector(openPreferences:)
                                                        keyEquivalent:@","];
@@ -976,6 +1043,24 @@ static os_log_t RCMenuManagerLog(void) {
         self.pendingMenuRebuild = NO;
         dispatch_async(dispatch_get_main_queue(), ^{ [self setupStatusItem]; });
     }
+    if (!self.trackingMenus.allObjects.count && self.afterTrackingBlock != nil && !self.afterTrackingScheduled) {
+        [self scheduleAfterTrackingBlock];
+    }
+}
+
+- (void)scheduleAfterTrackingBlock {
+    self.afterTrackingScheduled = YES;
+    NSUInteger generation = self.afterTrackingGeneration;
+    // The main dispatch queue is also drained inside the event-tracking run loop.
+    // These modes only run once AppKit's menu tracking loop has returned.
+    CFRunLoopPerformBlock(CFRunLoopGetMain(), (__bridge CFArrayRef)@[NSDefaultRunLoopMode, NSModalPanelRunLoopMode], ^{
+        if (generation != self.afterTrackingGeneration || self.afterTrackingBlock == nil) { return; }
+        dispatch_block_t block = self.afterTrackingBlock;
+        self.afterTrackingBlock = nil;
+        self.afterTrackingScheduled = NO;
+        block();
+    });
+    CFRunLoopWakeUp(CFRunLoopGetMain());
 }
 
 - (NSString *)previewTextForMenuItem:(NSMenuItem *)item {
@@ -987,6 +1072,11 @@ static os_log_t RCMenuManagerLog(void) {
     os_log_debug(RCMenuManagerLog(), "menu opened; tracking=%lu", (unsigned long)self.trackingMenus.count);
     [self.previewController hide];
     if (menu.supermenu == nil) {
+        // A command left over from an earlier session must not fire when this
+        // unrelated session ends.
+        self.afterTrackingBlock = nil;
+        self.afterTrackingGeneration++;
+        self.afterTrackingScheduled = NO;
         [self capturePasteTargetApplication];
     }
     [self configureMenuForSimpleTransparentBackground:menu];
@@ -1665,6 +1755,7 @@ static os_log_t RCMenuManagerLog(void) {
 #pragma mark - Actions
 
 - (void)selectClipMenuItem:(NSMenuItem *)menuItem {
+    if ([self captureServiceSelection:menuItem]) { return; }
     NSString *dataHash = nil;
     if ([menuItem.representedObject isKindOfClass:[NSString class]]) {
         dataHash = (NSString *)menuItem.representedObject;
@@ -1673,6 +1764,7 @@ static os_log_t RCMenuManagerLog(void) {
 }
 
 - (void)selectSnippetMenuItem:(NSMenuItem *)menuItem {
+    if ([self captureServiceSelection:menuItem]) { return; }
     NSDictionary *selectionInfo = nil;
     if ([menuItem.representedObject isKindOfClass:[NSDictionary class]]) {
         selectionInfo = (NSDictionary *)menuItem.representedObject;
@@ -1705,6 +1797,153 @@ static os_log_t RCMenuManagerLog(void) {
         return;
     }
     [[RCPasteService shared] pastePlainText:content toApplication:self.pasteTargetApplication];
+}
+
+#pragma mark - Services entry
+
+// The Services API is synchronous: the answer has to be on the service pasteboard when
+// this method returns. The hotkey presentation is not reused, because its clipboard
+// preflight is asynchronous; the menu call itself blocks until a choice or a cancel.
+static NSTimeInterval const kRCServiceMenuLimit = 50.0; // below NSTimeout (60 s) in Info.plist
+
+- (BOOL)serviceMonitoringActive { return [RCClipboardService shared].isMonitoring && ![RCPanicEraseService shared].isPanicInProgress; }
+- (NSUInteger)serviceMonitoringGeneration { return [RCClipboardService shared].monitoringGeneration; }
+- (BOOL)serviceModalWindowPresent { return NSApp.modalWindow != nil; }
+- (NSTimeInterval)serviceNow { return NSProcessInfo.processInfo.systemUptime; }
+- (void)presentServiceMenu:(NSMenu *)menu { [self popUpMenuAtMouseLocation:menu]; }
+- (void)recordServiceHistoryUse:(NSString *)dataHash { [[RCClipboardService shared] recordHistoryUseWithDataHash:dataHash]; }
+
+- (NSMenu *)buildServiceMenu {
+    // History and templates only: nothing here clears, quits or opens a window.
+    NSMenu *menu = [self menuWithTitle:@"Revclip"];
+    [self appendClipHistorySectionToMenu:menu];
+    [menu addItem:[NSMenuItem separatorItem]];
+    [self appendSnippetSectionToMenu:menu];
+    return menu;
+}
+
+// YES while a Services request is waiting for a choice: the item is recorded and the
+// caller must not paste. Only the two item kinds that carry content are taken.
+- (BOOL)captureServiceSelection:(NSMenuItem *)item {
+    if (!self.serviceSessionActive || item == nil || ![self serviceMenuContainsItem:item]) { return NO; }
+    if (item.action != @selector(selectClipMenuItem:) && item.action != @selector(selectSnippetMenuItem:)) { return NO; }
+    self.serviceSelectedItem = item;
+    return YES;
+}
+
+// Only the menu this request opened. An item of any other Revclip menu (the status
+// item, a hotkey menu) keeps its ordinary meaning even while a request is waiting.
+- (BOOL)serviceMenuContainsItem:(NSMenuItem *)item {
+    NSMenu *root = item.menu;
+    while (root.supermenu != nil) { root = root.supermenu; }
+    return root != nil && root == self.serviceMenu;
+}
+
+// A text service can only return text, so items that hold none are disabled up front
+// rather than refused after the click.
+- (BOOL)serviceItemCanReturnText:(NSMenuItem *)item {
+    if (item.action == @selector(selectClipMenuItem:)) {
+        NSString *type = [self.clipItemsByMenuItem objectForKey:item].primaryType;
+        if (type.length == 0) { return YES; } // unknown: decided when the data is read
+        return ![@[NSPasteboardTypeTIFF, NSPasteboardTypePDF, NSPasteboardTypeFileURL, @"NSFilenamesPboardType"] containsObject:type];
+    }
+    // Validation runs per row and per display: no database read here. A media template
+    // registered its data for the preview when the row was built; the choice itself is
+    // still read fresh in serviceTextForItem:.
+    if (item.action == @selector(selectSnippetMenuItem:)) { return [self.previewImageData objectForKey:item] == nil; }
+    return YES;
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)item {
+    if (!self.serviceSessionActive || ![self serviceMenuContainsItem:item]) { return YES; }
+    return [self serviceItemCanReturnText:item];
+}
+
+// Text for the recorded item, read now rather than when the menu was built. nil for
+// images, PDFs, files and media templates: a text service cannot return them, and they
+// are not placed on the general pasteboard as a substitute.
+- (nullable NSString *)serviceTextForItem:(NSMenuItem *)item historyDataHash:(NSString * _Nullable * _Nonnull)outHash {
+    *outHash = nil;
+    if (item.action == @selector(selectClipMenuItem:)) {
+        NSString *dataHash = [item.representedObject isKindOfClass:NSString.class] ? item.representedObject : nil;
+        if (dataHash.length == 0) { return nil; }
+        NSDictionary *row = [[RCDatabaseManager shared] clipItemWithDataHash:dataHash];
+        if (![row isKindOfClass:NSDictionary.class]) { return nil; }
+        RCClipItem *clipItem = [[RCClipItem alloc] initWithDictionary:row];
+        RCClipData *clipData = clipItem.dataPath.length ? [RCClipData clipDataFromPath:clipItem.dataPath] : nil;
+        if (clipData.stringValue.length == 0) { return nil; }
+        *outHash = dataHash;
+        return clipData.stringValue;
+    }
+    NSDictionary *info = [item.representedObject isKindOfClass:NSDictionary.class] ? item.representedObject : nil;
+    NSString *folder = [self stringValueFromDictionary:info key:kRCSnippetMenuFolderIdentifierKey defaultValue:@""];
+    NSString *snippet = [self stringValueFromDictionary:info key:kRCSnippetMenuSnippetIdentifierKey defaultValue:@""];
+    if (folder.length == 0 || snippet.length == 0) { return nil; }
+    for (NSDictionary *candidate in [[RCDatabaseManager shared] fetchSnippetsForFolder:folder]) {
+        if ([candidate[@"identifier"] isEqual:snippet] && [candidate[@"media_data"] length] > 0) { return nil; }
+    }
+    NSString *content = [self snippetContentForFolderIdentifier:folder snippetIdentifier:snippet];
+    return content.length ? content : nil;
+}
+
+- (void)insertFromRevclip:(NSPasteboard *)pasteboard userData:(NSString *)userData error:(NSString **)error {
+    (void)userData; (void)error; // No error text: a cancel or a refusal is not a failure to report.
+    if (!NSThread.isMainThread || pasteboard == nil) { return; }
+    // Not ready (still launching, Clear, Panic, quit), a modal alert in front (the
+    // first-run Accessibility guidance), a Revclip menu already open, or a second
+    // request while one is waiting: no menu, and nothing is returned.
+    if (self.serviceSessionActive || self.trackingMenus.allObjects.count || self.historyClearInProgress ||
+        ![self serviceMonitoringActive] || [self serviceModalWindowPresent]) { return; }
+
+    NSUInteger generation = [self serviceMonitoringGeneration];
+    NSTimeInterval startedAt = [self serviceNow];
+    __weak typeof(self) weakSelf = self;
+    NSTimer *limit = nil;
+    NSMenuItem *selected = nil;
+    @try {
+        // Everything that marks the session is inside the guard, so an exception while
+        // the menu is built cannot leave the interceptor or the flag behind.
+        self.serviceSessionActive = YES; self.serviceSessionTimedOut = NO; self.serviceSelectedItem = nil;
+        NSMenu *menu = [self buildServiceMenu];
+        self.serviceMenu = menu;
+        [RCMenuStyle setSelectionInterceptor:^BOOL(NSMenuItem *item) { return [weakSelf captureServiceSelection:item]; }];
+        // Exists only during this request. Menu tracking runs in the event-tracking mode.
+        limit = [NSTimer timerWithTimeInterval:kRCServiceMenuLimit repeats:NO block:^(NSTimer *timer) {
+            typeof(self) self = weakSelf;
+            if (self == nil || !self.serviceSessionActive) { return; }
+            self.serviceSessionTimedOut = YES;
+            [self.serviceMenu cancelTrackingWithoutAnimation];
+        }];
+        [[NSRunLoop mainRunLoop] addTimer:limit forMode:NSRunLoopCommonModes];
+        [[NSRunLoop mainRunLoop] addTimer:limit forMode:NSEventTrackingRunLoopMode];
+        [self presentServiceMenu:menu];
+        selected = self.serviceSelectedItem;
+    } @finally {
+        // Always back to ordinary pasting, whatever happened while the menu was open.
+        [limit invalidate];
+        [RCMenuStyle setSelectionInterceptor:nil];
+        self.serviceSessionActive = NO; self.serviceSelectedItem = nil; self.serviceMenu = nil;
+    }
+    if (selected == nil || ![self serviceMayAnswerSince:startedAt generation:generation]) { return; }
+
+    NSString *dataHash = nil;
+    NSString *text = [self serviceTextForItem:selected historyDataHash:&dataHash];
+    if (text.length == 0) { NSBeep(); return; }
+    // Reading and decrypting takes time, and a stop can arrive from another thread
+    // meanwhile: the conditions are checked again immediately before the answer.
+    if (![self serviceMayAnswerSince:startedAt generation:generation]) { return; }
+    // The service pasteboard only. The general pasteboard and the paste keystroke are
+    // never involved, so nothing is pasted twice and no other copy is overwritten.
+    [pasteboard clearContents];
+    if (![pasteboard writeObjects:@[text]]) { return; }
+    if (dataHash.length) { [self recordServiceHistoryUse:dataHash]; }
+}
+
+// NO after a stop, or a stop and restart, since the request began, and once the
+// requesting application may have stopped waiting.
+- (BOOL)serviceMayAnswerSince:(NSTimeInterval)startedAt generation:(NSUInteger)generation {
+    if (self.serviceSessionTimedOut || [self serviceNow] - startedAt >= kRCServiceMenuLimit) { return NO; }
+    return !self.historyClearInProgress && [self serviceMonitoringActive] && [self serviceMonitoringGeneration] == generation;
 }
 
 - (void)clearHistoryMenuItemSelected:(NSMenuItem *)sender {

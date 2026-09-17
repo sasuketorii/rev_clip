@@ -17,6 +17,9 @@
 // Accessibility権限の要求（システムダイアログを表示）
 - (void)requestAccessibilityPermission;
 
+// Opens settings without a permission request.
+- (void)openAccessibilitySettingsWithFallback;
+
 // 権限チェック + 未付与時にガイダンスアラート表示
 - (void)checkAndRequestAccessibilityWithAlert;
 

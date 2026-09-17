@@ -7,6 +7,7 @@
 //
 
 #import "RCHotKeyRecorderView.h"
+#import "RCPreferencesWindowController.h"
 
 #import <Carbon/Carbon.h>
 
@@ -36,10 +37,10 @@ static NSEventModifierFlags RCRecorderRelevantModifiers(NSEventModifierFlags mod
 - (BOOL)rc_shouldWarnForModifiers:(UInt32)modifiers;
 - (void)rc_showUnsupportedOptionWarning;
 - (NSString *)rc_displayText;
-- (NSString *)rc_stringFromKeyCombo:(RCKeyCombo)keyCombo;
-- (NSString *)rc_symbolStringFromModifiers:(NSEventModifierFlags)modifiers;
-- (NSString *)rc_stringForKeyCode:(UInt16)keyCode modifiers:(NSEventModifierFlags)modifiers;
-- (NSString *)rc_translatedStringForKeyCode:(UInt16)keyCode modifiers:(NSEventModifierFlags)modifiers;
++ (NSString *)rc_stringFromKeyCombo:(RCKeyCombo)keyCombo;
++ (NSString *)rc_symbolStringFromModifiers:(NSEventModifierFlags)modifiers;
++ (NSString *)rc_stringForKeyCode:(UInt16)keyCode modifiers:(NSEventModifierFlags)modifiers;
++ (NSString *)rc_translatedStringForKeyCode:(UInt16)keyCode modifiers:(NSEventModifierFlags)modifiers;
 - (void)processKeyEvent:(NSEvent *)event;
 
 @end
@@ -262,15 +263,9 @@ static NSEventModifierFlags RCRecorderRelevantModifiers(NSEventModifierFlags mod
 }
 
 - (BOOL)rc_shouldWarnForModifiers:(UInt32)modifiers {
-    if (@available(macOS 15.0, *)) {
-        BOOL hasOption = (modifiers & optionKey) != 0;
-        BOOL hasCommand = (modifiers & cmdKey) != 0;
-        BOOL hasControl = (modifiers & controlKey) != 0;
-
-        return hasOption && !hasCommand && !hasControl;
-    }
-
-    return NO;
+    // One rule for the recorder, the preferences and the CLI (RCHotKeyService).
+    // The key code is irrelevant to it; modifier-less input is rejected before this.
+    return modifiers != 0 && ![RCHotKeyService isAssignableKeyCombo:RCMakeKeyCombo(kVK_ANSI_S, modifiers)];
 }
 
 - (void)rc_showUnsupportedOptionWarning {
@@ -292,18 +287,142 @@ static NSEventModifierFlags RCRecorderRelevantModifiers(NSEventModifierFlags mod
 
 - (NSString *)rc_displayText {
     if (self.isRecording) {
-        NSString *modifierText = [self rc_symbolStringFromModifiers:self.recordingModifierFlags];
+        NSString *modifierText = [RCHotKeyRecorderView rc_symbolStringFromModifiers:self.recordingModifierFlags];
         return (modifierText.length > 0) ? modifierText : RCLocalizedString(@"Type shortcut", nil);
     }
 
     if (RCIsValidKeyCombo(self.keyCombo)) {
-        return [self rc_stringFromKeyCombo:self.keyCombo];
+        return [RCHotKeyRecorderView displayStringForKeyCombo:self.keyCombo];
     }
 
     return RCLocalizedString(@"Click to record", nil);
 }
 
-- (NSString *)rc_stringFromKeyCombo:(RCKeyCombo)keyCombo {
++ (NSString *)displayStringForKeyCombo:(RCKeyCombo)combo {
+    return RCIsValidKeyCombo(combo) ? [self rc_stringFromKeyCombo:combo] : @"";
+}
+
++ (NSString *)keyEquivalentForKeyCombo:(RCKeyCombo)combo {
+    if (!RCIsValidKeyCombo(combo)) return @"";
+    switch (combo.keyCode) {
+        case kVK_Return: return @"\r";
+        case kVK_Tab: return @"\t";
+        case kVK_Space: return @" ";
+        case kVK_Delete: return @"\b";
+        case kVK_Escape: return @"\033";
+        case kVK_LeftArrow: return [NSString stringWithFormat:@"%C", (unichar)NSLeftArrowFunctionKey];
+        case kVK_RightArrow: return [NSString stringWithFormat:@"%C", (unichar)NSRightArrowFunctionKey];
+        case kVK_UpArrow: return [NSString stringWithFormat:@"%C", (unichar)NSUpArrowFunctionKey];
+        case kVK_DownArrow: return [NSString stringWithFormat:@"%C", (unichar)NSDownArrowFunctionKey];
+        case kVK_Home: return [NSString stringWithFormat:@"%C", (unichar)NSHomeFunctionKey];
+        case kVK_End: return [NSString stringWithFormat:@"%C", (unichar)NSEndFunctionKey];
+        case kVK_PageUp: return [NSString stringWithFormat:@"%C", (unichar)NSPageUpFunctionKey];
+        case kVK_PageDown: return [NSString stringWithFormat:@"%C", (unichar)NSPageDownFunctionKey];
+        case kVK_ForwardDelete: return [NSString stringWithFormat:@"%C", (unichar)NSDeleteFunctionKey];
+        case kVK_Help: return [NSString stringWithFormat:@"%C", (unichar)NSHelpFunctionKey];
+        case kVK_F1: return [NSString stringWithFormat:@"%C", (unichar)NSF1FunctionKey];
+        case kVK_F2: return [NSString stringWithFormat:@"%C", (unichar)NSF2FunctionKey];
+        case kVK_F3: return [NSString stringWithFormat:@"%C", (unichar)NSF3FunctionKey];
+        case kVK_F4: return [NSString stringWithFormat:@"%C", (unichar)NSF4FunctionKey];
+        case kVK_F5: return [NSString stringWithFormat:@"%C", (unichar)NSF5FunctionKey];
+        case kVK_F6: return [NSString stringWithFormat:@"%C", (unichar)NSF6FunctionKey];
+        case kVK_F7: return [NSString stringWithFormat:@"%C", (unichar)NSF7FunctionKey];
+        case kVK_F8: return [NSString stringWithFormat:@"%C", (unichar)NSF8FunctionKey];
+        case kVK_F9: return [NSString stringWithFormat:@"%C", (unichar)NSF9FunctionKey];
+        case kVK_F10: return [NSString stringWithFormat:@"%C", (unichar)NSF10FunctionKey];
+        case kVK_F11: return [NSString stringWithFormat:@"%C", (unichar)NSF11FunctionKey];
+        case kVK_F12: return [NSString stringWithFormat:@"%C", (unichar)NSF12FunctionKey];
+        case kVK_F13: return [NSString stringWithFormat:@"%C", (unichar)NSF13FunctionKey];
+        case kVK_F14: return [NSString stringWithFormat:@"%C", (unichar)NSF14FunctionKey];
+        case kVK_F15: return [NSString stringWithFormat:@"%C", (unichar)NSF15FunctionKey];
+        case kVK_F16: return [NSString stringWithFormat:@"%C", (unichar)NSF16FunctionKey];
+        case kVK_F17: return [NSString stringWithFormat:@"%C", (unichar)NSF17FunctionKey];
+        case kVK_F18: return [NSString stringWithFormat:@"%C", (unichar)NSF18FunctionKey];
+        case kVK_F19: return [NSString stringWithFormat:@"%C", (unichar)NSF19FunctionKey];
+        case kVK_F20: return [NSString stringWithFormat:@"%C", (unichar)NSF20FunctionKey];
+        default: return [[self rc_translatedStringForKeyCode:(UInt16)combo.keyCode modifiers:0] lowercaseString];
+    }
+}
+
++ (NSString *)localizedNameForSlot:(NSString *)slot {
+    if ([slot hasPrefix:RCHotKeySlotFolderPrefix]) { return RCLocalizedString(@"Shortcut Slot Folder", nil); }
+    NSDictionary<NSString *, NSString *> *keys = @{
+        RCHotKeySlotMain: @"Shortcut Slot Main", RCHotKeySlotHistory: @"Shortcut Slot History",
+        RCHotKeySlotSnippet: @"Shortcut Slot Snippet", RCHotKeySlotClearHistory: @"Shortcut Slot Clear History",
+        RCHotKeySlotOCR: @"Shortcut Slot OCR",
+    };
+    NSString *key = slot.length > 0 ? keys[slot] : nil;
+    return key != nil ? RCLocalizedString(key, nil) : (slot ?: @"");
+}
+
++ (NSString *)messageForAssignmentResult:(RCHotKeyAssignmentResult *)result {
+    switch (result.status) {
+        case RCHotKeyAssignmentStatusOK: return @"";
+        case RCHotKeyAssignmentStatusInternalConflict:
+            return [NSString stringWithFormat:RCLocalizedString(@"Shortcut Conflict Internal", nil),
+                    [self localizedNameForSlot:result.conflictingSlot]];
+        case RCHotKeyAssignmentStatusSystemReserved: return RCLocalizedString(@"Shortcut Conflict System", nil);
+        case RCHotKeyAssignmentStatusRegistrationFailed:
+            // An OS refusal. Another application using the same keys does not cause it and
+            // cannot be detected, so the wording never points at other applications.
+            return [NSString stringWithFormat:RCLocalizedString(@"Shortcut Registration Failed", nil), (int)result.osStatus];
+        case RCHotKeyAssignmentStatusUnavailable: return RCLocalizedString(@"Shortcut Unavailable", nil);
+        case RCHotKeyAssignmentStatusInvalid: return RCLocalizedString(@"Shortcut Invalid", nil);
+    }
+    return RCLocalizedString(@"Shortcut Invalid", nil);
+}
+
++ (NSString *)preferencesTabForSlot:(NSString *)slot {
+    if (slot.length == 0 || [slot hasPrefix:RCHotKeySlotFolderPrefix]) { return nil; }
+    return [slot isEqualToString:RCHotKeySlotOCR] ? @"ocr" : RCPreferencesTabShortcuts;
+}
+
++ (void)presentAssignmentResult:(RCHotKeyAssignmentResult *)result window:(NSWindow *)window {
+    if (result == nil || result.succeeded) { return; }
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.alertStyle = NSAlertStyleWarning;
+    alert.messageText = RCLocalizedString(@"Shortcut Could Not Change", nil);
+    alert.informativeText = [self messageForAssignmentResult:result];
+    [alert addButtonWithTitle:RCLocalizedString(@"OK", nil)];
+    NSString *tab = result.status == RCHotKeyAssignmentStatusInternalConflict ? [self preferencesTabForSlot:result.conflictingSlot] : nil;
+    BOOL keyboard = result.status == RCHotKeyAssignmentStatusSystemReserved;
+    if (tab != nil) {
+        [alert addButtonWithTitle:[NSString stringWithFormat:RCLocalizedString(@"Shortcut Open Feature Settings", nil),
+                                   [self localizedNameForSlot:result.conflictingSlot]]];
+    } else if (keyboard) {
+        [alert addButtonWithTitle:RCLocalizedString(@"Shortcut Open Keyboard Settings", nil)];
+    }
+    void (^finish)(NSModalResponse) = ^(NSModalResponse response) {
+        if (response != NSAlertSecondButtonReturn) { return; }
+        if (tab != nil) { [[RCPreferencesWindowController shared] showTab:tab]; return; }
+        NSWorkspace *workspace = NSWorkspace.sharedWorkspace;
+        for (NSString *address in @[@"x-apple.systempreferences:com.apple.Keyboard-Settings.extension",
+                                    @"x-apple.systempreferences:com.apple.preference.keyboard?Shortcuts"]) {
+            NSURL *url = [NSURL URLWithString:address];
+            if (url != nil && [workspace openURL:url]) { return; }
+        }
+    };
+    if (window != nil) { [alert beginSheetModalForWindow:window completionHandler:finish]; }
+    else { finish([alert runModal]); }
+}
+
++ (NSString *)displayStringForKeyEquivalent:(NSString *)key modifiers:(NSEventModifierFlags)modifiers {
+    if (key.length == 0) return @"";
+    NSString *label = key.uppercaseString;
+    unichar character = [key characterAtIndex:0];
+    if (character >= NSF1FunctionKey && character <= NSF20FunctionKey) {
+        label = [NSString stringWithFormat:@"F%u", character - NSF1FunctionKey + 1];
+    } else {
+        NSDictionary *symbols = @{@(NSLeftArrowFunctionKey):@"←", @(NSRightArrowFunctionKey):@"→",
+            @(NSUpArrowFunctionKey):@"↑", @(NSDownArrowFunctionKey):@"↓", @(NSHomeFunctionKey):@"↖",
+            @(NSEndFunctionKey):@"↘", @(NSPageUpFunctionKey):@"⇞", @(NSPageDownFunctionKey):@"⇟",
+            @(NSDeleteFunctionKey):@"⌦", @13:@"↩", @9:@"⇥", @8:@"⌫", @27:@"⎋", @32:@"Space"};
+        label = symbols[@(character)] ?: label;
+    }
+    return [[self rc_symbolStringFromModifiers:modifiers] stringByAppendingString:label];
+}
+
++ (NSString *)rc_stringFromKeyCombo:(RCKeyCombo)keyCombo {
     NSEventModifierFlags cocoaModifiers = [RCHotKeyService cocoaModifiersFromCarbonModifiers:keyCombo.modifiers];
     NSString *modifierText = [self rc_symbolStringFromModifiers:cocoaModifiers];
     NSString *keyText = [self rc_stringForKeyCode:(UInt16)keyCombo.keyCode modifiers:cocoaModifiers];
@@ -315,7 +434,7 @@ static NSEventModifierFlags RCRecorderRelevantModifiers(NSEventModifierFlags mod
     return [modifierText stringByAppendingString:keyText];
 }
 
-- (NSString *)rc_symbolStringFromModifiers:(NSEventModifierFlags)modifiers {
++ (NSString *)rc_symbolStringFromModifiers:(NSEventModifierFlags)modifiers {
     NSMutableString *result = [NSMutableString string];
 
     if ((modifiers & NSEventModifierFlagControl) != 0) {
@@ -334,7 +453,7 @@ static NSEventModifierFlags RCRecorderRelevantModifiers(NSEventModifierFlags mod
     return [result copy];
 }
 
-- (NSString *)rc_stringForKeyCode:(UInt16)keyCode modifiers:(NSEventModifierFlags)modifiers {
++ (NSString *)rc_stringForKeyCode:(UInt16)keyCode modifiers:(NSEventModifierFlags)modifiers {
     switch (keyCode) {
         case kVK_Return: return @"↩";
         case kVK_Tab: return @"⇥";
@@ -396,7 +515,7 @@ static NSEventModifierFlags RCRecorderRelevantModifiers(NSEventModifierFlags mod
     return [self rc_translatedStringForKeyCode:keyCode modifiers:modifiers];
 }
 
-- (NSString *)rc_translatedStringForKeyCode:(UInt16)keyCode modifiers:(NSEventModifierFlags)modifiers {
++ (NSString *)rc_translatedStringForKeyCode:(UInt16)keyCode modifiers:(NSEventModifierFlags)modifiers {
     TISInputSourceRef inputSource = TISCopyCurrentKeyboardLayoutInputSource();
     CFDataRef layoutData = NULL;
     if (inputSource != NULL) {
@@ -429,7 +548,8 @@ static NSEventModifierFlags RCRecorderRelevantModifiers(NSEventModifierFlags mod
     UInt32 deadKeyState = 0;
     UniChar characters[8];
     UniCharCount length = 0;
-    NSEventModifierFlags displayModifiers = modifiers & (NSEventModifierFlagShift | NSEventModifierFlagOption);
+    // Modifier glyphs are already shown separately; translate the base key.
+    NSEventModifierFlags displayModifiers = 0;
     UInt32 carbonModifiers = [RCHotKeyService carbonModifiersFromCocoaModifiers:displayModifiers];
     UInt32 modifierKeyState = (carbonModifiers >> 8) & 0xFF;
 

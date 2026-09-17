@@ -3,6 +3,8 @@
 ## 現行の開発・運用資料
 
 - [品質確認と未確認事項](QUALITY_REPORT.md)
+- [faster OCR：挙動・制限・検証の状態](REV_OCR.md)
+- [faster OCR 開発メモ：不変条件と失敗の記録（変更の前に読む）](FASTER_OCR_DEVELOPMENT.md)
 - [パフォーマンス](PERFORMANCE.md)
 - [リリース手順](RELEASING.md)
 - [通常版とDemo版](DISTRIBUTIONS.md)

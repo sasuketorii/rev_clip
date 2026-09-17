@@ -21,7 +21,7 @@
 
 A clipboard for working with agents: ask an agent to create, edit, or delete reusable text, prompt, and image templates. Revclip CLI has no commands for reading clipboard history. This defines the CLI’s capabilities; it does not guarantee isolation from an agent with broader OS permissions.
 
-This README describes **v0.1.6 (build 39, September 16, 2026)**: bundled agent setup, 35 CLI settings, SVG previews, and consent-based bug reports. See [Releases](https://github.com/sasuketorii/rev_clip/releases) for distribution history.
+This README describes the **v0.2.0 implementation (build 58, September 17, 2026)**, including faster OCR, permission status, and 44 CLI settings. See [Releases](https://github.com/sasuketorii/rev_clip/releases) for distribution history.
 
 See the [quality verification report](docs/QUALITY_REPORT.md) for the 0.1.8 termination fix and maintenance release, measured results, and remaining acceptance checks.
 
@@ -142,7 +142,7 @@ APP='path/to/Revclip.app'
 The native CLI defaults to `Revclip`; pass `--app revclip-demo` for Demo. Template, settings, and bug-report commands require the target app to be running. Local `agent inspect/install` commands do not start or require the running app.
 
 The CLI supports template creation, editing and deletion, plus settings discovery,
-reading and writing for 35 settings. Shortcuts and Panic remain GUI-only. Permissions and update
+reading and writing for 44 settings, including four OCR preferences and five shortcuts. Panic remains GUI-only. Permissions and update
 checks use the app's existing UI. See [agent support](docs/AGENT_SUPPORT.md) and
 the [CLI reference](docs/TEMPLATE_CLI.md) for commands and reload instructions.
 
@@ -211,3 +211,17 @@ The [customization guide](docs/CUSTOMIZATION.md) covers data separation and upda
 Current Revclip releases (v0.1.0 onward) use **[AGPL-3.0-only](LICENSE)**, not a dual AGPL/MIT license. The [legacy notice](docs/notices/legacy-mit.txt) is retained for code published through v0.0.32. Bundled libraries retain their respective licenses.
 
 © sasuke torii and Revclip contributors.
+
+## faster OCR
+
+Press `⌘⇧2`, select screen text, then paste the copied result. faster OCR uses AppKit selection, a temporary ScreenCaptureKit frame and on-device Apple Vision on macOS 14 or later. The "faster OCR" settings page controls the switch, shortcut, language, language correction and history saving, and "Permission Status" shows the state of Screen Recording and the other permissions. The same settings are available through the CLI `settings-get` / `settings-set`; no CLI operation captures the screen or returns recognized text.
+
+Images are not saved or sent; copied text remains on the OS clipboard. Recognized text carries the transient pasteboard marker (`org.nspasteboard.TransientType`), so other clipboard managers that honor it do not record that text. It is saved to Revclip history only while clipboard access for Revclip is set to always allow; otherwise it is copied only.
+
+When a shortcut cannot be used, Revclip reports one of three things: another Revclip feature uses it, an enabled macOS keyboard shortcut uses it, or macOS refused the registration. Whether another application uses the same keys cannot be determined on macOS; in that case both applications react.
+
+See [faster OCR](docs/REV_OCR.md) for limits and verification status. "RevOCR" was the working name during development.
+
+Opening Revclip from Applications uses the same history and template menu as **⌘⇧V**. If a settings or editor window is already visible, it comes forward instead. Login and background launches are excluded. See [implementation and acceptance status](docs/REV_OCR.md) for verification limits.
+
+For a scripted background launch without the menu, use `open -g path/to/Revclip.app --args -suppressLaunchMenu YES`. On first launch, `open -g` alone cannot be distinguished from an ordinary open. Local build 58 validation passed 382 XCTest cases and 88 CLI/installer/delivery tests. Public delivery and real-device coverage are recorded separately in the [quality report](docs/QUALITY_REPORT.md).

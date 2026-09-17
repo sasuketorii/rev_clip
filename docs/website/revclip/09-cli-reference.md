@@ -1,20 +1,20 @@
 ---
 title: "CLIリファレンス"
-description: "配布版Revclip 0.1.9のネイティブCLIでテンプレート、許可された設定、エージェント用スキルを管理します。"
+description: "Revclip 0.2.0のネイティブCLIでテンプレート、許可された設定、エージェント用スキルを管理します。"
 slug: revclip/cli-reference
 navOrder: 9
 productArea: revclip
-docVersion: '0.1.9'
+docVersion: '0.2.0'
 status: draft
-verifiedAt: '2026-09-16'
+verifiedAt: '2026-09-17'
 ---
 
 # CLIリファレンス
 
-Revclipアプリに同梱されたネイティブCLIを使い、テンプレート、許可された設定、エージェント用スキルを操作できます。このページは配布版 **0.1.9（build 42）** のコマンドを対象にしています。アプリ本体の版はCLI内の選択肢で切り替えるものではなく、実行するアプリ内のCLIによって決まります。
+Revclipアプリに同梱されたネイティブCLIを使い、テンプレート、許可された設定、エージェント用スキルを操作できます。このページは**0.2.0の実装（リリース準備中）** のコマンドを対象にしています。アプリ本体の版はCLI内の選択肢で切り替えるものではなく、実行するアプリ内のCLIによって決まります。
 
 <!-- block: callout tone=warning -->
-> **0.1.9の実機受入状況**
+> **検証範囲**
 >
 > 実際の画面描画、貼り付け、連続操作の実機受入は未完了です。このページのコマンド説明は現行ソースとテストの照合結果であり、実機受入の完了を示すものではありません。
 
@@ -150,7 +150,7 @@ printf "%s" "更新後の本文" | "$CLI" --app Revclip update TEMPLATE_ID --con
 
 ## 設定を読む・変更する
 
-`settings-schema` がCLIから変更できる設定名、型、範囲、列挙値、操作を返します。対応設定は35項目です。設定名や値を推測せず、最初にスキーマを確認してください。
+`settings-schema` がCLIから変更できる設定名、型、範囲、列挙値、操作を返します。対応設定は44項目です。設定名や値を推測せず、最初にスキーマを確認してください。
 
 <!-- block: dataTable -->
 | コマンド | 入力 | 結果・動作 |
@@ -180,7 +180,19 @@ printf "%s" "更新後の本文" | "$CLI" --app Revclip update TEMPLATE_ID --con
 `max_history_size` や保存期限の設定変更は、条件に応じて通常の履歴整理を予定します。追加の削除確認はなく、応答の `cleanup_scheduled` は整理を予定したかを示すだけで、削除完了の確認ではありません。
 
 <!-- block: callout tone=warning -->
-> CLIで扱えない設定があります。ショートカットとPanicはCLIの対象外です。対応するキー以外のアプリ設定を直接書き換えるコマンドはありません。
+> PanicはCLIの対象外です。画面取得・OCRの起動・認識結果の取得も公開していません。対応するキー以外のアプリ設定を直接書き換えるコマンドはありません。
+
+OCRでは `ocr_enabled`、`ocr_save_history`、`ocr_language_correction`、`ocr_language` を扱えます。言語は `settings-schema` の許可値を確認してください。ショートカットは `shortcut_main`、`shortcut_history`、`shortcut_snippet`、`shortcut_clear_history`、`shortcut_ocr` に対応します。
+
+<!-- block: code language=bash -->
+```sh
+"$CLI" --app Revclip settings-get --key shortcut_ocr
+"$CLI" --app Revclip settings-set --json '{"ocr_language":"ja-en","ocr_save_history":false}'
+"$CLI" --app Revclip settings-set --json '{"shortcut_ocr":{"key_code":19,"modifiers":["command","shift"]}}'
+"$CLI" --app Revclip settings-set --json '{"shortcut_main":{"default":true}}'
+```
+
+ショートカットは `{}` で解除、`{"default":true}` で既定値へ戻します。変更後の組み合わせで重複を検証するため、1回の要求でキーを交換できます。他のアプリとの競合やアプリ名は検出できません。新しい登録に失敗した場合は以前の登録と設定を保持します。
 
 `app-action` が返す `status: queued` は操作の受付です。`permissions` で必要なmacOSの許可を得るときや、更新を完了するときは、画面を確認して利用者が操作してください。許可済み・更新済みを示す応答ではありません。
 
