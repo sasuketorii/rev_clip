@@ -64,6 +64,7 @@ v0.2.0（build 58）の公開ジョブは、署名・公証・公開まで成功
 ## CIの担当範囲
 
 - Woodpeckerの `.woodpecker/check.yaml` は、PythonのCLI・インストーラ・配信検証、通常版／Demo版の機能差チェック、Node.jsのフィードバック中継テストを実行します。署名鍵・配信権限・ホストのボリュームを渡しません。
+- Woodpeckerの共有checkoutには書込可能な親ディレクトリがあるため、インストーラ試験はコンテナ内で作成した所有者専用のコピーで実行します。製品の親ディレクトリ権限チェックを緩めたり、共有ボリューム全体をchmodしたりしません。
 - `.github/workflows/ci.yml` はmacOS上のXcodeテスト（Debug／Release）とUniversalビルド、ネイティブCLIを確認します。Linuxの検証成功でAppKit・Vision・ScreenCaptureKitの動作合格を代用しません。
 - `.github/workflows/release.yml` はmacOSで署名・公証・GitHub Releasesへの配信を行います。Woodpeckerの検証パイプラインは公開処理を行いません。
 - 開発コミットは、対象ブランチのクリーンな状態で `wp-check`、続いて `wp-verify --push` を実行します。Giteaの `ci` remoteで **pushイベント・同一ブランチ・同一SHA・初回実行** の成功を確認してから、GitHubの `origin` へ送ります。mainに公開する変更はmain上でこの経路を使います。

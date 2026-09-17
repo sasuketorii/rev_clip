@@ -12,6 +12,12 @@ steps:
     environment:
       PYTHONDONTWRITEBYTECODE: "1"
     commands:
+      # The shared checkout has writable ancestors. Test the installer from an
+      # owned private copy; retain its production parent-permission checks.
+      - umask 077
+      - REVCLIP_CI_DIR=$(mktemp -d)
+      - cp -R agents scripts src "$REVCLIP_CI_DIR/"
+      - cd "$REVCLIP_CI_DIR"
       - python3 scripts/check_demo_parity.py
       - python3 -m unittest discover -s scripts/tests -p test_release_delivery.py -v
       - python3 -m unittest discover -s scripts/tests -p test_agent_install.py -v
