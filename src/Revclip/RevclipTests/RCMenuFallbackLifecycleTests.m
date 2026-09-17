@@ -87,6 +87,9 @@
     self.manager = [RCMenuFallbackProbe new];
 }
 - (void)tearDown {
+    // Even a failed no-work assertion must finish queued reads before the
+    // reader and its captured test fixtures are released.
+    if (self.manager != nil) [self drainFallbackQueue];
     self.manager.reader = nil;
     self.manager = nil;
     [super tearDown];
@@ -295,14 +298,20 @@
     }
     NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Fixture"];
     [self.manager appendClipItems:clips toMenu:menu];
+    // A zero counter before the worker runs is not evidence of zero work.
+    // Finish submitted fallback work and its main completions at each phase.
+    [self drainFallbackQueue];
     XCTAssertEqual(menu.numberOfItems, 3);
     for (NSMenuItem *folder in menu.itemArray) XCTAssertEqual(folder.submenu.numberOfItems, 10);
     XCTAssertEqual(self.manager.configurations, 30u);
     XCTAssertEqual(self.manager.archiveReads, 0u);
     XCTAssertEqual(self.manager.thumbnailRequests, 0u);
     [self.manager prepareVisibleItemsOfOpenedMenu:menu];
+    [self drainFallbackQueue];
+    XCTAssertEqual(self.manager.archiveReads, 0u);
     XCTAssertEqual(self.manager.thumbnailRequests, 0u);
     [self.manager prepareVisibleItemsOfOpenedMenu:menu.itemArray.firstObject.submenu];
+    [self drainFallbackQueue];
     XCTAssertEqual(self.manager.thumbnailRequests, 10u);
     XCTAssertEqual(self.manager.archiveReads, 0u);
 }
