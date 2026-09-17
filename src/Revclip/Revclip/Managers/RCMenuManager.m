@@ -1650,7 +1650,7 @@ static os_log_t RCMenuManagerLog(void) {
             }
 
             id representedObject = strongMenuItem.representedObject;
-            if (![representedObject isKindOfClass:[NSString class]])
+            if (![representedObject isKindOfClass:[NSString class]]
                 || ![(NSString *)representedObject isEqualToString:expectedDataHash]) {
                 return;
             }
