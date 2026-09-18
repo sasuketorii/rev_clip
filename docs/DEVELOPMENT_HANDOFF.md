@@ -22,8 +22,8 @@ Pythonは3.12以降を使用します（CIはsetup-pythonで3.14を指定）。`
 - 通常サイドバーは一般・外観・ショートカット・faster OCR・プライバシー・アップデート・高度な設定です。
 - 既存の`showTab:`識別子は維持します。高度な設定はmenu/type/agents/panic/bug-report、プライバシーはlinks/exclude/permissionsです。別の設定保存層を作らず既存controllerを再利用します。
 - ページ変更前にfield editorをcommitします。言語変更時のcontroller再生成、子ページへの直接遷移、最後のタブの復元もテストします。
-- リンクは未設定なら手動です。選択中のリンクカードが出た状態でOption-Pを押すと、そのURLだけ取得します。メニューを開く/ホバーするだけでは通信しません。「取得しない」は処理中の要求とcacheを消去します。
-- プレビューpanelはマウス操作を透過し、NSMenuの追跡中に出ます。そこへ通常のボタンを置くだけでは押せません。入力経路を変えるときは実際のメニュー追跡中に確認してください。Option-Pのmonitorは表示中だけ登録し、hideで外します。
+- リンクは未設定なら自動です。手動モードではOptionを押しながらリンクへポインタを移すと、そのURLだけ取得します。通常のホバーでは通信しません。「取得しない」は処理中の要求とcacheを消去します。
+- プレビューpanelはマウス操作を透過し、NSMenuの追跡中に出ます。そこへ通常のボタンを置くだけでは押せません。入力経路を変えるときは実際のメニュー追跡中に確認してください。Option-Pのlocal monitorは実メニュー追跡中に機能せず撤去しました。手動取得はhover入口でmodifierを読む方式です。キー処理関数を直接呼ぶテストだけではNSMenuでの入力到達を保証できません。遅延hoverのReleaseテストではfixtureのmenuを`objc_precise_lifetime`で保持します。itemからmenuはweakなので、最後のローカル参照後に最適化でmenuが解放されると入力処理に到達しません。
 - ポリシー変更はserviceのcancel、previewの世代、menuの設定snapshotの3箇所に関係します。UIだけ変えて通信を残さないでください。
 
 ## テストとCIの役割

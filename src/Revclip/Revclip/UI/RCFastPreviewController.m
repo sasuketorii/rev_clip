@@ -14,7 +14,6 @@
 
 @interface RCFastPreviewController ()
 @property NSPanel *panel;
-@property (nonatomic, strong) id linkKeyMonitor;
 @property (nonatomic, copy) NSString *linkRequestStatus;
 @property (weak) NSMenuItem *linkItem;
 @property NSURL *linkURL;
@@ -41,11 +40,9 @@
 }
 - (void)dealloc {
     [NSNotificationCenter.defaultCenter removeObserver:self];
-    if (_linkKeyMonitor) [NSEvent removeMonitor:_linkKeyMonitor];
     [_timer invalidate]; [_svgQueue cancelAllOperations]; [_pendingSVGOperation cancel]; [_panel orderOut:nil];
 }
 - (void)hide {
-    if (self.linkKeyMonitor) { [NSEvent removeMonitor:self.linkKeyMonitor]; self.linkKeyMonitor = nil; }
     self.linkItem = nil; self.linkURL = nil; self.linkRequestStatus = nil;
     self.generation += 1;
     [self.svgQueue cancelAllOperations];
@@ -71,6 +68,11 @@
         NSRange range = [text rangeOfComposedCharacterSequencesForRange:NSMakeRange(0, 2000)];
         text = [[text substringWithRange:range] stringByAppendingString:@"…"];
     }
+    // Capture explicit intent at hover entry. NSMenu's native tracking loop
+    // does not reliably dispatch keyDown through local NSEvent monitors.
+    NSEventModifierFlags modifiers = [self previewModifierFlags] &
+        (NSEventModifierFlagCommand | NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagShift);
+    BOOL requestedByHover = modifiers == NSEventModifierFlagOption;
     NSUInteger scheduledGeneration = self.generation;
     __weak typeof(self) weakSelf = self;
     __weak NSMenuItem *weakItem = item;
@@ -89,9 +91,12 @@
         if (url) {
             strongSelf.linkItem = selected;
             strongSelf.linkURL = url;
-            [strongSelf installLinkRequestShortcut];
             NSUInteger generation = strongSelf.generation;
             [strongSelf showLinkURL:url title:selected.accessibilityLabel ?: selected.title image:nil menu:selected.menu];
+            if (requestedByHover && RCLinkPreviewService.shared.previewMode == RCLinkPreviewModeManual) {
+                [strongSelf requestLinkPreview];
+                return;
+            }
             [[RCLinkPreviewService shared] imageForURL:url completion:^(NSImage *preview) {
                 if (strongSelf.generation != generation || selected.menu.highlightedItem != selected) return;
                 [strongSelf showLinkURL:url title:selected.accessibilityLabel ?: selected.title image:preview menu:selected.menu];
@@ -176,23 +181,7 @@
 - (void)showText:(NSString *)text image:(NSImage *)image menu:(NSMenu *)menu {
     [self showText:text image:image menu:menu aspectRatio:0];
 }
-// Local to a visible link card; no global shortcut, key synthesis, or paste action.
-- (BOOL)handleLinkRequestEvent:(NSEvent *)event {
-    NSEventModifierFlags flags = event.modifierFlags & NSEventModifierFlagDeviceIndependentFlagsMask;
-    flags &= ~NSEventModifierFlagCapsLock;
-    if (event.type != NSEventTypeKeyDown || ![[event charactersByApplyingModifiers:0].lowercaseString isEqualToString:@"p"] || flags != NSEventModifierFlagOption || event.isARepeat ||
-        !self.panel.isVisible || !self.linkItem.menu || self.linkItem.menu.highlightedItem != self.linkItem ||
-        RCLinkPreviewService.shared.previewMode != RCLinkPreviewModeManual) return NO;
-    [self requestLinkPreview];
-    return YES;
-}
-- (void)installLinkRequestShortcut {
-    if (self.linkKeyMonitor || RCLinkPreviewService.shared.previewMode != RCLinkPreviewModeManual) return;
-    __weak typeof(self) weakSelf = self;
-    self.linkKeyMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown handler:^NSEvent *(NSEvent *event) {
-        return [weakSelf handleLinkRequestEvent:event] ? nil : event;
-    }];
-}
+- (NSEventModifierFlags)previewModifierFlags { return NSEvent.modifierFlags; }
 - (void)requestLinkPreview {
     NSMenuItem *item = self.linkItem;
     NSURL *url = self.linkURL;
@@ -213,7 +202,7 @@
     NSString *link = [url.scheme.lowercaseString isEqual:@"http"] ? [@"⚠️ " stringByAppendingString:url.absoluteString] : url.absoluteString;
     NSString *body = url.host;
     if (!image && RCLinkPreviewService.shared.previewMode == RCLinkPreviewModeManual) {
-        body = [NSString stringWithFormat:@"%@\n\n%@", url.host, self.linkRequestStatus ?: RCLocalizedString(@"Option-P: Fetch preview (connects to website)", nil)];
+        body = [NSString stringWithFormat:@"%@\n\n%@", url.host, self.linkRequestStatus ?: RCLocalizedString(@"Hold Option and hover over the link to fetch (connects to website)", nil)];
     } else if (!image && RCLinkPreviewService.shared.previewMode == RCLinkPreviewModeDisabled) {
         body = [NSString stringWithFormat:@"%@\n\n%@", url.host, RCLocalizedString(@"Online previews are disabled", nil)];
     }

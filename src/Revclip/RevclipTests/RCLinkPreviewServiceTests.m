@@ -124,8 +124,14 @@
     self.service.time += 24*60*60+1;
     XCTAssertNil([self.service cachedFaviconForURL:url]);
 }
-- (void)testDefaultAndManualModeNeverStartImplicitRequests {
+- (void)testUnsetPolicyDefaultsToAutomatic {
     [self.service.fixtureDefaults removeObjectForKey:RCLinkPreviewModeKey];
+    XCTAssertEqual(self.service.previewMode, RCLinkPreviewModeAutomatic);
+    [self.service assetsForURL:[NSURL URLWithString:@"https://example.invalid/"] completion:^(RCLinkPreviewAssets *assets) {}];
+    XCTAssertEqual(self.providers.count, 1u);
+}
+- (void)testExplicitManualModeNeverStartsImplicitRequests {
+    self.service.previewMode = RCLinkPreviewModeManual;
     XCTAssertEqual(self.service.previewMode, RCLinkPreviewModeManual);
     NSURL *url = [NSURL URLWithString:@"https://example.invalid/private?token=synthetic"];
     __block NSUInteger completions = 0;

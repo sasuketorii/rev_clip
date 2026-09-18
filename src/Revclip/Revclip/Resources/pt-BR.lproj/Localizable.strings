@@ -419,9 +419,9 @@
 
 "Fetching a preview connects to the website and may reveal your IP address and the full URL. Manual mode does not connect when you open a menu or hover over a link." = "Carregar uma prévia conecta ao site e pode revelar seu endereço IP e a URL completa. No modo manual, abrir um menu ou passar o cursor sobre um link não inicia uma conexão.";
 
-"In manual mode, highlight a link and press Option-P to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "No modo manual, destaque um link e pressione Option-P para carregar a prévia. Escolher Nunca carregar também cancela solicitações pendentes e limpa as prévias em cache.";
+"In manual mode, hold Option while moving the pointer onto a link to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "No modo manual, mantenha Option pressionada ao mover o cursor sobre um link para carregar a prévia. Nunca carregar cancela solicitações pendentes e limpa as prévias em cache.";
 
-"Option-P: Fetch preview (connects to website)" = "Option-P: carregar prévia (conecta ao site)";
+"Hold Option and hover over the link to fetch (connects to website)" = "Segure Option e passe sobre o link (conecta ao site)";
 
 "Online previews are disabled" = "As prévias online estão desativadas";
 

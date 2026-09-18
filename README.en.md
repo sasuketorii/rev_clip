@@ -36,7 +36,7 @@ See the [quality verification report](docs/QUALITY_REPORT.md) for the 0.1.8 term
 | **Preview before pasting** | Hover to preview text, images, supported standalone SVG code, or a standalone URL link card. |
 | **Your preferred appearance** | Choose light, dark, or system appearance and edit separate light/dark menu palettes with HEX input. |
 
-In the development build, link fetching defaults to manual under Privacy → Links. Specialized preferences are grouped into category tabs under Advanced Settings.
+In the development build, link fetching defaults to automatic under Privacy → Links. Specialized preferences are grouped into category tabs under Advanced Settings.
 
 Revclip uses the network for updates, standalone URL previews and favicons, and bug reports explicitly submitted with consent. It does not provide cloud history sync.
 

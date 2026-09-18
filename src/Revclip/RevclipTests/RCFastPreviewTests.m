@@ -17,7 +17,7 @@
 - (void)showText:(NSString *)text image:(NSImage *)image menu:(NSMenu *)menu;
 - (void)showText:(NSString *)text image:(NSImage *)image menu:(NSMenu *)menu aspectRatio:(CGFloat)ratio;
 - (void)showLinkURL:(NSURL *)url title:(NSString *)title image:(NSImage *)image menu:(NSMenu *)menu;
-- (BOOL)handleLinkRequestEvent:(NSEvent *)event;
+- (NSEventModifierFlags)previewModifierFlags;
 - (void)requestLinkPreview;
 @end
 @interface RCPreviewTestMenu : NSMenu
@@ -69,9 +69,11 @@
 @end
 @interface RCManualLinkPreviewProbe : RCFastPreviewController
 @property NSUInteger requests;
+@property NSEventModifierFlags fixtureModifiers;
 @end
 @implementation RCManualLinkPreviewProbe
 - (void)requestLinkPreview { self.requests++; }
+- (NSEventModifierFlags)previewModifierFlags { return self.fixtureModifiers; }
 @end
 @interface RCFastPreviewTests : XCTestCase
 @end
@@ -403,25 +405,30 @@
         if (savedPalette) [defaults setObject:savedPalette forKey:palette]; else [defaults removeObjectForKey:palette];
     }
 }
-- (void)testManualFetchShortcutIsScopedToVisibleHighlightedLinkAndRemovedOnHide {
+- (void)testManualFetchRequiresOptionHoverAndCancelsStaleHover {
     id saved = [NSUserDefaults.standardUserDefaults objectForKey:RCLinkPreviewModeKey];
-    RCManualLinkPreviewProbe *controller = [RCManualLinkPreviewProbe new];
+    RCManualLinkPreviewProbe *controller = nil;
     @try {
         RCLinkPreviewService.shared.previewMode = RCLinkPreviewModeManual;
-        RCPreviewTestMenu *menu = [RCPreviewTestMenu new];
+        controller = [RCManualLinkPreviewProbe new];
+        __attribute__((objc_precise_lifetime)) RCPreviewTestMenu *menu = [RCPreviewTestMenu new];
+        menu.autoenablesItems = NO;
         NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"synthetic link" action:nil keyEquivalent:@""];
-        [menu addItem:item]; menu.testHighlightedItem = item;
+        [menu addItem:item]; item.enabled = YES; menu.testHighlightedItem = item;
         [controller highlightItem:item text:@"https://example.invalid/fixture"];
         [self waitForTrackingTimer];
-        XCTAssertNotNil([controller valueForKey:@"linkKeyMonitor"]);
-        NSEvent *request = [NSEvent keyEventWithType:NSEventTypeKeyDown location:NSZeroPoint modifierFlags:NSEventModifierFlagOption timestamp:0 windowNumber:0 context:nil characters:@"p" charactersIgnoringModifiers:@"p" isARepeat:NO keyCode:35];
-        NSEvent *ordinary = [NSEvent keyEventWithType:NSEventTypeKeyDown location:NSZeroPoint modifierFlags:0 timestamp:0 windowNumber:0 context:nil characters:@"p" charactersIgnoringModifiers:@"p" isARepeat:NO keyCode:35];
-        XCTAssertFalse([controller handleLinkRequestEvent:ordinary]);
-        XCTAssertTrue([controller handleLinkRequestEvent:request]);
+        XCTAssertEqual(controller.requests, 0u);
+        controller.fixtureModifiers = NSEventModifierFlagOption;
+        [controller highlightItem:item text:@"https://example.invalid/fixture"];
+        [self waitForTrackingTimer];
         XCTAssertEqual(controller.requests, 1u);
-        [controller hide];
-        XCTAssertNil([controller valueForKey:@"linkKeyMonitor"]);
-        XCTAssertFalse([controller handleLinkRequestEvent:request]);
+        [controller highlightItem:item text:@"https://example.invalid/fixture"];
+        NSTimer *cancelled = controller.timer;
+        [controller hide]; [cancelled fire];
+        XCTAssertEqual(controller.requests, 1u);
+        controller.fixtureModifiers = NSEventModifierFlagOption | NSEventModifierFlagCommand;
+        [controller highlightItem:item text:@"https://example.invalid/fixture"];
+        [self waitForTrackingTimer];
         XCTAssertEqual(controller.requests, 1u);
     } @finally {
         [controller hide];
@@ -429,4 +436,5 @@
         else [NSUserDefaults.standardUserDefaults removeObjectForKey:RCLinkPreviewModeKey];
     }
 }
+
 @end

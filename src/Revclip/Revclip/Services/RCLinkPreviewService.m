@@ -62,7 +62,7 @@ static const NSTimeInterval RCLinkFailureTTL = 60;
 - (NSUserDefaults *)preferences { return NSUserDefaults.standardUserDefaults; }
 - (RCLinkPreviewMode)previewMode {
     id value = [self.preferences objectForKey:RCLinkPreviewModeKey];
-    if (!value) return RCLinkPreviewModeManual;
+    if (!value) return RCLinkPreviewModeAutomatic;
     if (![value isKindOfClass:NSNumber.class]) return RCLinkPreviewModeDisabled;
     NSInteger mode = [value integerValue];
     return mode >= RCLinkPreviewModeDisabled && mode <= RCLinkPreviewModeAutomatic &&

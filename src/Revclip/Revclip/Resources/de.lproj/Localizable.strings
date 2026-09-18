@@ -419,9 +419,9 @@
 
 "Fetching a preview connects to the website and may reveal your IP address and the full URL. Manual mode does not connect when you open a menu or hover over a link." = "Beim Laden einer Vorschau wird eine Verbindung zur Website hergestellt. Dabei können Ihre IP-Adresse und die vollständige URL übermittelt werden. Im manuellen Modus wird beim Öffnen eines Menüs oder Bewegen des Zeigers über einen Link keine Verbindung hergestellt.";
 
-"In manual mode, highlight a link and press Option-P to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "Markieren Sie im manuellen Modus einen Link und drücken Sie Option-P, um die Vorschau zu laden. „Nie laden“ bricht auch laufende Anfragen ab und löscht zwischengespeicherte Vorschauen.";
+"In manual mode, hold Option while moving the pointer onto a link to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "Halten Sie im manuellen Modus die Wahltaste gedrückt, während Sie den Zeiger auf einen Link bewegen, um die Vorschau zu laden. „Nie laden“ bricht laufende Anfragen ab und löscht zwischengespeicherte Vorschauen.";
 
-"Option-P: Fetch preview (connects to website)" = "Option-P: Vorschau laden (Verbindung zur Website)";
+"Hold Option and hover over the link to fetch (connects to website)" = "Wahltaste halten und auf den Link zeigen (Verbindung zur Website)";
 
 "Online previews are disabled" = "Online-Vorschauen sind deaktiviert";
 

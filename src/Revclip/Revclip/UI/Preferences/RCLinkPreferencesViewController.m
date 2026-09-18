@@ -19,7 +19,7 @@
     self.view = [RCPreferencesPage pageWithRows:@[
         @[RCLocalizedString(@"Link previews and website icons", nil), self.modePopup],
         @[RCLocalizedString(@"Fetching a preview connects to the website and may reveal your IP address and the full URL. Manual mode does not connect when you open a menu or hover over a link.", nil)],
-        @[RCLocalizedString(@"In manual mode, highlight a link and press Option-P to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews.", nil)],
+        @[RCLocalizedString(@"In manual mode, hold Option while moving the pointer onto a link to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews.", nil)],
     ]];
     [self refreshMode:nil];
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(refreshMode:) name:NSUserDefaultsDidChangeNotification object:nil];
