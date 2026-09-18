@@ -132,7 +132,6 @@
 // HotKey Recorder
 "Type shortcut" = "输入快捷键";
 "Click to record" = "点击以录制";
-"This shortcut may not work" = "此快捷键可能无法使用";
 "On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "由于系统限制，macOS 15（Sequoia）及更高版本不支持仅使用 Option 或仅使用 Option+Shift 的修饰键组合。\n请使用包含 Command 或 Control 的组合。";
 
 // Template Editor
@@ -441,4 +440,4 @@
 "This key is not on the pictured US keyboard. Your shortcut is shown in the field above." = "此按键不在图中的美式键盘上。快捷键显示在上方输入框中。";
 "US keyboard illustration. Modifier keys are shown on the left; either side works." = "图示为美式键盘。修饰键在左侧发光，但左右两侧均可使用。";
 "Shortcut" = "快捷键";
-"Shortcut recording is unavailable. Check Accessibility access and try again." = "暂时无法录入快捷键。请检查辅助功能权限后重试。";
+"Shortcut recording is unavailable. Check Accessibility access and try again." = "无法安全录制快捷键。请检查辅助功能权限，并完成其他应用中的密码输入后重试。";

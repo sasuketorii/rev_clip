@@ -132,7 +132,6 @@
 // HotKey Recorder
 "Type shortcut" = "Digite o atalho";
 "Click to record" = "Clique para registrar";
-"This shortcut may not work" = "Este atalho pode não funcionar";
 "On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "No macOS 15 (Sequoia) e posteriores, combinações somente com Option ou somente com Option+Shift não são compatíveis devido a restrições do sistema.\nUse uma combinação que inclua Command ou Control.";
 
 // Template Editor
@@ -441,4 +440,4 @@
 "This key is not on the pictured US keyboard. Your shortcut is shown in the field above." = "Esta tecla não aparece no teclado americano ilustrado. O atalho está no campo acima.";
 "US keyboard illustration. Modifier keys are shown on the left; either side works." = "Teclado americano. As teclas modificadoras são iluminadas à esquerda; ambos os lados funcionam.";
 "Shortcut" = "Atalho";
-"Shortcut recording is unavailable. Check Accessibility access and try again." = "A gravação está indisponível. Verifique a permissão de Acessibilidade e tente novamente.";
+"Shortcut recording is unavailable. Check Accessibility access and try again." = "Não foi possível gravar o atalho. Confira o acesso à Acessibilidade e termine de digitar senhas em outros apps antes de tentar novamente.";

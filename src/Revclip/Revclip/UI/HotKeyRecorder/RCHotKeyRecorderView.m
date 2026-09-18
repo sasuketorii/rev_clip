@@ -34,6 +34,7 @@ static NSEventModifierFlags RCRecorderRelevantModifiers(NSEventModifierFlags mod
 @property (nonatomic, assign) CFMachPortRef recordingTap;
 @property (nonatomic, assign) CFRunLoopSourceRef recordingSource;
 @property (nonatomic, strong) NSEvent *pendingKeyEvent;
+@property (nonatomic, strong) NSMutableIndexSet *consumedKeys;
 @property (nonatomic) NSUInteger recordingGeneration;
 @property (nonatomic, strong) NSTimer *recordingTimeout;
 @property (nonatomic, strong) id outsideClickMonitor;
@@ -88,6 +89,7 @@ static CGEventRef RCRecorderTap(CGEventTapProxy proxy, CGEventType type, CGEvent
     }
     if (self.recordingTap) { CFRelease(self.recordingTap); self.recordingTap = NULL; }
     self.pendingKeyEvent = nil;
+    [self.consumedKeys removeAllIndexes];
 }
 - (BOOL)recordingContextIsActive {
     return NSApp.isActive && self.window.isKeyWindow && self.window.firstResponder == self;
@@ -112,14 +114,20 @@ static CGEventRef RCRecorderTap(CGEventTapProxy proxy, CGEventType type, CGEvent
         [self flagsChanged:[NSEvent eventWithCGEvent:event]];
         return event; // Keep modifier state balanced for the rest of the system.
     }
+    NSUInteger keyCode = (UInt16)CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
     if (type == kCGEventKeyDown) {
+        // Ignore pre-capture repeats without owning their eventual keyUp.
+        if (CGEventGetIntegerValueField(event, kCGKeyboardEventAutorepeat) && ![self.consumedKeys containsIndex:keyCode]) return NULL;
+        [self.consumedKeys addIndex:keyCode];
         if (!self.pendingKeyEvent && !CGEventGetIntegerValueField(event, kCGKeyboardEventAutorepeat))
             self.pendingKeyEvent = [NSEvent eventWithCGEvent:event];
         return NULL;
     }
     if (type == kCGEventKeyUp) {
+        if (![self.consumedKeys containsIndex:keyCode]) return event;
+        [self.consumedKeys removeIndex:keyCode];
         NSEvent *press = self.pendingKeyEvent;
-        if (press && press.keyCode == CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode)) {
+        if (press && self.consumedKeys.count == 0) {
             self.pendingKeyEvent = nil;
             // Both down and up are consumed before registration changes. Validation
             // and UI work run outside the tap callback so it cannot time out.
@@ -135,13 +143,19 @@ static CGEventRef RCRecorderTap(CGEventTapProxy proxy, CGEventType type, CGEvent
 }
 - (void)recordingContextEnded:(NSNotification *)notification { [self stopRecording]; }
 - (void)viewWillMoveToWindow:(NSWindow *)newWindow {
-    if (self.window != newWindow) [self stopRecording];
+    if (self.window != newWindow) { [self stopRecording]; self.warningLabel.stringValue = @""; }
     [super viewWillMoveToWindow:newWindow];
 }
 - (void)dealloc { [self endEventCapture]; [NSNotificationCenter.defaultCenter removeObserver:self]; }
 - (void)showAssignmentResult:(RCHotKeyAssignmentResult *)result {
+    NSString *message = [RCHotKeyRecorderView messageForAssignmentResult:result];
+    if (message.length && result.failedSlot.length)
+        message = [NSString stringWithFormat:@"%@: %@", [RCHotKeyRecorderView localizedNameForSlot:result.failedSlot], message];
+    [self showWarningMessage:message];
+}
+- (void)showWarningMessage:(NSString *)message {
     self.warningLabel.textColor = NSColor.systemYellowColor;
-    self.warningLabel.stringValue = [RCHotKeyRecorderView messageForAssignmentResult:result];
+    self.warningLabel.stringValue = message;
     if (self.warningLabel.stringValue.length) {
         [self.warningLabel.superview layoutSubtreeIfNeeded];
         [self.warningLabel scrollRectToVisible:self.warningLabel.bounds];
@@ -207,6 +221,7 @@ static CGEventRef RCRecorderTap(CGEventTapProxy proxy, CGEventType type, CGEvent
         return;
     }
 
+    self.warningLabel.stringValue = @"";
     _keyCombo = keyCombo;
     [self setNeedsDisplay:YES];
 }
@@ -221,10 +236,10 @@ static CGEventRef RCRecorderTap(CGEventTapProxy proxy, CGEventType type, CGEvent
     }
 
     [RCActiveRecorder stopRecording];
+    self.consumedKeys = [NSMutableIndexSet indexSet];
     self.warningLabel.stringValue = @"";
     if (![self beginEventCapture]) {
-        self.warningLabel.textColor = NSColor.systemYellowColor;
-        self.warningLabel.stringValue = RCLocalizedString(@"Shortcut recording is unavailable. Check Accessibility access and try again.", nil);
+        [self showWarningMessage:RCLocalizedString(@"Shortcut recording is unavailable. Check Accessibility access and try again.", nil)];
         return;
     }
     self.isRecording = YES;
@@ -285,12 +300,19 @@ static CGEventRef RCRecorderTap(CGEventTapProxy proxy, CGEventType type, CGEvent
         return;
     }
 
-    [self processKeyEvent:event];
+    [self rejectUncapturedInput];
+}
+
+- (void)rejectUncapturedInput {
+    // A real recording completes only after the tap consumes keyUp. AppKit input
+    // during recording means capture was bypassed (for example Secure Input).
+    [self stopRecording];
+    [self showWarningMessage:RCLocalizedString(@"Shortcut recording is unavailable. Check Accessibility access and try again.", nil)];
 }
 
 - (BOOL)performKeyEquivalent:(NSEvent *)event {
     if (self.isRecording) {
-        [self processKeyEvent:event];
+        [self rejectUncapturedInput];
         return YES;
     }
 
@@ -411,20 +433,8 @@ static CGEventRef RCRecorderTap(CGEventTapProxy proxy, CGEventType type, CGEvent
 }
 
 - (void)rc_showUnsupportedOptionWarning {
-    NSWindow *window = self.window;
-    if (window == nil) {
-        return;
-    }
-    if (window.attachedSheet != nil) {
-        return;
-    }
-
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.alertStyle = NSAlertStyleWarning;
-    alert.messageText = RCLocalizedString(@"This shortcut may not work", nil);
-    alert.informativeText = RCLocalizedString(@"On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control.", nil);
-    [alert addButtonWithTitle:RCLocalizedString(@"OK", nil)];
-    [alert beginSheetModalForWindow:window completionHandler:nil];
+    [self stopRecording];
+    [self showWarningMessage:RCLocalizedString(@"On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control.", nil)];
 }
 
 - (NSString *)rc_displayText {

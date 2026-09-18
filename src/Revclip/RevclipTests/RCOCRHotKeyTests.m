@@ -82,6 +82,16 @@ static RCKeyCombo RCCombo(UInt32 code, UInt32 modifiers) { return RCMakeKeyCombo
     XCTAssertEqualObjects(self.service.calls, (@[@"register 8:2304", @"unregister 9:768"]));
     XCTAssertEqualObjects([self stored:RCHotKeySlotMain], @"8:2304");
 }
+- (void)testReassigningEachFeaturesOwnShortcutIsNotAConflict {
+    for (NSString *slot in @[RCHotKeySlotMain, RCHotKeySlotOCR]) {
+        RCKeyCombo current = [self.service configuredKeyComboForSlot:slot];
+        RCHotKeyAssignmentResult *result = [self set:slot to:current];
+        XCTAssertTrue(result.succeeded);
+        XCTAssertNil(result.conflictingSlot);
+        XCTAssertEqualObjects([self stored:slot], [RCHotKeyContractProbe key:current]);
+    }
+    XCTAssertEqual(self.service.calls.count, 0u);
+}
 - (void)testInternalConflictNamesTheFeatureAndChangesNothing {
     RCHotKeyAssignmentResult *result = [self set:RCHotKeySlotOCR to:RCCombo(9, cmdKey | shiftKey)];
     XCTAssertEqual(result.status, RCHotKeyAssignmentStatusInternalConflict);

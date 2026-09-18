@@ -58,6 +58,7 @@ final class RCOCRPreferencesController: NSViewController, @preconcurrency RCHotK
     }
     override func viewWillDisappear() { super.viewWillDisappear(); NotificationCenter.default.removeObserver(self) }
     @objc private func reloadValues() {
+        shortcutWarning.stringValue = ""
         enabledControl.state = RCOCRCoordinator.bool(kRCOCREnabledKey, fallback: true) ? .on : .off
         historyControl.state = RCOCRCoordinator.bool(kRCOCRSaveHistoryKey, fallback: true) ? .on : .off
         correctionControl.state = RCOCRCoordinator.bool(kRCOCRCorrectionKey, fallback: false) ? .on : .off

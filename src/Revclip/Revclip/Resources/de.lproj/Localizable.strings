@@ -132,7 +132,6 @@
 // HotKey Recorder
 "Type shortcut" = "Tastenkürzel eingeben";
 "Click to record" = "Zum Aufzeichnen klicken";
-"This shortcut may not work" = "Dieses Tastenkürzel funktioniert möglicherweise nicht";
 "On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "Unter macOS 15 (Sequoia) und neuer werden Kombinationen nur mit Option oder nur mit Option+Umschalttaste aufgrund von Systembeschränkungen nicht unterstützt.\nVerwenden Sie eine Kombination mit Befehl oder Ctrl.";
 
 // Template Editor
@@ -441,4 +440,4 @@
 "This key is not on the pictured US keyboard. Your shortcut is shown in the field above." = "Diese Taste fehlt auf der abgebildeten US-Tastatur. Der Kurzbefehl steht im Feld oben.";
 "US keyboard illustration. Modifier keys are shown on the left; either side works." = "US-Tastatur. Modifikatortasten leuchten links; beide Seiten funktionieren.";
 "Shortcut" = "Kurzbefehl";
-"Shortcut recording is unavailable. Check Accessibility access and try again." = "Die Aufzeichnung ist nicht verfügbar. Prüfen Sie die Bedienungshilfen-Berechtigung und versuchen Sie es erneut.";
+"Shortcut recording is unavailable. Check Accessibility access and try again." = "Die Tastenkombination kann nicht aufgezeichnet werden. Prüfen Sie die Bedienungshilfen und schließen Sie Passworteingaben in anderen Apps ab. Versuchen Sie es dann erneut.";

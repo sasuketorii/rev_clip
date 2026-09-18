@@ -132,7 +132,6 @@
 // HotKey Recorder
 "Type shortcut" = "Inserisci la scorciatoia";
 "Click to record" = "Fai clic per registrare";
-"This shortcut may not work" = "Questa scorciatoia potrebbe non funzionare";
 "On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "Su macOS 15 (Sequoia) e versioni successive, le combinazioni con solo Option o solo Option+Maiuscole non sono supportate a causa delle restrizioni del sistema.\nUsa una combinazione che includa Comando o Ctrl.";
 
 // Template Editor
@@ -441,4 +440,4 @@
 "This key is not on the pictured US keyboard. Your shortcut is shown in the field above." = "Questo tasto non è presente nella tastiera US illustrata. La scorciatoia è indicata nel campo sopra.";
 "US keyboard illustration. Modifier keys are shown on the left; either side works." = "Tastiera US. I modificatori sono illuminati a sinistra; funzionano entrambi i lati.";
 "Shortcut" = "Scorciatoia";
-"Shortcut recording is unavailable. Check Accessibility access and try again." = "Registrazione non disponibile. Controlla il permesso di accessibilità e riprova.";
+"Shortcut recording is unavailable. Check Accessibility access and try again." = "Impossibile registrare la scorciatoia. Verifica l’accesso ad Accessibilità e termina l’inserimento di password nelle altre app, poi riprova.";

@@ -4,10 +4,15 @@
 #import "RCHotKeyRecorderView.h"
 #import "RCHotKeyContractProbe.h"
 
+@interface RCHotKeyAssignmentResult (SetupTesting)
++ (instancetype)resultWithStatus:(RCHotKeyAssignmentStatus)status failedSlot:(NSString *)slot conflictingSlot:(NSString *)conflict osStatus:(OSStatus)statusCode;
+@end
 @interface RCSetupPreferencesViewController (Testing)
 - (RCHotKeyService *)hotKeyService;
 - (void)featureChanged:(NSSegmentedControl *)sender;
 - (void)refreshShortcuts;
+- (void)defaultsChanged:(NSNotification *)notification;
+- (NSDictionary *)shortcutState;
 @end
 @interface RCSetupReadOnlyService : RCHotKeyService
 @property RCKeyCombo mainCombo;
@@ -59,6 +64,44 @@
     NSBitmapImageRep *image = [NSBitmapImageRep imageRepWithData:[NSData dataWithContentsOfURL:url]];
     XCTAssertEqual(image.pixelsWide, 2546);
     XCTAssertEqual(image.pixelsHigh, 1046);
+}
+- (void)testConflictWarningDoesNotFollowUserIntoTheFeatureThatOwnsThoseKeys {
+    RCSetupControllerProbe *controller = [RCSetupControllerProbe new];
+    controller.service = [RCSetupReadOnlyService new];
+    controller.service.mainCombo = [RCHotKeyService defaultKeyComboForSlot:RCHotKeySlotMain];
+    controller.service.ocrCombo = [RCHotKeyService defaultKeyComboForSlot:RCHotKeySlotOCR];
+    (void)controller.view;
+    RCHotKeyRecorderView *recorder = [controller valueForKey:@"recorder"];
+    [recorder showAssignmentResult:[RCHotKeyAssignmentResult resultWithStatus:RCHotKeyAssignmentStatusInternalConflict
+        failedSlot:RCHotKeySlotMain conflictingSlot:RCHotKeySlotOCR osStatus:0]];
+    XCTAssertGreaterThan(recorder.warningLabel.stringValue.length, 0u);
+    NSSegmentedControl *selector = [controller valueForKey:@"featureSelector"];
+    selector.selectedSegment = 1;
+    [controller featureChanged:selector];
+    XCTAssertEqual(recorder.keyCombo.keyCode, 19u);
+    XCTAssertEqualObjects(recorder.warningLabel.stringValue, @"");
+    selector.selectedSegment = 0;
+    [controller featureChanged:selector];
+    XCTAssertEqualObjects(recorder.warningLabel.stringValue, @"");
+}
+- (void)testWarningClearsOnReappearanceAndOtherSlotsExternalChange {
+    RCSetupControllerProbe *controller = [RCSetupControllerProbe new];
+    controller.service = [RCSetupReadOnlyService new];
+    controller.service.mainCombo = [RCHotKeyService defaultKeyComboForSlot:RCHotKeySlotMain];
+    controller.service.ocrCombo = [RCHotKeyService defaultKeyComboForSlot:RCHotKeySlotOCR];
+    (void)controller.view;
+    RCHotKeyRecorderView *recorder = [controller valueForKey:@"recorder"];
+    recorder.warningLabel.stringValue = @"Old conflict";
+    [controller viewWillAppear];
+    XCTAssertEqualObjects(recorder.warningLabel.stringValue, @"");
+    recorder.warningLabel.stringValue = @"Old conflict";
+    [controller setValue:[controller shortcutState] forKey:@"warningShortcutState"];
+    [controller defaultsChanged:nil];
+    XCTAssertEqualObjects(recorder.warningLabel.stringValue, @"Old conflict");
+    controller.service.ocrCombo = RCMakeKeyCombo(12, cmdKey | shiftKey);
+    [controller defaultsChanged:nil];
+    XCTAssertEqualObjects(recorder.warningLabel.stringValue, @"");
+    XCTAssertEqual(recorder.keyCombo.keyCode, 9u);
 }
 - (void)testSetupReadsSavedValuesAndSwitchesFeatureWithoutChangingThem {
     RCSetupControllerProbe *controller = [RCSetupControllerProbe new];
@@ -142,6 +185,47 @@
     XCTAssertEqual(recorder.keyCombo.keyCode, 19u);
     XCTAssertFalse(recorder.isRecording);
     XCTAssertGreaterThan(recorder.releases, 0u);
+}
+- (void)testUnmatchedReleasePassesThroughAndOverlappingKeysFinishTogether {
+    RCRecordingProbe *recorder = [self recorder]; [recorder startRecording];
+    CGEventRef release = CGEventCreateKeyboardEvent(NULL, 49, false);
+    XCTAssertEqual([recorder captureEvent:release type:kCGEventKeyUp], release);
+    CFRelease(release);
+    CGEventRef repeat = CGEventCreateKeyboardEvent(NULL, 49, true);
+    CGEventSetIntegerValueField(repeat, kCGKeyboardEventAutorepeat, 1);
+    XCTAssertEqual([recorder captureEvent:repeat type:kCGEventKeyDown], NULL);
+    CFRelease(repeat);
+    XCTAssertTrue(recorder.isRecording);
+    [self sendKey:19 down:YES to:recorder];
+    [self sendKey:9 down:YES to:recorder];
+    [self sendKey:19 down:NO to:recorder];
+    [self drain]; XCTAssertEqual(recorder.completed, 0u);
+    [self sendKey:9 down:NO to:recorder];
+    [self drain]; XCTAssertEqual(recorder.completed, 1u);
+    XCTAssertEqual(recorder.keyCombo.keyCode, 19u);
+}
+- (void)testAppKitBypassFailsClosedWithoutSaving {
+    RCRecordingProbe *recorder = [self recorder];
+    recorder.keyCombo = RCMakeKeyCombo(9, cmdKey | shiftKey);
+    [recorder startRecording];
+    CGEventRef event = CGEventCreateKeyboardEvent(NULL, 19, true);
+    CGEventSetFlags(event, kCGEventFlagMaskCommand | kCGEventFlagMaskShift);
+    XCTAssertTrue([recorder performKeyEquivalent:[NSEvent eventWithCGEvent:event]]);
+    CFRelease(event);
+    XCTAssertFalse(recorder.isRecording);
+    XCTAssertEqual(recorder.completed, 0u);
+    XCTAssertEqual(recorder.keyCombo.keyCode, 9u);
+    XCTAssertGreaterThan(recorder.warningLabel.stringValue.length, 0u);
+}
+- (void)testWarningBelongsToItsPageAndSavedValue {
+    RCRecordingProbe *recorder = [self recorder];
+    recorder.warningLabel.stringValue = @"Old conflict";
+    recorder.keyCombo = RCMakeKeyCombo(9, cmdKey | shiftKey);
+    XCTAssertEqualObjects(recorder.warningLabel.stringValue, @"");
+    recorder.warningLabel.stringValue = @"Old conflict";
+    NSTextField *label = recorder.warningLabel;
+    [recorder removeFromSuperview];
+    XCTAssertEqualObjects(label.stringValue, @"");
 }
 - (void)testCancelledQueuedInputCannotChangeANewRecordingSession {
     RCRecordingProbe *recorder = [self recorder];

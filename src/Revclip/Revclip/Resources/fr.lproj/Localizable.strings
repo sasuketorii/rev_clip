@@ -132,7 +132,6 @@
 // HotKey Recorder
 "Type shortcut" = "Saisir le raccourci";
 "Click to record" = "Cliquez pour enregistrer";
-"This shortcut may not work" = "Ce raccourci risque de ne pas fonctionner";
 "On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "Sous macOS 15 (Sequoia) et les versions ultérieures, les combinaisons utilisant uniquement Option ou Option+Maj ne sont pas prises en charge en raison de restrictions système.\nUtilisez une combinaison incluant Commande ou Contrôle.";
 
 // Template Editor
@@ -441,4 +440,4 @@
 "This key is not on the pictured US keyboard. Your shortcut is shown in the field above." = "Cette touche ne figure pas sur le clavier américain illustré. Le raccourci apparaît dans le champ ci-dessus.";
 "US keyboard illustration. Modifier keys are shown on the left; either side works." = "Clavier américain. Les touches de modification sont éclairées à gauche ; les deux côtés fonctionnent.";
 "Shortcut" = "Raccourci";
-"Shortcut recording is unavailable. Check Accessibility access and try again." = "La saisie est indisponible. Vérifiez l’autorisation d’accessibilité et réessayez.";
+"Shortcut recording is unavailable. Check Accessibility access and try again." = "Impossible d’enregistrer le raccourci. Vérifiez l’accès à Accessibilité et terminez toute saisie de mot de passe dans les autres apps, puis réessayez.";

@@ -77,3 +77,9 @@ Demoの署名にはローカルApple Development identityが必要です。`demo
 - 主アプリのentitlementsは現在空です。再署名時に明示して、archive由来の不要な権限が復活しないようにします。追加権限は用途と署名検証ポリシーも変更します。
 - releaseは署名jobから公開jobへhash付きartifactを渡します。公開jobへ署名秘密を渡しません。証明書import途中の失敗でも一時ファイル/keychainを片付け、cleanup失敗なら転送を止めます。
 - 実行した検証と未検証環境を区別します。単体テスト成功だけでIntel実機、RSS上限、実Sparkle更新の成功を宣言しません。
+
+### ショートカット記録と警告の所有者
+
+- 競合判定は `RCHotKeyService` のslotを基準にし、自分の保存済みキーの再設定を拒否しません。UIが古い警告を別slotへ持ち越すと自己競合に見えるため、画面移動・保存値変更・設定再読込で警告を解除します。共有ラベルには失敗したslot名も表示します。
+- 記録の確定はevent tapで消費したキーのrelease後だけです。AppKitへ入力が漏れた場合は保存せず停止します。捕捉開始前のkeyUpは通し、重ねて押されたキーは全releaseを待ちます。OS全体の他アプリの非排他登録を確実に検出できるとは表示しません。
+- 回帰は `RCSetupPreferencesTests` / `RCHotKeyRecordingTests` / `RCHotKeyContractTests` にあります。実機ではメニュー側でOCRキーを入力して拒否された後、OCRへ切替→同じOCRキーの再設定→別ページ往復を確認します。成功時は警告なし、拒否時は保存済み値を維持します。

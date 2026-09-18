@@ -132,7 +132,6 @@
 // HotKey Recorder
 "Type shortcut" = "Nhấn tổ hợp phím tắt";
 "Click to record" = "Nhấp để đặt";
-"This shortcut may not work" = "Phím tắt này có thể không hoạt động";
 "On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "Trên macOS 15 (Sequoia) trở lên, tổ hợp chỉ dùng Option hoặc Option+Shift không được hỗ trợ do giới hạn của hệ thống.\nHãy dùng tổ hợp có Command hoặc Control.";
 
 // Template Editor
@@ -441,4 +440,4 @@
 "This key is not on the pictured US keyboard. Your shortcut is shown in the field above." = "Phím này không có trên bàn phím US trong hình. Phím tắt được hiển thị trong ô phía trên.";
 "US keyboard illustration. Modifier keys are shown on the left; either side works." = "Hình bàn phím US. Phím bổ trợ sáng ở bên trái; cả hai bên đều hoạt động.";
 "Shortcut" = "Phím tắt";
-"Shortcut recording is unavailable. Check Accessibility access and try again." = "Không thể ghi phím tắt. Kiểm tra quyền Trợ năng rồi thử lại.";
+"Shortcut recording is unavailable. Check Accessibility access and try again." = "Không thể ghi phím tắt an toàn. Hãy kiểm tra quyền Trợ năng và hoàn tất việc nhập mật khẩu trong ứng dụng khác rồi thử lại.";

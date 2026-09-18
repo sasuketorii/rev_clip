@@ -14,6 +14,8 @@
 @property (nonatomic, strong) NSTextField *layoutNote;
 @property (nonatomic, strong) NSButton *ocrSettingsButton;
 @property (nonatomic, copy) NSString *selectedSlot;
+@property (nonatomic, copy) NSString *warningConflictSlot;
+@property (nonatomic, copy) NSDictionary *warningShortcutState;
 @end
 
 @implementation RCSetupPreferencesViewController
@@ -72,7 +74,7 @@
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(defaultsChanged:) name:RCSettingsDidChangeNotification object:nil];
 }
 - (void)dealloc { [NSNotificationCenter.defaultCenter removeObserver:self]; }
-- (void)viewWillAppear { [super viewWillAppear]; [self refreshShortcuts]; }
+- (void)viewWillAppear { [super viewWillAppear]; self.recorder.warningLabel.stringValue = @""; [self refreshShortcuts]; }
 - (void)viewWillDisappear { [self.recorder stopRecording]; [super viewWillDisappear]; }
 - (void)defaultsChanged:(NSNotification *)notification {
     if (!NSThread.isMainThread) {
@@ -80,10 +82,25 @@
         dispatch_async(dispatch_get_main_queue(), ^{ [weakSelf defaultsChanged:nil]; });
         return;
     }
-    if (self.view.window && !self.recorder.isRecording) [self refreshShortcuts];
+    if (!self.recorder.isRecording) {
+        if (![self.warningShortcutState isEqual:[self shortcutState]]) self.recorder.warningLabel.stringValue = @"";
+        if (self.view.window) [self refreshShortcuts];
+    }
+}
+- (NSDictionary *)shortcutState {
+    NSMutableDictionary *state = [NSMutableDictionary dictionary];
+    NSMutableArray *slots = [@[RCHotKeySlotMain, RCHotKeySlotOCR, RCHotKeySlotHistory, RCHotKeySlotSnippet, RCHotKeySlotClearHistory] mutableCopy];
+    if (self.warningConflictSlot.length) [slots addObject:self.warningConflictSlot];
+    for (NSString *slot in slots) {
+        RCKeyCombo combo = [self.hotKeyService configuredKeyComboForSlot:slot];
+        state[slot] = @[@(combo.keyCode), @(combo.modifiers)];
+    }
+    return state;
 }
 - (void)refreshShortcuts {
     RCKeyCombo combo = [self.hotKeyService configuredKeyComboForSlot:self.selectedSlot];
+    if (self.recorder.keyCombo.keyCode != combo.keyCode || self.recorder.keyCombo.modifiers != combo.modifiers)
+        self.recorder.warningLabel.stringValue = @"";
     self.recorder.keyCombo = combo;
     self.keyboard.keyCombo = combo;
     NSString *defaultKeys = [RCHotKeyRecorderView displayStringForKeyCombo:[RCHotKeyService defaultKeyComboForSlot:self.selectedSlot]];
@@ -94,12 +111,18 @@
 }
 - (void)featureChanged:(NSSegmentedControl *)sender {
     [self.recorder stopRecording];
+    // A refusal describes the attempted assignment in the previous slot, not
+    // the shortcut already owned by the newly selected feature.
+    self.recorder.warningLabel.stringValue = @"";
     self.selectedSlot = sender.selectedSegment == 1 ? RCHotKeySlotOCR : RCHotKeySlotMain;
     [self refreshShortcuts];
+    [self.featureSelector scrollRectToVisible:self.featureSelector.bounds];
 }
 - (void)applyAssignment:(RCHotKeyAssignment *)assignment {
     RCHotKeyAssignmentResult *result = [self.hotKeyService applyAssignments:@[assignment]];
     [self refreshShortcuts]; // Read the committed value, including a refused assignment.
+    self.warningConflictSlot = result.conflictingSlot;
+    self.warningShortcutState = [self shortcutState];
     [self.recorder showAssignmentResult:result];
 }
 - (void)hotKeyRecorderView:(RCHotKeyRecorderView *)view didRecordKeyCombo:(RCKeyCombo)combo {

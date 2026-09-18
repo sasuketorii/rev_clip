@@ -132,7 +132,6 @@
 // HotKey Recorder
 "Type shortcut" = "Type shortcut";
 "Click to record" = "Click to record";
-"This shortcut may not work" = "This shortcut may not work";
 "On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control." = "On macOS 15 (Sequoia) and later, Option-only or Option+Shift-only modifier combinations are not supported due to system restrictions.\nPlease use a combination that includes Command or Control.";
 
 // Template Editor
@@ -440,4 +439,4 @@
 "This key is not on the pictured US keyboard. Your shortcut is shown in the field above." = "This key is not on the pictured US keyboard. Your shortcut is shown in the field above.";
 "US keyboard illustration. Modifier keys are shown on the left; either side works." = "US keyboard illustration. Modifier keys are shown on the left; either side works.";
 "Shortcut" = "Shortcut";
-"Shortcut recording is unavailable. Check Accessibility access and try again." = "Shortcut recording is unavailable. Check Accessibility access and try again.";
+"Shortcut recording is unavailable. Check Accessibility access and try again." = "Shortcut recording is unavailable. Check Accessibility access and finish any password entry in other apps, then try again.";

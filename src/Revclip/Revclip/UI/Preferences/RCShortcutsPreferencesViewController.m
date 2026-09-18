@@ -121,6 +121,7 @@
 #pragma mark - Private
 
 - (void)reloadRecordersFromDefaults {
+    self.mainMenuRecorderView.warningLabel.stringValue = @"";
     RCHotKeyService *service = [RCHotKeyService shared];
     self.mainMenuRecorderView.keyCombo = [service configuredKeyComboForSlot:RCHotKeySlotMain];
     self.historyMenuRecorderView.keyCombo = [service configuredKeyComboForSlot:RCHotKeySlotHistory];
