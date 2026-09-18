@@ -32,6 +32,29 @@
 @interface RCSetupPreferencesTests : XCTestCase
 @end
 @implementation RCSetupPreferencesTests
+- (void)testSetupStartsWithPermissionsAndSwitchesToSavedShortcuts {
+    RCSetupControllerProbe *controller = [RCSetupControllerProbe new];
+    controller.service = [RCSetupReadOnlyService new];
+    controller.service.mainCombo = [RCHotKeyService defaultKeyComboForSlot:RCHotKeySlotMain];
+    controller.service.ocrCombo = [RCHotKeyService defaultKeyComboForSlot:RCHotKeySlotOCR];
+    (void)controller.view;
+    NSSegmentedControl *selector = [controller valueForKey:@"featureSelector"];
+    XCTAssertEqual(selector.segmentCount, 3);
+    XCTAssertEqual(selector.selectedSegment, 0);
+    NSViewController *permissions = [controller valueForKey:@"permissionsController"];
+    XCTAssertEqualObjects([controller valueForKey:@"displayedContent"], permissions.view);
+    selector.selectedSegment = 1; [controller featureChanged:selector];
+    RCHotKeyRecorderView *recorder = [controller valueForKey:@"recorder"];
+    XCTAssertEqual(recorder.keyCombo.keyCode, 9u);
+    XCTAssertNil(permissions.view.superview);
+    selector.selectedSegment = 2; [controller featureChanged:selector];
+    XCTAssertEqual(recorder.keyCombo.keyCode, 19u);
+    recorder.warningLabel.stringValue = @"Previous conflict";
+    selector.selectedSegment = 0; [controller featureChanged:selector];
+    XCTAssertEqualObjects(recorder.warningLabel.stringValue, @"");
+    XCTAssertEqualObjects([controller valueForKey:@"permissionsController"], permissions);
+    XCTAssertEqualObjects([controller valueForKey:@"displayedContent"], permissions.view);
+}
 - (void)testDefaultsHighlightVAnd2WithLeftModifiers {
     RCKeyboardShortcutView *view = [RCKeyboardShortcutView new];
     view.keyCombo = [RCHotKeyService defaultKeyComboForSlot:RCHotKeySlotMain];
@@ -76,11 +99,11 @@
         failedSlot:RCHotKeySlotMain conflictingSlot:RCHotKeySlotOCR osStatus:0]];
     XCTAssertGreaterThan(recorder.warningLabel.stringValue.length, 0u);
     NSSegmentedControl *selector = [controller valueForKey:@"featureSelector"];
-    selector.selectedSegment = 1;
+    selector.selectedSegment = 2;
     [controller featureChanged:selector];
     XCTAssertEqual(recorder.keyCombo.keyCode, 19u);
     XCTAssertEqualObjects(recorder.warningLabel.stringValue, @"");
-    selector.selectedSegment = 0;
+    selector.selectedSegment = 1;
     [controller featureChanged:selector];
     XCTAssertEqualObjects(recorder.warningLabel.stringValue, @"");
 }
@@ -114,7 +137,7 @@
     XCTAssertEqual(keyboard.keyCombo.keyCode, 12u);
     XCTAssertEqual(recorder.keyCombo.modifiers, cmdKey | optionKey);
     NSSegmentedControl *selector = [controller valueForKey:@"featureSelector"];
-    selector.selectedSegment = 1;
+    selector.selectedSegment = 2;
     [controller featureChanged:selector];
     XCTAssertEqual(keyboard.keyCombo.keyCode, 3u);
     XCTAssertEqual(recorder.keyCombo.modifiers, controlKey | shiftKey);
@@ -122,7 +145,7 @@
     controller.service.ocrCombo = RCInvalidKeyCombo();
     [controller refreshShortcuts];
     XCTAssertEqual(keyboard.highlightedKeyCodes.count, 0u);
-    selector.selectedSegment = 0;
+    selector.selectedSegment = 1;
     [controller featureChanged:selector];
     XCTAssertEqual(keyboard.keyCombo.keyCode, 12u);
     XCTAssertTrue([[controller valueForKey:@"ocrSettingsButton"] isHidden]);
