@@ -1,6 +1,13 @@
-# v0.2.2（build 60）リリース候補 — 2026-09-18
+# v0.2.2（build 60）の公開・品質確認 — 2026-09-18
 
-セットアップを「権限ステータス」「クリップボードメニュー」「FasterOCR」の3タブに変更し、初期表示を権限ステータスにしました。既存の権限画面と保存・競合判定を再利用します。ローカル最適化回帰49件が成功。Demo実画面で3タブの表示、保存済みキー、競合拒否、権限への切替後の警告解除を確認。Fable 5.1の差分レビューでもブロッカーなし。公開配信の結果は検証後に追記します。
+- [公開版 v0.2.2](https://github.com/sasuketorii/rev_clip/releases/tag/v0.2.2)、対象SHA `0c6d7b63d03887c9ab0c4e1a467f6dda4a7f92cc`。
+- セットアップを「権限ステータス」「クリップボードメニュー」「FasterOCR」の3タブに変更し、初期表示を権限にしました。既存の権限controllerとショートカット保存・競合判定を再利用し、サイドバーの権限導線も維持します。
+- Woodpecker #11（同一SHA・push・初回）、[macOS CI](https://github.com/sasuketorii/rev_clip/actions/runs/35353122876)、[Release](https://github.com/sasuketorii/rev_clip/actions/runs/35354332892)の全工程が成功。最適化XCTest 420件、ローカル関連回帰49件が成功。今回は公開後の自動配信チェックも成功しました。
+- Demo実画面で3タブの順序・権限表示・保存済みキー・競合拒否・権限への切替後の警告解除を確認。Fable 5.1の差分レビューでブロッカーなし。権限の実変更は行っていません。
+- 公開DMGのDeveloper ID署名（Team `LLKWV86ZBP`）・entitlements・公証チケット・Gatekeeperを検証し、アプリ内公開鍵によるSparkle Ed25519検証も成功。匿名配信と通常版／Demoの照合receiptは `.local/release-v0.2.2/public-delivery.json` です。
+- DMG SHA-256: `de21d63e3fcef171946e52008e0aac5697678dca295ae5646378b0f839c2c83b`。
+- 通常版／Demoはともに **0.2.2 (60)**。通常版は公開DMG、Demoはタグの製品ソースから導入し、元バンドルとの実行ファイルhash一致と署名を確認。旧通常版を退避し設定・履歴は維持。通常版を起動済みです。
+- 証拠は `.local/release-v0.2.2/` に保存。Intel／macOS 14実機、権限を付け外しした復帰、実Sparkle更新インストールは未確認です。配信receipt単独で公証・暗号署名・UIを証明するものではなく、別ログと画面記録も保持します。
 
 ---
 
