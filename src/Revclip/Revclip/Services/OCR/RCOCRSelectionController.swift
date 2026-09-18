@@ -34,13 +34,13 @@ final class RCOCRSelectionView: NSView {
     override var isFlipped: Bool { true }
     override var acceptsFirstResponder: Bool { true }
     static let selectionFillOpacity: CGFloat = 0.10
-    // One length for the crosshair's arms and for the corner marks of the selection,
-    // so the corner under the pointer and the crosshair coincide exactly.
+    // Keep the pointer crosshair distinct from the shorter selection corner marks.
     static let armLength: CGFloat = 22.5
+    static let cornerArmLength: CGFloat = armLength / 2
     static let pointerSize: CGFloat = 48
     // Everything drawn outside the selection rectangle: the corner marks plus half
     // their stroke and antialiasing. Redraw requests must cover it or marks are left behind.
-    static let selectionRedrawInset: CGFloat = armLength + 2.5
+    static let selectionRedrawInset: CGFloat = cornerArmLength + 2.5
     static func resolvedSelectionColor() -> NSColor {
         if RCMenuStyle.isEnabled(), let color = RCMenuStyle.color(forKey: "primary") { return color }
         return NSColor(srgbRed: 0, green: 127.0 / 255.0, blue: 1, alpha: 1)
@@ -134,10 +134,10 @@ final class RCOCRSelectionView: NSView {
         let corners = NSBezierPath()
         for x in [selection.minX, selection.maxX] {
             for y in [selection.minY, selection.maxY] {
-                corners.move(to: NSPoint(x: x - Self.armLength, y: y))
-                corners.line(to: NSPoint(x: x + Self.armLength, y: y))
-                corners.move(to: NSPoint(x: x, y: y - Self.armLength))
-                corners.line(to: NSPoint(x: x, y: y + Self.armLength))
+                corners.move(to: NSPoint(x: x - Self.cornerArmLength, y: y))
+                corners.line(to: NSPoint(x: x + Self.cornerArmLength, y: y))
+                corners.move(to: NSPoint(x: x, y: y - Self.cornerArmLength))
+                corners.line(to: NSPoint(x: x, y: y + Self.cornerArmLength))
             }
         }
         corners.lineWidth = 1.5; corners.stroke()
