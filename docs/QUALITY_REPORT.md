@@ -1,11 +1,15 @@
-# v0.2.1（build 59）リリース候補 — 2026-09-18
+# v0.2.1（build 59）の公開・品質確認 — 2026-09-18
 
-- 実装コミット `837db0e` は Woodpecker #7 と [macOS CI](https://github.com/sasuketorii/rev_clip/actions/runs/35330943538) が成功。最適化XCTest 413件、ローカルの設定・ショートカット試験42件が成功しました。
-- 提供されたキーボード画像、保存済みキーの発光、セットアップ先頭・Panic末尾の黄色文字をDemoの実画面で確認済みです。
-- 入力捕捉は完了・キャンセル・フォーカス喪失・画面移動・30秒タイムアウトで解除します。自前のCarbon通知も入力中は抑止します。他アプリの非排他ホットキー登録を確実に検出する手段はなく、競合と断定しません。
-- 記録中の実キー入力はこの候補の実機受入としてまだ完了していません。自動テストから他アプリすべての抑止を保証しません。
-- Fable 5.1の現物レビューを受け、全設定ページの警告残留、拒否されたslotの表示、捕捉開始前のrelease、複数キーのrelease待ち、AppKitへの入力漏れ時の保存拒否を修正。追加回帰を含むローカル最適化試験48件が成功しました。最終差分のCIと配布確認はこれからです。
-- この節は公開前の記録です。公開タグ、署名・公証、公開DMG・appcastと通常版／Demoの導入結果は公開検証後に追記します。
+- 公開タグ: [`v0.2.1`](https://github.com/sasuketorii/rev_clip/releases/tag/v0.2.1)、対象SHA `43e357db86c3c860091b1f48a6d70488970d2f68`。
+- Woodpecker #9（push・同一SHA・初回）と[macOS CI](https://github.com/sasuketorii/rev_clip/actions/runs/35340107009)が成功。最適化XCTest 419件、ローカルの設定・ショートカット回帰48件が成功しました。
+- Fable 5.1で保存・所有slot・競合判定・入力捕捉・各設定画面をレビューし、警告残留と入力捕捉の境界条件を修正。再レビューでリリースを止める指摘なし。レビューは実機試験の代替ではありません。
+- 最終Demoで、メニューへのOCRキー割当拒否と保存値維持、OCRへの切替時の警告解除、自分のOCRキー再設定、OCR／ショートカット画面の競合拒否とページ往復後の警告解除をGUI入力とAX読み取りで確認。キーボード画像とPanic末尾の黄色文字も確認しました。
+- [Release run](https://github.com/sasuketorii/rev_clip/actions/runs/35344841395)は署名・公証・公開に成功しましたが、最後の配信チェックは `GITHUB_TOKEN has an unexpected form` で失敗。ジョブ全体を成功とは扱いません。GitHubの新しい可変長installation tokenに対する旧255文字上限を公開後に修正し、長い偽tokenのAPI限定・非出力を含む18テストで検証。タグや公開assetは変更せず、配信検証だけを別実行しました。
+- 匿名の公開配信検証、および通常版／Demoを含む再照合が成功。Developer ID（Team `LLKWV86ZBP`）、Hardened Runtime、timestamp、entitlements、DMG公証チケット、Gatekeeperを検証。アプリ内公開鍵によるSparkle Ed25519署名検証も成功しました。
+- DMG SHA-256: `bf0b6098b674c8d7db6a14c87b30d0b74c1a0b9b3b7bc05b0d5320920744207c`。
+- このMacの通常版とDemoはともに **0.2.1 (59)**。通常版は公開DMG、Demoはタグと同じ製品ソースから導入し、それぞれ元バンドルとの実行ファイルhash一致と署名を検証。旧通常版を退避し、設定・履歴は維持しました。
+- 証拠: `.local/release-v0.2.1/public-delivery.json`、`final-ui-acceptance.json`、画面記録、署名検証ログ、Fableレビュー、CIログ。配信receipt単独では公証・暗号署名・実機受入を証明しないため、別証拠も保持します。
+- 制約: 他アプリの非排他ホットキー登録は網羅検出できません。GUI試験は合成キー入力で、すべての物理入力・VoiceOver・第三者hookの抑止を保証しません。Intel／macOS 14の実機と、Sparkleによる実際の更新インストールは未確認です。
 
 ---
 

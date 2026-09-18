@@ -166,6 +166,19 @@ class TokenScopeTests(unittest.TestCase):
             self.assertNotIn(TOKEN, output.read_text())
             self.assertEqual(json.loads(output.read_text())['status'], 'passed')
 
+    def test_long_stateless_installation_token_is_opaque_and_api_only(self):
+        token = 'ghs_12345_' + 'a' * 180 + '.' + 'b' * 300 + '.' + 'c' * 86
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'delivery.json'
+            calls, printed = self.run_main(output, {'GITHUB_TOKEN': token})
+            for url, authorization in calls:
+                if url.startswith('https://api.github.com/'):
+                    self.assertEqual(authorization, 'Bearer ' + token)
+                else:
+                    self.assertIsNone(authorization)
+            self.assertNotIn(token, printed)
+            self.assertNotIn(token, output.read_text())
+
     def test_local_run_without_token_stays_anonymous_and_passes(self):
         with tempfile.TemporaryDirectory() as directory:
             calls, _ = self.run_main(Path(directory) / 'receipt.json', {})

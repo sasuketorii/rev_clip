@@ -38,7 +38,9 @@ def fetch(url, limit=1024 * 1024):
 def api_token():
     """Optional token for GitHub API metadata only; never for the feed or the artifact."""
     token = os.environ.get('GITHUB_TOKEN', '').strip()
-    require(not token or bool(re.fullmatch(r'[A-Za-z0-9_.\-]{1,255}', token)), 'GITHUB_TOKEN has an unexpected form')
+    # GitHub installation tokens are variable-length opaque values (including JWTs).
+    # Validate header-safe characters, not the obsolete 255-character length cap.
+    require(not token or bool(re.fullmatch(r'[A-Za-z0-9_.\-]+', token)), 'GITHUB_TOKEN has an unexpected form')
     return token
 
 
