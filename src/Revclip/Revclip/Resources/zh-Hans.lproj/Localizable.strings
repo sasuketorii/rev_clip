@@ -441,3 +441,7 @@
 "US keyboard illustration. Modifier keys are shown on the left; either side works." = "图示为美式键盘。修饰键在左侧发光，但左右两侧均可使用。";
 "Shortcut" = "快捷键";
 "Shortcut recording is unavailable. Check Accessibility access and try again." = "无法安全录制快捷键。请检查辅助功能权限，并完成其他应用中的密码输入后重试。";
+
+// Scheduled update reminders
+"Revclip update available" = "Revclip 有可用更新";
+"Click to review and install the update." = "点击查看并安装更新。";

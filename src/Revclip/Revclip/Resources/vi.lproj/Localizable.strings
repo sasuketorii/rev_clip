@@ -441,3 +441,7 @@
 "US keyboard illustration. Modifier keys are shown on the left; either side works." = "Hình bàn phím US. Phím bổ trợ sáng ở bên trái; cả hai bên đều hoạt động.";
 "Shortcut" = "Phím tắt";
 "Shortcut recording is unavailable. Check Accessibility access and try again." = "Không thể ghi phím tắt an toàn. Hãy kiểm tra quyền Trợ năng và hoàn tất việc nhập mật khẩu trong ứng dụng khác rồi thử lại.";
+
+// Scheduled update reminders
+"Revclip update available" = "Có bản cập nhật Revclip";
+"Click to review and install the update." = "Nhấp để xem và cài đặt bản cập nhật.";

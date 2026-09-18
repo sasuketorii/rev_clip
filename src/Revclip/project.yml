@@ -52,6 +52,7 @@ targets:
       - sdk: CoreText.framework
       - sdk: Security.framework
       - sdk: ServiceManagement.framework
+      - sdk: UserNotifications.framework
       - framework: Revclip/Vendor/Sparkle/Sparkle.framework
         embed: true
         weak: true
@@ -61,8 +62,8 @@ targets:
         CFBundleName: "$(PRODUCT_NAME)"
         CFBundleDisplayName: "$(PRODUCT_NAME)"
         CFBundleIdentifier: "$(PRODUCT_BUNDLE_IDENTIFIER)"
-        CFBundleVersion: "60"
-        CFBundleShortVersionString: "0.2.2"
+        CFBundleVersion: "61"
+        CFBundleShortVersionString: "0.2.3"
         CFBundleExecutable: "$(EXECUTABLE_NAME)"
         CFBundlePackageType: "APPL"
         CFBundleSignature: "????"

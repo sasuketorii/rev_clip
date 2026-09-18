@@ -441,3 +441,7 @@
 "US keyboard illustration. Modifier keys are shown on the left; either side works." = "Teclado americano. As teclas modificadoras são iluminadas à esquerda; ambos os lados funcionam.";
 "Shortcut" = "Atalho";
 "Shortcut recording is unavailable. Check Accessibility access and try again." = "Não foi possível gravar o atalho. Confira o acesso à Acessibilidade e termine de digitar senhas em outros apps antes de tentar novamente.";
+
+// Scheduled update reminders
+"Revclip update available" = "Atualização do Revclip disponível";
+"Click to review and install the update." = "Clique para revisar e instalar a atualização.";

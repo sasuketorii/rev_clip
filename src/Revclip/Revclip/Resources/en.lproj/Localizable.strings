@@ -440,3 +440,7 @@
 "US keyboard illustration. Modifier keys are shown on the left; either side works." = "US keyboard illustration. Modifier keys are shown on the left; either side works.";
 "Shortcut" = "Shortcut";
 "Shortcut recording is unavailable. Check Accessibility access and try again." = "Shortcut recording is unavailable. Check Accessibility access and finish any password entry in other apps, then try again.";
+
+// Scheduled update reminders
+"Revclip update available" = "Revclip update available";
+"Click to review and install the update." = "Click to review and install the update.";

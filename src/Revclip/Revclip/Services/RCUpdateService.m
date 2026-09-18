@@ -8,6 +8,9 @@
 #import "RCUpdateService.h"
 
 #import "RCConstants.h"
+#import "RCLocalization.h"
+#import <AppKit/AppKit.h>
+#import <UserNotifications/UserNotifications.h>
 
 static NSTimeInterval const kRCDefaultUpdateCheckInterval = 86400.0;
 static NSString * const kRCSparkleFrameworkName = @"Sparkle.framework";
@@ -64,10 +67,19 @@ typedef NS_ENUM(NSInteger, RCSparkleErrorCode) {
 - (void)checkForUpdates:(nullable id)sender;
 @end
 
-@interface RCUpdateService () <RCSPUUpdaterDelegate>
+// Sparkle is loaded dynamically; these selectors match its public delegate API.
+@protocol RCUpdateUserState <NSObject>
+@property (nonatomic, readonly) BOOL userInitiated;
+@end
+
+@interface RCUpdateService () <RCSPUUpdaterDelegate, UNUserNotificationCenterDelegate>
 
 @property (nonatomic, strong, nullable) id<RCSPUStandardUpdaterController> updaterController;
 @property (nonatomic, strong, nullable, readwrite) NSError *lastError;
+@property (nonatomic, strong, nullable) NSStatusItem *updateReminderItem;
+@property (nonatomic, assign) NSUInteger reminderGeneration;
+@property (nonatomic, assign) BOOL awaitingUpdateAttention;
+@property (nonatomic, copy, nullable) NSString *reminderNotificationIdentifier;
 
 - (BOOL)setupUpdaterForUpdateCheck:(NSInteger)updateCheck
                notifyUserOnFailure:(BOOL)notifyUserOnFailure;
@@ -90,6 +102,10 @@ typedef NS_ENUM(NSInteger, RCSparkleErrorCode) {
 }
 
 - (void)setupUpdater {
+    // Register at launch so notifications from a previous process remain actionable.
+    if ([self updateFeedURL].length > 0) {
+        [self updateNotificationCenter].delegate = self;
+    }
     [self setupUpdaterForUpdateCheck:RCUpdateServiceUpdateCheckUpdatesInBackground
                  notifyUserOnFailure:NO];
 }
@@ -299,12 +315,132 @@ typedef NS_ENUM(NSInteger, RCSparkleErrorCode) {
             NSLog(@"[RCUpdateService] Suppressing background update failure notification (check: %ld): %@",
                   (long)updateCheck,
                   error.localizedDescription ?: @"Unknown error");
-            self.lastError = nil;
+            self.lastError = error;
         }
         return;
     }
 
     self.lastError = nil;
+}
+
+#pragma mark - Gentle update reminders
+
+- (BOOL)supportsGentleScheduledUpdateReminders {
+    return YES;
+}
+
+- (BOOL)standardUserDriverShouldHandleShowingScheduledUpdate:(id)update andInImmediateFocus:(BOOL)immediateFocus {
+    // A dockless app otherwise gets an update window behind other applications.
+    // Keep Sparkle's immediate alerts; defer the others until our reminder is clicked.
+    return immediateFocus;
+}
+
+- (void)standardUserDriverWillHandleShowingUpdate:(BOOL)handleShowingUpdate forUpdate:(id)update state:(id<RCUpdateUserState>)state {
+    if (handleShowingUpdate || state.userInitiated || self.awaitingUpdateAttention) {
+        return;
+    }
+    self.awaitingUpdateAttention = YES;
+    NSUInteger generation = ++self.reminderGeneration;
+    self.reminderNotificationIdentifier = [@"com.revclip.update-reminder." stringByAppendingString:NSUUID.UUID.UUIDString];
+    [self showUpdateReminder];
+    [self deliverUpdateNotificationForGeneration:generation];
+}
+
+- (void)showUpdateReminder {
+    // Independent of the optional clipboard status icon: users who hide that icon
+    // must still have a visible fallback when notifications are denied or silenced.
+    self.updateReminderItem = [NSStatusBar.systemStatusBar statusItemWithLength:NSVariableStatusItemLength];
+    self.updateReminderItem.autosaveName = @"RevclipUpdateReminder";
+    NSStatusBarButton *button = self.updateReminderItem.button;
+    button.image = [NSImage imageWithSystemSymbolName:@"arrow.down.circle.fill" accessibilityDescription:RCLocalizedString(@"Revclip update available", nil)];
+    button.toolTip = RCLocalizedString(@"Revclip update available", nil);
+    button.target = self;
+    button.action = @selector(openUpdateReminder:);
+}
+
+- (void)openUpdateReminder:(id)sender {
+    // Sparkle's controller brings the existing session forward (no extra request).
+    [self.updaterController checkForUpdates:sender];
+}
+
+- (UNUserNotificationCenter *)updateNotificationCenter {
+    return UNUserNotificationCenter.currentNotificationCenter;
+}
+
+- (void)deliverUpdateNotificationForGeneration:(NSUInteger)generation {
+    UNUserNotificationCenter *center = [self updateNotificationCenter];
+    NSString *identifier = self.reminderNotificationIdentifier;
+    center.delegate = self;
+    __weak typeof(self) weakSelf = self;
+    [center requestAuthorizationWithOptions:UNAuthorizationOptionAlert completionHandler:^(BOOL granted, NSError *error) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            typeof(self) self = weakSelf;
+            if (!self || !granted || !self.awaitingUpdateAttention || self.reminderGeneration != generation) {
+                return;
+            }
+            UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
+            content.title = RCLocalizedString(@"Revclip update available", nil);
+            content.body = RCLocalizedString(@"Click to review and install the update.", nil);
+            UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:identifier content:content trigger:nil];
+            __weak UNUserNotificationCenter *weakCenter = center;
+            [center addNotificationRequest:request withCompletionHandler:^(NSError *deliveryError) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    typeof(self) self = weakSelf;
+                    // The user can attend/dismiss the update while delivery is pending.
+                    if (!self || !self.awaitingUpdateAttention || self.reminderGeneration != generation) {
+                        [weakCenter removePendingNotificationRequestsWithIdentifiers:@[identifier]];
+                        [weakCenter removeDeliveredNotificationsWithIdentifiers:@[identifier]];
+                    }
+                    if (deliveryError) {
+                        NSLog(@"[RCUpdateService] Update notification delivery failed: %@", deliveryError.localizedDescription);
+                    }
+                });
+            }];
+        });
+    }];
+}
+
+- (void)removeUpdateNotification {
+    UNUserNotificationCenter *center = [self updateNotificationCenter];
+    NSString *identifier = self.reminderNotificationIdentifier;
+    if (identifier) {
+        [center removePendingNotificationRequestsWithIdentifiers:@[identifier]];
+        [center removeDeliveredNotificationsWithIdentifiers:@[identifier]];
+        self.reminderNotificationIdentifier = nil;
+    }
+}
+
+- (void)clearUpdateReminder {
+    self.awaitingUpdateAttention = NO;
+    ++self.reminderGeneration;
+    if (self.updateReminderItem) {
+        [NSStatusBar.systemStatusBar removeStatusItem:self.updateReminderItem];
+        self.updateReminderItem = nil;
+    }
+    [self removeUpdateNotification];
+}
+
+- (void)standardUserDriverDidReceiveUserAttentionForUpdate:(id)update {
+    [self clearUpdateReminder];
+}
+
+- (void)standardUserDriverWillFinishUpdateSession {
+    [self clearUpdateReminder];
+}
+
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response withCompletionHandler:(void (^)(void))completionHandler {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if ([response.notification.request.identifier hasPrefix:@"com.revclip.update-reminder."] &&
+            [response.actionIdentifier isEqualToString:UNNotificationDefaultActionIdentifier]) {
+            [center removeDeliveredNotificationsWithIdentifiers:@[response.notification.request.identifier]];
+            [self openUpdateReminder:nil];
+        }
+        completionHandler();
+    });
+}
+
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler {
+    completionHandler(UNNotificationPresentationOptionBanner | UNNotificationPresentationOptionList);
 }
 
 #pragma mark - Private
@@ -362,12 +498,12 @@ typedef NS_ENUM(NSInteger, RCSparkleErrorCode) {
     if ([updaterControllerClass instancesRespondToSelector:@selector(initWithStartingUpdater:updaterDelegate:userDriverDelegate:)]) {
         return [(id<RCSPUStandardUpdaterController>)[updaterControllerClass alloc] initWithStartingUpdater:YES
                                                                                              updaterDelegate:self
-                                                                                          userDriverDelegate:nil];
+                                                                                          userDriverDelegate:self];
     }
 
     if ([updaterControllerClass instancesRespondToSelector:@selector(initWithUpdaterDelegate:userDriverDelegate:)]) {
         return [(id<RCSPUStandardUpdaterController>)[updaterControllerClass alloc] initWithUpdaterDelegate:self
-                                                                                          userDriverDelegate:nil];
+                                                                                          userDriverDelegate:self];
     }
 
     return nil;

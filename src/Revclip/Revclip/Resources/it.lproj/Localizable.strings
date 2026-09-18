@@ -441,3 +441,7 @@
 "US keyboard illustration. Modifier keys are shown on the left; either side works." = "Tastiera US. I modificatori sono illuminati a sinistra; funzionano entrambi i lati.";
 "Shortcut" = "Scorciatoia";
 "Shortcut recording is unavailable. Check Accessibility access and try again." = "Impossibile registrare la scorciatoia. Verifica l’accesso ad Accessibilità e termina l’inserimento di password nelle altre app, poi riprova.";
+
+// Scheduled update reminders
+"Revclip update available" = "Aggiornamento Revclip disponibile";
+"Click to review and install the update." = "Fai clic per esaminare e installare l’aggiornamento.";

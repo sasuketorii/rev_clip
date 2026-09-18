@@ -441,3 +441,7 @@
 "US keyboard illustration. Modifier keys are shown on the left; either side works." = "US-Tastatur. Modifikatortasten leuchten links; beide Seiten funktionieren.";
 "Shortcut" = "Kurzbefehl";
 "Shortcut recording is unavailable. Check Accessibility access and try again." = "Die Tastenkombination kann nicht aufgezeichnet werden. Prüfen Sie die Bedienungshilfen und schließen Sie Passworteingaben in anderen Apps ab. Versuchen Sie es dann erneut.";
+
+// Scheduled update reminders
+"Revclip update available" = "Revclip-Update verfügbar";
+"Click to review and install the update." = "Klicken Sie, um das Update anzusehen und zu installieren.";

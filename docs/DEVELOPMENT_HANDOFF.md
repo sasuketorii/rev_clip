@@ -83,3 +83,14 @@ Demoの署名にはローカルApple Development identityが必要です。`demo
 - 競合判定は `RCHotKeyService` のslotを基準にし、自分の保存済みキーの再設定を拒否しません。UIが古い警告を別slotへ持ち越すと自己競合に見えるため、画面移動・保存値変更・設定再読込で警告を解除します。共有ラベルには失敗したslot名も表示します。
 - 記録の確定はevent tapで消費したキーのrelease後だけです。AppKitへ入力が漏れた場合は保存せず停止します。捕捉開始前のkeyUpは通し、重ねて押されたキーは全releaseを待ちます。OS全体の他アプリの非排他登録を確実に検出できるとは表示しません。
 - 回帰は `RCSetupPreferencesTests` / `RCHotKeyRecordingTests` / `RCHotKeyContractTests` にあります。実機ではメニュー側でOCRキーを入力して拒否された後、OCRへ切替→同じOCRキーの再設定→別ページ往復を確認します。成功時は警告なし、拒否時は保存済み値を維持します。
+
+## 自動更新のリマインダー
+
+`RCUpdateService` が Sparkle の updater delegate と standard user driver delegate を兼ねます。`LSUIElement` の常駐アプリでは、通常の定期更新ダイアログは他アプリの背後に表示されるため、`userDriverDelegate:nil` に戻さないでください。起動直後など `immediateFocus` が真なら Sparkle の表示を使い、それ以外は gentle reminder を表示します。
+
+- 更新待ちの専用メニューバーボタンは通常アイコンの表示設定から独立しています。通知センターの許可拒否・集中モードでも、更新を開く導線を残します。フォーカスを強制的に奪いません。
+- 通知 delegate は起動時に登録し、前のプロセスから残った通知もクリックで更新確認へ進めます。通知を見た時点、または更新セッション終了時にリマインダーを撤去します。
+- 通知許可と配信は非同期です。世代と通知ごとの UUID で、閉じたセッションの通知復活や次のセッションの通知削除を防ぎます。定期ポーリングは追加していません。
+- 更新ボタンは Sparkle の controller に直接 `checkForUpdates:` を渡し、保留中セッションを前面に戻します。新規通信を独自に開始しません。自動確認間隔の既定値は引き続き24時間です。
+- 回帰テストは `RCUpdateServiceNotificationPolicyTests`。通知拒否、遅延した許可応答・配信完了、手動確認との重複、セッション終了、次セッションへの復帰を含みます。単体テストでは通知センターを差し替え、利用者の権限を変更しません。
+- 実 Sparkle の確認は別 bundle ID・別 defaults・署名した専用更新 fixture で行います。製品の bundle ID や更新フィードを検証のために書き換えないでください。通知の表示確認と更新インストール完了は別の受入条件です。

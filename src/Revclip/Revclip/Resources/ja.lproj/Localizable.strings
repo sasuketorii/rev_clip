@@ -440,3 +440,7 @@
 "US keyboard illustration. Modifier keys are shown on the left; either side works." = "図は US 配列です。修飾キーは左側を光らせていますが、左右どちらでも使えます。";
 "Shortcut" = "ショートカット";
 "Shortcut recording is unavailable. Check Accessibility access and try again." = "ショートカットを安全に入力できません。アクセシビリティ権限を確認し、他のアプリでパスワードを入力中の場合は入力を終えてから、もう一度お試しください。";
+
+// Scheduled update reminders
+"Revclip update available" = "Revclipのアップデートがあります";
+"Click to review and install the update." = "クリックして更新内容を確認・インストールできます。";
