@@ -106,6 +106,7 @@ static os_log_t RCMenuManagerLog(void) {
 - (void)cacheColorPreviewEligibility:(BOOL)isEligible forClipItem:(RCClipItem *)clipItem;
 - (void)prefetchClipDataFallbackForClipItems:(NSArray<RCClipItem *> *)clipItems
                                   completion:(nullable dispatch_block_t)completion;
+- (NSUInteger)cacheGenerationSnapshot;
 - (nullable NSString *)cachedTooltipForClipItem:(RCClipItem *)clipItem;
 - (nullable NSString *)cachedColorStringForClipItem:(RCClipItem *)clipItem;
 - (nullable NSImage *)colorPreviewImageForClipItem:(RCClipItem *)clipItem;
@@ -976,12 +977,15 @@ static os_log_t RCMenuManagerLog(void) {
 
     // A tooltip needs the payload only for the item the user is inspecting.
     // Never restore every image/archive just to construct an unopened menu.
+    NSUInteger generation = [self cacheGenerationSnapshot];
     __weak typeof(self) weakSelf = self;
     __weak NSMenuItem *weakItem = item;
     [self prefetchClipDataFallbackForClipItems:@[clipItem] completion:^{
         RCMenuManager *strongSelf = weakSelf;
         NSMenuItem *strongItem = weakItem;
-        if (strongSelf == nil || strongItem == nil) return;
+        // Clear/Panic can leave a row alive while its archive read finishes.
+        // Reject the UI completion too, not only the background cache writes.
+        if (strongSelf == nil || strongItem == nil || [strongSelf cacheGenerationSnapshot] != generation) return;
         [strongSelf configureClipMenuItem:strongItem clipItem:clipItem loadThumbnail:NO];
         if (strongItem.menu.highlightedItem == strongItem) {
             [strongSelf.previewController highlightItem:strongItem text:[strongSelf previewTextForMenuItem:strongItem] imageData:[strongSelf.previewImageData objectForKey:strongItem]];
@@ -1485,6 +1489,7 @@ static os_log_t RCMenuManagerLog(void) {
     }
 
     NSInteger maxTooltipLength = MAX(1, [self integerPreferenceForKey:kRCMaxLengthOfToolTipKey defaultValue:10000]);
+    NSUInteger generation = [self cacheGenerationSnapshot];
     NSMutableArray<RCClipItem *> *pendingItems = [NSMutableArray arrayWithCapacity:clipItems.count];
     for (RCClipItem *clipItem in clipItems) {
         NSString *type = clipItem.primaryType;
@@ -1497,13 +1502,17 @@ static os_log_t RCMenuManagerLog(void) {
             continue;
         }
 
-        NSNumber *state = [self.clipDataFallbackPrefetchStateCache objectForKey:cacheKey];
-        if (state != nil) {
-            continue;
+        // Admission and invalidation share a lock. An old request must never
+        // install its InFlight marker in a newer generation for the same hash.
+        [self.cacheLock lock];
+        BOOL current = self.cacheGeneration == generation;
+        BOOL shouldPrefetch = current && [self.clipDataFallbackPrefetchStateCache objectForKey:cacheKey] == nil;
+        if (shouldPrefetch) {
+            [self.clipDataFallbackPrefetchStateCache setObject:@(kRCClipDataFallbackPrefetchStateInFlight) forKey:cacheKey];
         }
-
-        [self.clipDataFallbackPrefetchStateCache setObject:@(kRCClipDataFallbackPrefetchStateInFlight) forKey:cacheKey];
-        [pendingItems addObject:clipItem];
+        [self.cacheLock unlock];
+        if (!current) break;
+        if (shouldPrefetch) [pendingItems addObject:clipItem];
     }
 
     if (pendingItems.count == 0) {
@@ -1530,48 +1539,57 @@ static os_log_t RCMenuManagerLog(void) {
 
         for (RCClipItem *clipItem in itemsToPrefetch) {
             @autoreleasepool {
+                // A cancelled batch need not read any remaining archives. A read
+                // already in flight is allowed to finish, but cannot publish.
+                if ([strongSelf cacheGenerationSnapshot] != generation) break;
                 NSString *cacheKey = [strongSelf colorPreviewCacheKeyForClipItem:clipItem];
                 if (cacheKey.length == 0) {
                     continue;
                 }
-                if (clipItem.dataPath.length == 0) {
-                    [strongSelf.clipDataFallbackPrefetchStateCache setObject:@(kRCClipDataFallbackPrefetchStateDone) forKey:cacheKey];
-                    continue;
-                }
 
-                RCClipData *clipData = [strongSelf clipDataForPath:clipItem.dataPath];
-                if (clipData == nil) {
-                    [strongSelf.clipDataFallbackPrefetchStateCache setObject:@(kRCClipDataFallbackPrefetchStateDone) forKey:cacheKey];
-                    continue;
-                }
-
+                // File I/O, decryption, formatting and color parsing stay outside
+                // cacheLock. Only the resulting references are committed below.
+                RCClipData *clipData = clipItem.dataPath.length > 0 ? [strongSelf clipDataForPath:clipItem.dataPath] : nil;
+                NSString *tooltip = nil;
+                NSString *colorString = nil;
+                BOOL shouldCacheEligibility = NO;
+                BOOL colorEligible = NO;
                 if (needsTooltipFallback) {
-                    NSString *tooltip = nil;
                     if (clipData.stringValue.length > 0) {
                         tooltip = clipData.stringValue;
                     } else if (clipData.URLString.length > 0) {
                         tooltip = clipData.URLString;
                     }
                     if (tooltip.length > 0) {
-                        NSString *truncatedTooltip = [strongSelf truncatedString:tooltip maxLength:maxTooltipLength];
-                        [strongSelf.clipDataTooltipCache setObject:truncatedTooltip forKey:cacheKey];
+                        tooltip = [strongSelf truncatedString:tooltip maxLength:maxTooltipLength];
                     }
                 }
 
                 if (needsColorFallback && clipData.stringValue.length > 0) {
                     NSColor *payloadColor = [NSColor colorWithColorString:clipData.stringValue];
                     if (payloadColor != nil) {
-                        [strongSelf.clipDataColorStringCache setObject:clipData.stringValue forKey:cacheKey];
-                        [strongSelf cacheColorPreviewEligibility:YES forClipItem:clipItem];
+                        colorString = clipData.stringValue;
+                        shouldCacheEligibility = !clipItem.isColorCode;
+                        colorEligible = YES;
                     } else if (!clipItem.isColorCode) {
                         BOOL titleLooksLikeColor = [NSColor isPotentialColorStringCandidate:(clipItem.title ?: @"")];
                         if (!titleLooksLikeColor) {
-                            [strongSelf cacheColorPreviewEligibility:NO forClipItem:clipItem];
+                            shouldCacheEligibility = YES;
                         }
                     }
                 }
 
-                [strongSelf.clipDataFallbackPrefetchStateCache setObject:@(kRCClipDataFallbackPrefetchStateDone) forKey:cacheKey];
+                // Checking separately from insertion would still race Clear or
+                // Panic. Include Done (also for an unreadable archive), so an old
+                // completion cannot overwrite a new same-hash InFlight marker.
+                [strongSelf.cacheLock lock];
+                if (strongSelf.cacheGeneration == generation) {
+                    if (tooltip.length > 0) [strongSelf.clipDataTooltipCache setObject:tooltip forKey:cacheKey];
+                    if (colorString != nil) [strongSelf.clipDataColorStringCache setObject:colorString forKey:cacheKey];
+                    if (shouldCacheEligibility) [strongSelf.colorPreviewEligibilityCache setObject:@(colorEligible) forKey:cacheKey];
+                    [strongSelf.clipDataFallbackPrefetchStateCache setObject:@(kRCClipDataFallbackPrefetchStateDone) forKey:cacheKey];
+                }
+                [strongSelf.cacheLock unlock];
             }
         }
 
@@ -2304,6 +2322,15 @@ static NSTimeInterval const kRCServiceMenuLimit = 50.0; // below NSTimeout (60 s
     [self.previewTexts removeAllObjects];
     [self.previewURLs removeAllObjects];
     [[RCLinkPreviewService shared] clearCache];
+}
+
+// Fallback work runs off-main; use the invalidation lock instead of reading
+// the nonatomic generation property concurrently with a cache clear.
+- (NSUInteger)cacheGenerationSnapshot {
+    [self.cacheLock lock];
+    NSUInteger generation = self.cacheGeneration;
+    [self.cacheLock unlock];
+    return generation;
 }
 
 - (void)clearMenuCaches {
