@@ -1,0 +1,116 @@
+#import "RCSetupPreferencesViewController.h"
+#import "RCKeyboardShortcutView.h"
+#import "RCHotKeyRecorderView.h"
+#import "RCPreferencesPage.h"
+#import "RCPreferencesWindowController.h"
+#import "RCSettingsCLIService.h"
+#import "RCLocalization.h"
+
+@interface RCSetupPreferencesViewController () <RCHotKeyRecorderViewDelegate>
+@property (nonatomic, strong) NSSegmentedControl *featureSelector;
+@property (nonatomic, strong) RCKeyboardShortcutView *keyboard;
+@property (nonatomic, strong) RCHotKeyRecorderView *recorder;
+@property (nonatomic, strong) NSTextField *defaultLabel;
+@property (nonatomic, strong) NSTextField *layoutNote;
+@property (nonatomic, strong) NSButton *ocrSettingsButton;
+@property (nonatomic, copy) NSString *selectedSlot;
+@end
+
+@implementation RCSetupPreferencesViewController
+- (RCHotKeyService *)hotKeyService { return RCHotKeyService.shared; }
+- (void)loadView {
+    self.selectedSlot = RCHotKeySlotMain;
+    RCPreferencesPage *page = [RCPreferencesPage new];
+    NSStackView *stack = [NSStackView new];
+    stack.orientation = NSUserInterfaceLayoutOrientationVertical;
+    stack.alignment = NSLayoutAttributeLeading;
+    stack.spacing = 20;
+    stack.translatesAutoresizingMaskIntoConstraints = NO;
+    [page addSubview:stack];
+    [NSLayoutConstraint activateConstraints:@[
+        [stack.topAnchor constraintEqualToAnchor:page.topAnchor constant:16],
+        [stack.leadingAnchor constraintEqualToAnchor:page.leadingAnchor constant:16],
+        [stack.trailingAnchor constraintEqualToAnchor:page.trailingAnchor constant:-16],
+        [stack.bottomAnchor constraintEqualToAnchor:page.bottomAnchor constant:-16],
+    ]];
+    NSTextField *intro = [NSTextField wrappingLabelWithString:RCLocalizedString(@"Choose the shortcuts that feel natural to you. The highlighted keys show your saved shortcut.", nil)];
+    intro.font = [NSFont systemFontOfSize:14];
+    intro.textColor = NSColor.secondaryLabelColor;
+    self.featureSelector = [NSSegmentedControl segmentedControlWithLabels:@[RCLocalizedString(@"Clipboard menu", nil), @"faster OCR"]
+        trackingMode:NSSegmentSwitchTrackingSelectOne target:self action:@selector(featureChanged:)];
+    self.featureSelector.segmentDistribution = NSSegmentDistributionFillEqually;
+    self.featureSelector.selectedSegment = 0;
+    self.featureSelector.accessibilityLabel = RCLocalizedString(@"Shortcut feature", nil);
+    self.keyboard = [RCKeyboardShortcutView new];
+    self.recorder = [RCHotKeyRecorderView new];
+    self.recorder.delegate = self;
+    NSTextField *warning = [NSTextField wrappingLabelWithString:@""];
+    warning.textColor = NSColor.systemYellowColor;
+    self.recorder.warningLabel = warning;
+    self.recorder.accessibilityLabel = RCLocalizedString(@"Shortcut", nil);
+    NSView *recording = [RCPreferencesPage pageWithRows:@[@[RCLocalizedString(@"Shortcut", nil), self.recorder]]];
+    NSTextField *instructions = [NSTextField wrappingLabelWithString:RCLocalizedString(@"Click the shortcut field, then press your preferred keys. Conflicting shortcuts will not replace your current setting.", nil)];
+    instructions.textColor = NSColor.secondaryLabelColor;
+    self.defaultLabel = [NSTextField wrappingLabelWithString:@""];
+    self.defaultLabel.textColor = NSColor.secondaryLabelColor;
+    self.layoutNote = [NSTextField wrappingLabelWithString:@""];
+    self.layoutNote.textColor = NSColor.secondaryLabelColor;
+    NSButton *restore = [NSButton buttonWithTitle:RCLocalizedString(@"Restore this shortcut's default", nil) target:self action:@selector(restoreDefault:)];
+    self.ocrSettingsButton = [NSButton buttonWithTitle:RCLocalizedString(@"Open faster OCR settings", nil) target:self action:@selector(openOCRSettings:)];
+    NSStackView *actions = [NSStackView stackViewWithViews:@[restore, self.ocrSettingsButton]];
+    actions.spacing = 12;
+    for (NSView *view in @[intro, self.featureSelector, self.keyboard, recording, warning, instructions, self.defaultLabel, self.layoutNote, actions]) {
+        view.translatesAutoresizingMaskIntoConstraints = NO;
+        [stack addArrangedSubview:view];
+        [view.widthAnchor constraintEqualToAnchor:stack.widthAnchor].active = YES;
+    }
+    [self.featureSelector.heightAnchor constraintEqualToConstant:32].active = YES;
+    [self.keyboard.heightAnchor constraintEqualToAnchor:self.keyboard.widthAnchor multiplier:1046.0/2546.0].active = YES;
+    self.view = page;
+    [self refreshShortcuts];
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(defaultsChanged:) name:NSUserDefaultsDidChangeNotification object:nil];
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(defaultsChanged:) name:RCSettingsDidChangeNotification object:nil];
+}
+- (void)dealloc { [NSNotificationCenter.defaultCenter removeObserver:self]; }
+- (void)viewWillAppear { [super viewWillAppear]; [self refreshShortcuts]; }
+- (void)viewWillDisappear { [self.recorder stopRecording]; [super viewWillDisappear]; }
+- (void)defaultsChanged:(NSNotification *)notification {
+    if (!NSThread.isMainThread) {
+        __weak typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{ [weakSelf defaultsChanged:nil]; });
+        return;
+    }
+    if (self.view.window && !self.recorder.isRecording) [self refreshShortcuts];
+}
+- (void)refreshShortcuts {
+    RCKeyCombo combo = [self.hotKeyService configuredKeyComboForSlot:self.selectedSlot];
+    self.recorder.keyCombo = combo;
+    self.keyboard.keyCombo = combo;
+    NSString *defaultKeys = [RCHotKeyRecorderView displayStringForKeyCombo:[RCHotKeyService defaultKeyComboForSlot:self.selectedSlot]];
+    self.defaultLabel.stringValue = [NSString stringWithFormat:RCLocalizedString(@"Default: %@", nil), defaultKeys];
+    BOOL externalKey = RCIsValidKeyCombo(combo) && NSIsEmptyRect([RCKeyboardShortcutView imageRectForKeyCode:combo.keyCode]);
+    self.layoutNote.stringValue = RCLocalizedString(externalKey ? @"This key is not on the pictured US keyboard. Your shortcut is shown in the field above." : @"US keyboard illustration. Modifier keys are shown on the left; either side works.", nil);
+    self.ocrSettingsButton.hidden = ![self.selectedSlot isEqualToString:RCHotKeySlotOCR];
+}
+- (void)featureChanged:(NSSegmentedControl *)sender {
+    [self.recorder stopRecording];
+    self.selectedSlot = sender.selectedSegment == 1 ? RCHotKeySlotOCR : RCHotKeySlotMain;
+    [self refreshShortcuts];
+}
+- (void)applyAssignment:(RCHotKeyAssignment *)assignment {
+    RCHotKeyAssignmentResult *result = [self.hotKeyService applyAssignments:@[assignment]];
+    [self refreshShortcuts]; // Read the committed value, including a refused assignment.
+    [self.recorder showAssignmentResult:result];
+}
+- (void)hotKeyRecorderView:(RCHotKeyRecorderView *)view didRecordKeyCombo:(RCKeyCombo)combo {
+    [self applyAssignment:[RCHotKeyAssignment assignmentSettingSlot:self.selectedSlot combo:combo]];
+}
+- (void)hotKeyRecorderViewDidClearKeyCombo:(RCHotKeyRecorderView *)view {
+    [self applyAssignment:[RCHotKeyAssignment assignmentClearingSlot:self.selectedSlot]];
+}
+- (void)restoreDefault:(id)sender {
+    [self.recorder stopRecording];
+    [self applyAssignment:[RCHotKeyAssignment assignmentRestoringDefaultForSlot:self.selectedSlot]];
+}
+- (void)openOCRSettings:(id)sender { [RCPreferencesWindowController.shared showTab:@"ocr"]; }
+@end

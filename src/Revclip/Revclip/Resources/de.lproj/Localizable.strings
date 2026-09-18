@@ -428,3 +428,17 @@
 "Fetching preview…" = "Vorschau wird geladen…";
 
 "No preview available. Try again in a minute." = "Keine Vorschau verfügbar. Versuchen Sie es in einer Minute erneut.";
+
+/* Shortcut setup */
+"Setup" = "Einrichtung";
+"Choose the shortcuts that feel natural to you. The highlighted keys show your saved shortcut." = "Wählen Sie Ihre bevorzugten Kurzbefehle. Die leuchtenden Tasten zeigen den gespeicherten Kurzbefehl.";
+"Clipboard menu" = "Zwischenablage-Menü";
+"Shortcut feature" = "Kurzbefehl-Funktion";
+"Click the shortcut field, then press your preferred keys. Conflicting shortcuts will not replace your current setting." = "Klicken Sie auf das Kurzbefehlsfeld und drücken Sie die gewünschten Tasten. Bei Konflikten bleibt die aktuelle Einstellung erhalten.";
+"Default: %@" = "Standard: %@";
+"Restore this shortcut's default" = "Diesen Kurzbefehl zurücksetzen";
+"Open faster OCR settings" = "faster OCR-Einstellungen öffnen";
+"This key is not on the pictured US keyboard. Your shortcut is shown in the field above." = "Diese Taste fehlt auf der abgebildeten US-Tastatur. Der Kurzbefehl steht im Feld oben.";
+"US keyboard illustration. Modifier keys are shown on the left; either side works." = "US-Tastatur. Modifikatortasten leuchten links; beide Seiten funktionieren.";
+"Shortcut" = "Kurzbefehl";
+"Shortcut recording is unavailable. Check Accessibility access and try again." = "Die Aufzeichnung ist nicht verfügbar. Prüfen Sie die Bedienungshilfen-Berechtigung und versuchen Sie es erneut.";

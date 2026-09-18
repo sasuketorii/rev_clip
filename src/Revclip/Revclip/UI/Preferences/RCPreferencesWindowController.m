@@ -1,4 +1,5 @@
 #import "RCGlassBackground.h"
+#import "RCSetupPreferencesViewController.h"
 #import "RCLinkPreferencesViewController.h"
 #import "RCAgentPreferencesViewController.h"
 #import "RCBugReportPreferencesViewController.h"
@@ -85,6 +86,7 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 @property (nonatomic, strong, nullable) RCUpdatesPreferencesViewController *updatesViewController;
 @property (nonatomic, strong, nullable) RCPanicPreferencesViewController *panicViewController;
 @property (nonatomic, strong) NSViewController *appearanceViewController;
+@property (nonatomic, strong) RCSetupPreferencesViewController *setupViewController;
 @property (nonatomic, strong) RCLinkPreferencesViewController *linkViewController;
 @property (nonatomic, strong) RCAgentPreferencesViewController *agentViewController;
 @property (nonatomic, strong) RCOCRPreferencesController *ocrViewController;
@@ -131,7 +133,7 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(settingsDidChange:) name:RCSettingsDidChangeNotification object:nil];
     [self configureWindow];
     [self configureSidebar];
-    [self showTab:RCPreferencesTabGeneral];
+    [self showTab:@"setup"];
 }
 
 - (void)languageDidChange:(NSNotification *)notification {
@@ -141,6 +143,7 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
     dispatch_async(dispatch_get_main_queue(), ^{
         self.refreshScheduled = NO;
         NSString *tab = self.selectedTab;
+        self.setupViewController = nil;
         self.generalViewController = nil;
         self.menuViewController = nil;
         self.typeViewController = nil;
@@ -476,6 +479,7 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
     NSTableCellView *cell = [[NSTableCellView alloc] initWithFrame:NSZeroRect];
     NSTextField *label = [NSTextField labelWithString:[self titleForTabIdentifier:identifier]];
     label.font = [NSFont systemFontOfSize:13 weight:NSFontWeightMedium];
+    if ([identifier isEqualToString:RCPreferencesTabPanic]) label.textColor = NSColor.systemYellowColor;
     label.translatesAutoresizingMaskIntoConstraints = NO;
     NSImageView *icon = [[NSImageView alloc] initWithFrame:NSZeroRect];
     icon.image = [NSImage imageWithSystemSymbolName:[self symbolNameForTabIdentifier:identifier] accessibilityDescription:nil];
@@ -545,11 +549,15 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 }
 
 - (NSArray<NSString *> *)tabIdentifiers {
-    return @[RCPreferencesTabGeneral, RCPreferencesTabAppearance, RCPreferencesTabShortcuts,
-             @"ocr", @"privacy", @"permissions", RCPreferencesTabPanic, RCPreferencesTabUpdates, @"advanced"];
+    return @[@"setup", RCPreferencesTabGeneral, RCPreferencesTabAppearance, RCPreferencesTabShortcuts,
+             @"ocr", @"privacy", @"permissions", RCPreferencesTabUpdates, @"advanced", RCPreferencesTabPanic];
 }
 
 - (nullable NSViewController *)viewControllerForTabIdentifier:(NSString *)tabIdentifier {
+    if ([tabIdentifier isEqualToString:@"setup"]) {
+        if (!self.setupViewController) self.setupViewController = [RCSetupPreferencesViewController new];
+        return self.setupViewController;
+    }
     if ([tabIdentifier isEqualToString:@"links"]) {
         if (!self.linkViewController) self.linkViewController = [RCLinkPreferencesViewController new];
         return self.linkViewController;
@@ -630,6 +638,7 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 }
 
 - (NSString *)titleForTabIdentifier:(NSString *)tabIdentifier {
+    if ([tabIdentifier isEqualToString:@"setup"]) return RCLocalizedString(@"Setup", nil);
     if ([tabIdentifier isEqualToString:@"links"]) return RCLocalizedString(@"Links", nil);
     if ([tabIdentifier isEqualToString:@"advanced"]) return RCLocalizedString(@"Advanced Settings", nil);
     if ([tabIdentifier isEqualToString:@"privacy"]) return RCLocalizedString(@"Privacy", nil);
@@ -663,6 +672,7 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 }
 
 - (NSString *)symbolNameForTabIdentifier:(NSString *)tabIdentifier {
+    if ([tabIdentifier isEqualToString:@"setup"]) return @"keyboard";
     if ([tabIdentifier isEqualToString:@"advanced"]) return @"slider.horizontal.3";
     if ([tabIdentifier isEqualToString:@"privacy"]) return @"hand.raised";
     if ([tabIdentifier isEqualToString:@"permissions"]) return @"checkmark.shield";

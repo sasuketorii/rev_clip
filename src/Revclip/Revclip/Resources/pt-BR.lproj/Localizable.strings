@@ -428,3 +428,17 @@
 "Fetching preview…" = "Carregando prévia…";
 
 "No preview available. Try again in a minute." = "Prévia indisponível. Tente novamente em um minuto.";
+
+/* Shortcut setup */
+"Setup" = "Configuração";
+"Choose the shortcuts that feel natural to you. The highlighted keys show your saved shortcut." = "Escolha os atalhos que preferir. As teclas iluminadas mostram o atalho salvo.";
+"Clipboard menu" = "Menu da área de transferência";
+"Shortcut feature" = "Função do atalho";
+"Click the shortcut field, then press your preferred keys. Conflicting shortcuts will not replace your current setting." = "Clique no campo do atalho e pressione as teclas desejadas. Em caso de conflito, a configuração atual será mantida.";
+"Default: %@" = "Padrão: %@";
+"Restore this shortcut's default" = "Restaurar o padrão deste atalho";
+"Open faster OCR settings" = "Abrir configurações do faster OCR";
+"This key is not on the pictured US keyboard. Your shortcut is shown in the field above." = "Esta tecla não aparece no teclado americano ilustrado. O atalho está no campo acima.";
+"US keyboard illustration. Modifier keys are shown on the left; either side works." = "Teclado americano. As teclas modificadoras são iluminadas à esquerda; ambos os lados funcionam.";
+"Shortcut" = "Atalho";
+"Shortcut recording is unavailable. Check Accessibility access and try again." = "A gravação está indisponível. Verifique a permissão de Acessibilidade e tente novamente.";

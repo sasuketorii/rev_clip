@@ -107,7 +107,7 @@
 - (void)applyAssignments:(NSArray<RCHotKeyAssignment *> *)assignments {
     RCHotKeyAssignmentResult *result = [[RCHotKeyService shared] applyAssignments:assignments];
     [self reloadRecordersFromDefaults];
-    [RCHotKeyRecorderView presentAssignmentResult:result window:self.view.window];
+    [self.mainMenuRecorderView showAssignmentResult:result];
 }
 
 - (nullable NSString *)slotForRecorderView:(RCHotKeyRecorderView *)recorderView {
@@ -137,11 +137,15 @@
 }
 
 - (void)arrangeSettingsPage {
+    NSTextField *warning = [NSTextField wrappingLabelWithString:@""];
+    warning.textColor = NSColor.systemYellowColor;
+    for (RCHotKeyRecorderView *recorder in @[self.mainMenuRecorderView, self.historyMenuRecorderView, self.snippetMenuRecorderView, self.clearHistoryRecorderView]) recorder.warningLabel = warning;
     self.view = [RCPreferencesPage pageWithRows:@[
         @[([RCLocalization titleForIdentifier:@"ZgK-s1-dYB" table:@"RCShortcutsPreferencesView"] ?: @"メインメニュー:"), self.mainMenuRecorderView],
         @[([RCLocalization titleForIdentifier:@"xhM-yq-5Ef" table:@"RCShortcutsPreferencesView"] ?: @"履歴メニュー:"), self.historyMenuRecorderView],
         @[([RCLocalization titleForIdentifier:@"MV8-qY-5rU" table:@"RCShortcutsPreferencesView"] ?: @"テンプレートメニュー:"), self.snippetMenuRecorderView],
         @[([RCLocalization titleForIdentifier:@"W4b-7h-QK2" table:@"RCShortcutsPreferencesView"] ?: @"履歴消去:"), self.clearHistoryRecorderView],
+        @[@"", warning],
         @[ @"", [NSButton buttonWithTitle:([RCLocalization titleForIdentifier:@"D9f-HL-0Nb" table:@"RCShortcutsPreferencesView"] ?: RCLocalizedString(@"Reset to Defaults", nil)) target:self action:@selector(resetToDefaults:)] ],
     ]];
 }

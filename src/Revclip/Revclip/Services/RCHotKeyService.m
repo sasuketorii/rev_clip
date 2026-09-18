@@ -222,6 +222,7 @@ static RCKeyCombo RCKeyComboFromValue(NSValue *value) {
     UInt32 _nextCarbonID;
     // Set while commit stores its result, so a defaults observer cannot re-register.
     BOOL _committingAssignments;
+    EventTime _recordingSuppressionEndedAt;
 }
 
 - (void)installHotKeyEventHandlerIfNeeded;
@@ -1306,6 +1307,10 @@ static RCKeyCombo RCKeyComboFromValue(NSValue *value) {
     [self postNotificationForHotKeyIdentifier:identifier eventTime:0];
 }
 
+- (void)setShortcutRecordingOwner:(id)owner {
+    if (_shortcutRecordingOwner != nil && owner == nil) _recordingSuppressionEndedAt = GetCurrentEventTime();
+    _shortcutRecordingOwner = owner;
+}
 - (void)postNotificationForHotKeyIdentifier:(UInt32)identifier eventTime:(EventTime)eventTime {
     NSString *notificationName = nil;
     NSDictionary *userInfo = nil;
@@ -1348,6 +1353,7 @@ static RCKeyCombo RCKeyComboFromValue(NSValue *value) {
     }
 
     dispatch_block_t postBlock = ^{
+        if (self.shortcutRecordingOwner != nil || (eventTime > 0 && eventTime <= _recordingSuppressionEndedAt)) return;
         [[NSNotificationCenter defaultCenter] postNotificationName:notificationName
                                                             object:self
                                                           userInfo:userInfo];

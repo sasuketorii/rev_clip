@@ -95,6 +95,9 @@ typedef NS_ENUM(NSInteger, RCHotKeyAssignmentStatus) {
 @interface RCHotKeyService : NSObject
 
 + (instancetype)shared;
+// Main-thread scoped capture: registrations stay intact; only action dispatch is
+// suspended while a live recorder owns this weak reference.
+@property (nonatomic, weak, nullable) id shortcutRecordingOwner;
 
 // メインホットキー登録（メニュー表示）
 - (BOOL)registerMainHotKey:(RCKeyCombo)combo;

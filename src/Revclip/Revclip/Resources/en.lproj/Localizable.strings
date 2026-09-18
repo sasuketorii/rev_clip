@@ -427,3 +427,17 @@
 "Fetching preview…" = "Fetching preview…";
 
 "No preview available. Try again in a minute." = "No preview available. Try again in a minute.";
+
+/* Shortcut setup */
+"Setup" = "Setup";
+"Choose the shortcuts that feel natural to you. The highlighted keys show your saved shortcut." = "Choose the shortcuts that feel natural to you. The highlighted keys show your saved shortcut.";
+"Clipboard menu" = "Clipboard menu";
+"Shortcut feature" = "Shortcut feature";
+"Click the shortcut field, then press your preferred keys. Conflicting shortcuts will not replace your current setting." = "Click the shortcut field, then press your preferred keys. Conflicting shortcuts will not replace your current setting.";
+"Default: %@" = "Default: %@";
+"Restore this shortcut's default" = "Restore this shortcut's default";
+"Open faster OCR settings" = "Open faster OCR settings";
+"This key is not on the pictured US keyboard. Your shortcut is shown in the field above." = "This key is not on the pictured US keyboard. Your shortcut is shown in the field above.";
+"US keyboard illustration. Modifier keys are shown on the left; either side works." = "US keyboard illustration. Modifier keys are shown on the left; either side works.";
+"Shortcut" = "Shortcut";
+"Shortcut recording is unavailable. Check Accessibility access and try again." = "Shortcut recording is unavailable. Check Accessibility access and try again.";

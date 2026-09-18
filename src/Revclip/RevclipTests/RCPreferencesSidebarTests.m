@@ -62,7 +62,9 @@
 - (void)testBugReportSidebarOrderTitleIconAndLazyFactory {
     RCPreferencesRefreshProbe *controller = [self refreshController];
     NSArray *tabs = [controller valueForKey:@"tabIdentifiers"];
-    XCTAssertEqual(tabs.count, 9u);
+    XCTAssertEqual(tabs.count, 10u);
+    XCTAssertEqualObjects(tabs.firstObject, @"setup");
+    XCTAssertEqualObjects(tabs.lastObject, RCPreferencesTabPanic);
     XCTAssertFalse([tabs containsObject:RCPreferencesTabBugReport]);
     XCTAssertTrue([tabs containsObject:@"advanced"]);
     XCTAssertTrue([[controller valueForKey:@"advancedTabIdentifiers"] containsObject:RCPreferencesTabBugReport]);
@@ -140,6 +142,7 @@
 
 - (void)testUnrelatedCLIWritePreservesGeneralFieldEditorAndShell {
     RCPreferencesRefreshProbe *controller = [self refreshController];
+    [controller showTab:RCPreferencesTabGeneral];
     NSView *shell = controller.window.contentView;
     NSScrollView *scroll = [controller valueForKey:@"pageScrollView"];
     RCGeneralPreferencesViewController *general = [controller valueForKey:@"generalViewController"];
@@ -161,6 +164,7 @@
 
 - (void)testGeneralCLIRefreshUpdatesOnlyRequestedValuesAndDependentControls {
     RCPreferencesRefreshProbe *controller = [self refreshController];
+    [controller showTab:RCPreferencesTabGeneral];
     RCGeneralPreferencesViewController *general = [controller valueForKey:@"generalViewController"];
     NSTextField *history = [general valueForKey:@"maxHistorySizeTextField"];
     history.stringValue = @"unfinished";

@@ -428,3 +428,17 @@
 "Fetching preview…" = "미리보기를 가져오는 중…";
 
 "No preview available. Try again in a minute." = "미리보기를 가져올 수 없습니다. 1분 후 다시 시도하세요.";
+
+/* Shortcut setup */
+"Setup" = "설정 시작";
+"Choose the shortcuts that feel natural to you. The highlighted keys show your saved shortcut." = "편리한 단축키를 선택하세요. 저장된 단축키가 파란색으로 빛납니다.";
+"Clipboard menu" = "클립보드 메뉴";
+"Shortcut feature" = "단축키 기능";
+"Click the shortcut field, then press your preferred keys. Conflicting shortcuts will not replace your current setting." = "단축키 입력란을 클릭하고 원하는 키를 누르세요. 충돌하는 경우 현재 설정은 변경되지 않습니다.";
+"Default: %@" = "기본값: %@";
+"Restore this shortcut's default" = "이 단축키를 기본값으로 복원";
+"Open faster OCR settings" = "faster OCR 설정 열기";
+"This key is not on the pictured US keyboard. Your shortcut is shown in the field above." = "이 키는 그림의 US 키보드에 없습니다. 위 입력란에서 단축키를 확인하세요.";
+"US keyboard illustration. Modifier keys are shown on the left; either side works." = "US 키보드입니다. 보조 키는 왼쪽에 표시되며 양쪽 모두 사용할 수 있습니다.";
+"Shortcut" = "단축키";
+"Shortcut recording is unavailable. Check Accessibility access and try again." = "단축키를 입력할 수 없습니다. 손쉬운 사용 권한을 확인하고 다시 시도하세요.";

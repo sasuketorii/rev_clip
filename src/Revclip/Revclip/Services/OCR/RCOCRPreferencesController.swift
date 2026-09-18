@@ -8,12 +8,15 @@ final class RCOCRPreferencesController: NSViewController, @preconcurrency RCHotK
     private let correctionControl = NSSwitch()
     private let languages = NSPopUpButton()
     private let recorder = RCHotKeyRecorderView()
+    private let shortcutWarning = NSTextField(wrappingLabelWithString: "")
     private func text(_ key: String) -> String { RCLocalizedString(key, comment: "") }
     private let historyStatus = NSTextField(wrappingLabelWithString: "")
     private var unsupportedItem: NSMenuItem?
     override func loadView() {
         for control in [enabledControl, historyControl, correctionControl] { control.target = self; control.action = #selector(changed(_:)) }
         recorder.delegate = self
+        recorder.warningLabel = shortcutWarning
+        shortcutWarning.textColor = .systemYellow
         languages.addItem(withTitle: text("OCR Automatic")); languages.lastItem?.representedObject = "auto"
         languages.addItem(withTitle: text("OCR Japanese English")); languages.lastItem?.representedObject = "ja-en"
         do {
@@ -32,6 +35,7 @@ final class RCOCRPreferencesController: NSViewController, @preconcurrency RCHotK
         view = RCPreferencesPage(rows: [
             [text("OCR Copy Screen Text"), enabledControl],
             [text("OCR Shortcut"), recorder],
+            ["", shortcutWarning],
             [text("OCR Language"), languages],
             [text("OCR Correction"), correctionControl],
             ["", correctionHelp],
@@ -93,7 +97,7 @@ final class RCOCRPreferencesController: NSViewController, @preconcurrency RCHotK
             let result = RCHotKeyService.shared().prepare([RCHotKeyAssignment(keepingSlot: RCHotKeySlotOCR)],
                 ocrEnabledAfterCommit: NSNumber(value: enabled), transaction: &transaction)
             guard result.succeeded, let transaction else {
-                reloadValues(); RCHotKeyRecorderView.present(result, window: view.window); return
+                reloadValues(); recorder.show(result); return
             }
             RCHotKeyService.shared().commitPreparedAssignments(transaction)
             UserDefaults.standard.set(enabled, forKey: kRCOCREnabledKey)
@@ -112,6 +116,6 @@ final class RCOCRPreferencesController: NSViewController, @preconcurrency RCHotK
     private func apply(_ assignment: RCHotKeyAssignment) {
         let result = RCHotKeyService.shared().apply([assignment])
         reloadValues()
-        RCHotKeyRecorderView.present(result, window: view.window)
+        recorder.show(result)
     }
 }

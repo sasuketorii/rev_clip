@@ -428,3 +428,17 @@
 "Fetching preview…" = "Caricamento anteprima…";
 
 "No preview available. Try again in a minute." = "Anteprima non disponibile. Riprova tra un minuto.";
+
+/* Shortcut setup */
+"Setup" = "Configurazione";
+"Choose the shortcuts that feel natural to you. The highlighted keys show your saved shortcut." = "Scegli le scorciatoie che preferisci. I tasti illuminati mostrano la scorciatoia salvata.";
+"Clipboard menu" = "Menu degli appunti";
+"Shortcut feature" = "Funzione della scorciatoia";
+"Click the shortcut field, then press your preferred keys. Conflicting shortcuts will not replace your current setting." = "Fai clic sul campo della scorciatoia e premi i tasti desiderati. In caso di conflitto, la configurazione attuale resta invariata.";
+"Default: %@" = "Predefinita: %@";
+"Restore this shortcut's default" = "Ripristina questa scorciatoia predefinita";
+"Open faster OCR settings" = "Apri le impostazioni di faster OCR";
+"This key is not on the pictured US keyboard. Your shortcut is shown in the field above." = "Questo tasto non è presente nella tastiera US illustrata. La scorciatoia è indicata nel campo sopra.";
+"US keyboard illustration. Modifier keys are shown on the left; either side works." = "Tastiera US. I modificatori sono illuminati a sinistra; funzionano entrambi i lati.";
+"Shortcut" = "Scorciatoia";
+"Shortcut recording is unavailable. Check Accessibility access and try again." = "Registrazione non disponibile. Controlla il permesso di accessibilità e riprova.";

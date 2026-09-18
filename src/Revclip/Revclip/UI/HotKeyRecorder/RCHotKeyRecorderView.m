@@ -7,7 +7,6 @@
 //
 
 #import "RCHotKeyRecorderView.h"
-#import "RCPreferencesWindowController.h"
 
 #import <Carbon/Carbon.h>
 
@@ -32,6 +31,19 @@ static NSEventModifierFlags RCRecorderRelevantModifiers(NSEventModifierFlags mod
 
 @property (nonatomic, assign, readwrite) BOOL isRecording;
 @property (nonatomic, assign) NSEventModifierFlags recordingModifierFlags;
+@property (nonatomic, assign) CFMachPortRef recordingTap;
+@property (nonatomic, assign) CFRunLoopSourceRef recordingSource;
+@property (nonatomic, strong) NSEvent *pendingKeyEvent;
+@property (nonatomic) NSUInteger recordingGeneration;
+@property (nonatomic, strong) NSTimer *recordingTimeout;
+@property (nonatomic, strong) id outsideClickMonitor;
+@property (nonatomic, weak) NSWindow *recordingWindow;
+- (void)deferCaptureStop;
+- (BOOL)recordingContextIsActive;
+- (CGEventRef)captureEvent:(CGEventRef)event type:(CGEventType)type;
+- (BOOL)beginEventCapture;
+- (void)endEventCapture;
+- (void)recordingContextEnded:(NSNotification *)notification;
 
 - (void)rc_commonInit;
 - (BOOL)rc_shouldWarnForModifiers:(UInt32)modifiers;
@@ -45,7 +57,99 @@ static NSEventModifierFlags RCRecorderRelevantModifiers(NSEventModifierFlags mod
 
 @end
 
+static __weak RCHotKeyRecorderView *RCActiveRecorder;
+
+static CGEventRef RCRecorderTap(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *context) {
+    return [(__bridge RCHotKeyRecorderView *)context captureEvent:event type:type];
+}
+
 @implementation RCHotKeyRecorderView
+
+- (BOOL)beginEventCapture {
+    // Session head intercepts key presses before registered hotkeys and AppKit
+    // key equivalents. No key event is persisted or observed outside recording.
+    if (!AXIsProcessTrusted() || IsSecureEventInputEnabled()) return NO;
+    CGEventMask mask = CGEventMaskBit(kCGEventKeyDown) | CGEventMaskBit(kCGEventKeyUp) | CGEventMaskBit(kCGEventFlagsChanged);
+    self.recordingTap = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap,
+        kCGEventTapOptionDefault, mask, RCRecorderTap, (__bridge void *)self);
+    if (!self.recordingTap) return NO;
+    self.recordingSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, self.recordingTap, 0);
+    if (!self.recordingSource) { [self endEventCapture]; return NO; }
+    CFRunLoopAddSource(CFRunLoopGetMain(), self.recordingSource, kCFRunLoopCommonModes);
+    return YES;
+}
+- (void)endEventCapture {
+    [self.recordingTimeout invalidate]; self.recordingTimeout = nil;
+    if (self.outsideClickMonitor) { [NSEvent removeMonitor:self.outsideClickMonitor]; self.outsideClickMonitor = nil; }
+    if (self.recordingTap) CFMachPortInvalidate(self.recordingTap);
+    if (self.recordingSource) {
+        CFRunLoopRemoveSource(CFRunLoopGetMain(), self.recordingSource, kCFRunLoopCommonModes);
+        CFRelease(self.recordingSource); self.recordingSource = NULL;
+    }
+    if (self.recordingTap) { CFRelease(self.recordingTap); self.recordingTap = NULL; }
+    self.pendingKeyEvent = nil;
+}
+- (BOOL)recordingContextIsActive {
+    return NSApp.isActive && self.window.isKeyWindow && self.window.firstResponder == self;
+}
+- (void)deferCaptureStop {
+    if (self.recordingTap) CGEventTapEnable(self.recordingTap, false);
+    NSUInteger generation = self.recordingGeneration;
+    __weak typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (weakSelf.recordingGeneration == generation) [weakSelf stopRecording];
+    });
+}
+- (CGEventRef)captureEvent:(CGEventRef)event type:(CGEventType)type {
+    if (type == kCGEventTapDisabledByTimeout || type == kCGEventTapDisabledByUserInput) {
+        [self deferCaptureStop]; // Destroy outside the callback.
+        return event;
+    }
+    if (!self.isRecording || ![self recordingContextIsActive]) {
+        [self deferCaptureStop]; return event;
+    }
+    if (type == kCGEventFlagsChanged) {
+        [self flagsChanged:[NSEvent eventWithCGEvent:event]];
+        return event; // Keep modifier state balanced for the rest of the system.
+    }
+    if (type == kCGEventKeyDown) {
+        if (!self.pendingKeyEvent && !CGEventGetIntegerValueField(event, kCGKeyboardEventAutorepeat))
+            self.pendingKeyEvent = [NSEvent eventWithCGEvent:event];
+        return NULL;
+    }
+    if (type == kCGEventKeyUp) {
+        NSEvent *press = self.pendingKeyEvent;
+        if (press && press.keyCode == CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode)) {
+            self.pendingKeyEvent = nil;
+            // Both down and up are consumed before registration changes. Validation
+            // and UI work run outside the tap callback so it cannot time out.
+            NSUInteger generation = self.recordingGeneration;
+            __weak typeof(self) weakSelf = self;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (weakSelf.isRecording && weakSelf.recordingGeneration == generation) [weakSelf processKeyEvent:press];
+            });
+        }
+        return NULL;
+    }
+    return event;
+}
+- (void)recordingContextEnded:(NSNotification *)notification { [self stopRecording]; }
+- (void)viewWillMoveToWindow:(NSWindow *)newWindow {
+    if (self.window != newWindow) [self stopRecording];
+    [super viewWillMoveToWindow:newWindow];
+}
+- (void)dealloc { [self endEventCapture]; [NSNotificationCenter.defaultCenter removeObserver:self]; }
+- (void)showAssignmentResult:(RCHotKeyAssignmentResult *)result {
+    self.warningLabel.textColor = NSColor.systemYellowColor;
+    self.warningLabel.stringValue = [RCHotKeyRecorderView messageForAssignmentResult:result];
+    if (self.warningLabel.stringValue.length) {
+        [self.warningLabel.superview layoutSubtreeIfNeeded];
+        [self.warningLabel scrollRectToVisible:self.warningLabel.bounds];
+        NSAccessibilityPostNotificationWithUserInfo(self.warningLabel, NSAccessibilityAnnouncementRequestedNotification,
+            @{NSAccessibilityAnnouncementKey:self.warningLabel.stringValue, NSAccessibilityPriorityKey:@(NSAccessibilityPriorityHigh)});
+    }
+}
+
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
@@ -71,6 +175,11 @@ static NSEventModifierFlags RCRecorderRelevantModifiers(NSEventModifierFlags mod
 - (NSSize)intrinsicContentSize {
     return NSMakeSize(180.0, 30.0);
 }
+
+- (BOOL)isAccessibilityElement { return YES; }
+- (NSString *)accessibilityRole { return NSAccessibilityButtonRole; }
+- (id)accessibilityValue { return [self rc_displayText]; }
+- (BOOL)accessibilityPerformPress { [self startRecording]; return self.isRecording; }
 
 - (BOOL)acceptsFirstResponder {
     return YES;
@@ -111,7 +220,32 @@ static NSEventModifierFlags RCRecorderRelevantModifiers(NSEventModifierFlags mod
         return;
     }
 
+    [RCActiveRecorder stopRecording];
+    self.warningLabel.stringValue = @"";
+    if (![self beginEventCapture]) {
+        self.warningLabel.textColor = NSColor.systemYellowColor;
+        self.warningLabel.stringValue = RCLocalizedString(@"Shortcut recording is unavailable. Check Accessibility access and try again.", nil);
+        return;
+    }
     self.isRecording = YES;
+    self.recordingGeneration++;
+    RCActiveRecorder = self;
+    RCHotKeyService.shared.shortcutRecordingOwner = self;
+    self.recordingWindow = self.window;
+    __weak typeof(self) weakSelf = self;
+    self.recordingTimeout = [NSTimer timerWithTimeInterval:30 repeats:NO block:^(NSTimer *timer) { [weakSelf stopRecording]; }];
+    [NSRunLoop.mainRunLoop addTimer:self.recordingTimeout forMode:NSRunLoopCommonModes];
+    self.outsideClickMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskLeftMouseDown | NSEventMaskRightMouseDown handler:^NSEvent *(NSEvent *event) {
+        RCHotKeyRecorderView *recorder = weakSelf;
+        if (event.window != recorder.window || !NSPointInRect([recorder convertPoint:event.locationInWindow fromView:nil], recorder.bounds)) [recorder stopRecording];
+        return event;
+    }];
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(recordingContextEnded:)
+        name:NSWindowDidResignKeyNotification object:self.window];
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(recordingContextEnded:)
+        name:NSWindowWillCloseNotification object:self.window];
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(recordingContextEnded:)
+        name:NSApplicationDidResignActiveNotification object:nil];
     self.recordingModifierFlags = 0;
     [self setNeedsDisplay:YES];
 }
@@ -122,6 +256,14 @@ static NSEventModifierFlags RCRecorderRelevantModifiers(NSEventModifierFlags mod
     }
 
     self.isRecording = NO;
+    self.recordingGeneration++;
+    if (RCActiveRecorder == self) RCActiveRecorder = nil;
+    [self endEventCapture];
+    if (RCHotKeyService.shared.shortcutRecordingOwner == self) RCHotKeyService.shared.shortcutRecordingOwner = nil;
+    [NSNotificationCenter.defaultCenter removeObserver:self name:NSWindowDidResignKeyNotification object:self.recordingWindow];
+    [NSNotificationCenter.defaultCenter removeObserver:self name:NSWindowWillCloseNotification object:self.recordingWindow];
+    [NSNotificationCenter.defaultCenter removeObserver:self name:NSApplicationDidResignActiveNotification object:nil];
+    self.recordingWindow = nil;
     self.recordingModifierFlags = 0;
     [self setNeedsDisplay:YES];
 }
@@ -370,40 +512,6 @@ static NSEventModifierFlags RCRecorderRelevantModifiers(NSEventModifierFlags mod
         case RCHotKeyAssignmentStatusInvalid: return RCLocalizedString(@"Shortcut Invalid", nil);
     }
     return RCLocalizedString(@"Shortcut Invalid", nil);
-}
-
-+ (NSString *)preferencesTabForSlot:(NSString *)slot {
-    if (slot.length == 0 || [slot hasPrefix:RCHotKeySlotFolderPrefix]) { return nil; }
-    return [slot isEqualToString:RCHotKeySlotOCR] ? @"ocr" : RCPreferencesTabShortcuts;
-}
-
-+ (void)presentAssignmentResult:(RCHotKeyAssignmentResult *)result window:(NSWindow *)window {
-    if (result == nil || result.succeeded) { return; }
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.alertStyle = NSAlertStyleWarning;
-    alert.messageText = RCLocalizedString(@"Shortcut Could Not Change", nil);
-    alert.informativeText = [self messageForAssignmentResult:result];
-    [alert addButtonWithTitle:RCLocalizedString(@"OK", nil)];
-    NSString *tab = result.status == RCHotKeyAssignmentStatusInternalConflict ? [self preferencesTabForSlot:result.conflictingSlot] : nil;
-    BOOL keyboard = result.status == RCHotKeyAssignmentStatusSystemReserved;
-    if (tab != nil) {
-        [alert addButtonWithTitle:[NSString stringWithFormat:RCLocalizedString(@"Shortcut Open Feature Settings", nil),
-                                   [self localizedNameForSlot:result.conflictingSlot]]];
-    } else if (keyboard) {
-        [alert addButtonWithTitle:RCLocalizedString(@"Shortcut Open Keyboard Settings", nil)];
-    }
-    void (^finish)(NSModalResponse) = ^(NSModalResponse response) {
-        if (response != NSAlertSecondButtonReturn) { return; }
-        if (tab != nil) { [[RCPreferencesWindowController shared] showTab:tab]; return; }
-        NSWorkspace *workspace = NSWorkspace.sharedWorkspace;
-        for (NSString *address in @[@"x-apple.systempreferences:com.apple.Keyboard-Settings.extension",
-                                    @"x-apple.systempreferences:com.apple.preference.keyboard?Shortcuts"]) {
-            NSURL *url = [NSURL URLWithString:address];
-            if (url != nil && [workspace openURL:url]) { return; }
-        }
-    };
-    if (window != nil) { [alert beginSheetModalForWindow:window completionHandler:finish]; }
-    else { finish([alert runModal]); }
 }
 
 + (NSString *)displayStringForKeyEquivalent:(NSString *)key modifiers:(NSEventModifierFlags)modifiers {

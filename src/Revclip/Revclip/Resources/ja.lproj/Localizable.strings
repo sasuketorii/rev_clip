@@ -427,3 +427,17 @@
 "Fetching preview…" = "プレビューを取得中…";
 
 "No preview available. Try again in a minute." = "プレビューを取得できませんでした。1分後に再度お試しください。";
+
+/* Shortcut setup */
+"Setup" = "セットアップ";
+"Choose the shortcuts that feel natural to you. The highlighted keys show your saved shortcut." = "使いやすいショートカットを設定できます。保存済みのキーが青く光ります。";
+"Clipboard menu" = "クリップボードメニュー";
+"Shortcut feature" = "ショートカットの機能";
+"Click the shortcut field, then press your preferred keys. Conflicting shortcuts will not replace your current setting." = "ショートカット欄をクリックして、使いたいキーを押してください。競合する場合、現在の設定は変更されません。";
+"Default: %@" = "デフォルト: %@";
+"Restore this shortcut's default" = "このショートカットをデフォルトに戻す";
+"Open faster OCR settings" = "faster OCR の設定を開く";
+"This key is not on the pictured US keyboard. Your shortcut is shown in the field above." = "このキーは図の US キーボードにはありません。上の欄でショートカットを確認できます。";
+"US keyboard illustration. Modifier keys are shown on the left; either side works." = "図は US 配列です。修飾キーは左側を光らせていますが、左右どちらでも使えます。";
+"Shortcut" = "ショートカット";
+"Shortcut recording is unavailable. Check Accessibility access and try again." = "ショートカットを安全に入力できません。アクセシビリティ権限を確認して、もう一度お試しください。";

@@ -26,6 +26,8 @@ IB_DESIGNABLE
 @property (nonatomic, weak) IBOutlet id<RCHotKeyRecorderViewDelegate> delegate;
 @property (nonatomic, assign) RCKeyCombo keyCombo;
 @property (nonatomic, readonly) BOOL isRecording;
+@property (nonatomic, weak, nullable) NSTextField *warningLabel;
+- (void)showAssignmentResult:(RCHotKeyAssignmentResult *)result;
 
 + (NSString *)displayStringForKeyCombo:(RCKeyCombo)combo;
 + (NSString *)keyEquivalentForKeyCombo:(RCKeyCombo)combo;
@@ -35,8 +37,6 @@ IB_DESIGNABLE
 // Revclip can know: its own feature, an enabled macOS shortcut, or an OS refusal.
 + (NSString *)localizedNameForSlot:(NSString *)slot;
 + (NSString *)messageForAssignmentResult:(RCHotKeyAssignmentResult *)result;
-+ (nullable NSString *)preferencesTabForSlot:(nullable NSString *)slot;
-+ (void)presentAssignmentResult:(RCHotKeyAssignmentResult *)result window:(nullable NSWindow *)window;
 
 - (void)startRecording;
 - (void)stopRecording;

@@ -428,3 +428,17 @@
 "Fetching preview…" = "Đang tải bản xem trước…";
 
 "No preview available. Try again in a minute." = "Không có bản xem trước. Hãy thử lại sau một phút.";
+
+/* Shortcut setup */
+"Setup" = "Thiết lập";
+"Choose the shortcuts that feel natural to you. The highlighted keys show your saved shortcut." = "Chọn phím tắt phù hợp với bạn. Các phím sáng thể hiện phím tắt đã lưu.";
+"Clipboard menu" = "Menu bảng nhớ tạm";
+"Shortcut feature" = "Chức năng phím tắt";
+"Click the shortcut field, then press your preferred keys. Conflicting shortcuts will not replace your current setting." = "Nhấp vào ô phím tắt rồi nhấn các phím mong muốn. Nếu có xung đột, cài đặt hiện tại sẽ được giữ nguyên.";
+"Default: %@" = "Mặc định: %@";
+"Restore this shortcut's default" = "Khôi phục mặc định cho phím tắt này";
+"Open faster OCR settings" = "Mở cài đặt faster OCR";
+"This key is not on the pictured US keyboard. Your shortcut is shown in the field above." = "Phím này không có trên bàn phím US trong hình. Phím tắt được hiển thị trong ô phía trên.";
+"US keyboard illustration. Modifier keys are shown on the left; either side works." = "Hình bàn phím US. Phím bổ trợ sáng ở bên trái; cả hai bên đều hoạt động.";
+"Shortcut" = "Phím tắt";
+"Shortcut recording is unavailable. Check Accessibility access and try again." = "Không thể ghi phím tắt. Kiểm tra quyền Trợ năng rồi thử lại.";

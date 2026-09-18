@@ -428,3 +428,17 @@
 "Fetching preview…" = "正在获取预览…";
 
 "No preview available. Try again in a minute." = "无法获取预览。请在一分钟后重试。";
+
+/* Shortcut setup */
+"Setup" = "初始设置";
+"Choose the shortcuts that feel natural to you. The highlighted keys show your saved shortcut." = "选择适合您的快捷键。发光的按键表示已保存的快捷键。";
+"Clipboard menu" = "剪贴板菜单";
+"Shortcut feature" = "快捷键功能";
+"Click the shortcut field, then press your preferred keys. Conflicting shortcuts will not replace your current setting." = "点击快捷键输入框，然后按下所需按键。如果发生冲突，将保留当前设置。";
+"Default: %@" = "默认：%@";
+"Restore this shortcut's default" = "恢复此快捷键的默认值";
+"Open faster OCR settings" = "打开 faster OCR 设置";
+"This key is not on the pictured US keyboard. Your shortcut is shown in the field above." = "此按键不在图中的美式键盘上。快捷键显示在上方输入框中。";
+"US keyboard illustration. Modifier keys are shown on the left; either side works." = "图示为美式键盘。修饰键在左侧发光，但左右两侧均可使用。";
+"Shortcut" = "快捷键";
+"Shortcut recording is unavailable. Check Accessibility access and try again." = "暂时无法录入快捷键。请检查辅助功能权限后重试。";
