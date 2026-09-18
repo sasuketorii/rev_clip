@@ -21,7 +21,7 @@
 
 A clipboard for working with agents: ask an agent to create, edit, or delete reusable text, prompt, and image templates. Revclip CLI has no commands for reading clipboard history. This defines the CLI’s capabilities; it does not guarantee isolation from an agent with broader OS permissions.
 
-This README describes the **v0.2.0 implementation (build 58, September 17, 2026)**, including faster OCR, permission status, and 44 CLI settings. See [Releases](https://github.com/sasuketorii/rev_clip/releases) for distribution history.
+This README describes the **v0.2.1 implementation (build 59, September 18, 2026)**, including faster OCR, permission status, and 44 CLI settings. See [Releases](https://github.com/sasuketorii/rev_clip/releases) for distribution history.
 
 See the [quality verification report](docs/QUALITY_REPORT.md) for the 0.1.8 termination fix and maintenance release, measured results, and remaining acceptance checks.
 
@@ -226,4 +226,4 @@ See [faster OCR](docs/REV_OCR.md) for limits and verification status. "RevOCR" w
 
 Opening Revclip from Applications uses the same history and template menu as **⌘⇧V**. If a settings or editor window is already visible, it comes forward instead. Login and background launches are excluded. See [implementation and acceptance status](docs/REV_OCR.md) for verification limits.
 
-For a scripted background launch without the menu, use `open -g path/to/Revclip.app --args -suppressLaunchMenu YES`. On first launch, `open -g` alone cannot be distinguished from an ordinary open. Local build 58 validation passed 382 XCTest cases and 88 CLI/installer/delivery tests. Public delivery and real-device coverage are recorded separately in the [quality report](docs/QUALITY_REPORT.md).
+For a scripted background launch without the menu, use `open -g path/to/Revclip.app --args -suppressLaunchMenu YES`. On first launch, `open -g` alone cannot be distinguished from an ordinary open. For the v0.2.1 implementation commit `837db0e`, macOS CI passed 413 optimized XCTest cases; 42 focused settings and shortcut tests also passed locally. Public delivery and real-device coverage are recorded separately in the [quality report](docs/QUALITY_REPORT.md).
