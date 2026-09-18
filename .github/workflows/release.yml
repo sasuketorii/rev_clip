@@ -21,7 +21,9 @@ jobs:
       SPARKLE_TARBALL_SHA256: 52bf9e88cdd972fc0c81501377a880e90d47031bd8ca5462488f843e2609e192
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Select Xcode 26.6
         run: |
@@ -335,7 +337,7 @@ jobs:
           echo "appcast.xml validation passed: EdDSA signature found."
 
       - name: Publish GitHub Release with assets
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
           files: |
             ${{ env.DMG_PATH }}
