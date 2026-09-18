@@ -1,4 +1,5 @@
 #import "RCGlassBackground.h"
+#import "RCLinkPreferencesViewController.h"
 #import "RCAgentPreferencesViewController.h"
 #import "RCBugReportPreferencesViewController.h"
 #import "RCSettingsCLIService.h"
@@ -84,6 +85,7 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 @property (nonatomic, strong, nullable) RCUpdatesPreferencesViewController *updatesViewController;
 @property (nonatomic, strong, nullable) RCPanicPreferencesViewController *panicViewController;
 @property (nonatomic, strong) NSViewController *appearanceViewController;
+@property (nonatomic, strong) RCLinkPreferencesViewController *linkViewController;
 @property (nonatomic, strong) RCAgentPreferencesViewController *agentViewController;
 @property (nonatomic, strong) RCOCRPreferencesController *ocrViewController;
 @property (nonatomic, strong) RCPermissionsPreferencesController *permissionsViewController;
@@ -97,6 +99,10 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 @property (nonatomic, strong) NSTextField *brandWordmark;
 @property (nonatomic, strong) NSScrollView *pageScrollView;
 @property (nonatomic, strong) NSTextField *pageTitle;
+@property (nonatomic, strong) NSSegmentedControl *categoryTabs;
+@property (nonatomic, strong) NSLayoutConstraint *pageTopConstraint;
+@property (nonatomic, copy) NSString *lastAdvancedTab;
+@property (nonatomic, copy) NSString *lastPrivacyTab;
 @property (nonatomic, strong) NSArray<NSLayoutConstraint *> *documentConstraints;
 
 
@@ -147,6 +153,7 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
         self.agentViewController = nil;
         self.ocrViewController = nil;
         self.permissionsViewController = nil;
+        self.linkViewController = nil;
         self.bugReportViewController = nil;
         self.window.title = RCLocalizedString(@"Preferences", nil);
         [self configureSidebar];
@@ -254,6 +261,13 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 
 - (void)showTab:(NSString *)tabIdentifier {
     NSString *resolvedTabIdentifier = tabIdentifier.length > 0 ? tabIdentifier : RCPreferencesTabGeneral;
+    if ([resolvedTabIdentifier isEqualToString:@"advanced"]) resolvedTabIdentifier = self.lastAdvancedTab ?: RCPreferencesTabMenu;
+    if ([resolvedTabIdentifier isEqualToString:@"privacy"]) resolvedTabIdentifier = self.lastPrivacyTab ?: @"links";
+    if (self.selectedTab && ![self.selectedTab isEqualToString:resolvedTabIdentifier] &&
+        ![self.window makeFirstResponder:nil]) {
+        [self updateCategoryTabs];
+        return;
+    }
     if ([resolvedTabIdentifier isEqualToString:RCPreferencesTabAppearance] && self.appearancePaletteNeedsRefresh) {
         self.appearanceViewController = nil;
         self.appearancePaletteNeedsRefresh = NO;
@@ -269,11 +283,44 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 
     [self switchToViewController:viewController];
     self.selectedTab = resolvedTabIdentifier;
-    self.pageTitle.stringValue = [self titleForTabIdentifier:resolvedTabIdentifier];
-    NSInteger row = [self.tabIdentifiers indexOfObject:resolvedTabIdentifier];
+    NSString *group = [self sidebarIdentifierForTab:resolvedTabIdentifier];
+    if ([group isEqualToString:@"advanced"]) self.lastAdvancedTab = resolvedTabIdentifier;
+    if ([group isEqualToString:@"privacy"]) self.lastPrivacyTab = resolvedTabIdentifier;
+    self.pageTitle.stringValue = [self titleForTabIdentifier:group];
+    [self updateCategoryTabs];
+    NSInteger row = [self.tabIdentifiers indexOfObject:group];
     if (self.sidebar.selectedRow != row) {
         [self.sidebar selectRowIndexes:[NSIndexSet indexSetWithIndex:row] byExtendingSelection:NO];
     }
+}
+
+- (NSArray<NSString *> *)advancedTabIdentifiers {
+    return @[RCPreferencesTabMenu, RCPreferencesTabType, RCPreferencesTabAgents, RCPreferencesTabPanic, RCPreferencesTabBugReport];
+}
+- (NSArray<NSString *> *)privacyTabIdentifiers {
+    return @[@"links", RCPreferencesTabExclude, @"permissions"];
+}
+- (NSString *)sidebarIdentifierForTab:(NSString *)tab {
+    if ([self.advancedTabIdentifiers containsObject:tab]) return @"advanced";
+    if ([self.privacyTabIdentifiers containsObject:tab]) return @"privacy";
+    return tab;
+}
+- (void)updateCategoryTabs {
+    NSString *group = [self sidebarIdentifierForTab:self.selectedTab];
+    NSArray *tabs = [group isEqualToString:@"advanced"] ? self.advancedTabIdentifiers :
+        ([group isEqualToString:@"privacy"] ? self.privacyTabIdentifiers : @[]);
+    self.categoryTabs.hidden = tabs.count == 0;
+    self.categoryTabs.segmentCount = tabs.count;
+    for (NSUInteger index = 0; index < tabs.count; index++) {
+        [self.categoryTabs setLabel:[self titleForTabIdentifier:tabs[index]] forSegment:index];
+    }
+    if (tabs.count) self.categoryTabs.selectedSegment = [tabs indexOfObject:self.selectedTab];
+    self.pageTopConstraint.constant = tabs.count ? 64 : 20;
+}
+- (void)categoryTabChanged:(NSSegmentedControl *)sender {
+    NSArray *tabs = [[self sidebarIdentifierForTab:self.selectedTab] isEqualToString:@"advanced"] ?
+        self.advancedTabIdentifiers : self.privacyTabIdentifiers;
+    if (sender.selectedSegment >= 0 && sender.selectedSegment < (NSInteger)tabs.count) [self showTab:tabs[sender.selectedSegment]];
 }
 
 #pragma mark - Sidebar
@@ -376,6 +423,16 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
     self.pageTitle.font = [NSFont systemFontOfSize:24 weight:NSFontWeightSemibold];
     self.pageTitle.translatesAutoresizingMaskIntoConstraints = NO;
     [background addSubview:self.pageTitle];
+    self.categoryTabs = [[NSSegmentedControl alloc] initWithFrame:NSZeroRect];
+    self.categoryTabs.identifier = @"preferencesCategoryTabs";
+    self.categoryTabs.segmentStyle = NSSegmentStyleRounded;
+    self.categoryTabs.trackingMode = NSSegmentSwitchTrackingSelectOne;
+    self.categoryTabs.segmentDistribution = NSSegmentDistributionFillEqually;
+    self.categoryTabs.target = self;
+    self.categoryTabs.action = @selector(categoryTabChanged:);
+    self.categoryTabs.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.categoryTabs setAccessibilityLabel:RCLocalizedString(@"Settings categories", nil)];
+    [background addSubview:self.categoryTabs];
     self.pageScrollView = [[NSScrollView alloc] initWithFrame:NSZeroRect];
     self.pageScrollView.drawsBackground = NO;
     self.pageScrollView.hasVerticalScroller = YES;
@@ -384,6 +441,7 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
     self.pageScrollView.translatesAutoresizingMaskIntoConstraints = NO;
     [background addSubview:self.pageScrollView];
     self.window.contentView = shell;
+    self.pageTopConstraint = [self.pageScrollView.topAnchor constraintEqualToAnchor:self.pageTitle.bottomAnchor constant:20];
     [NSLayoutConstraint activateConstraints:@[
         [sidebarBackground.leadingAnchor constraintEqualToAnchor:background.leadingAnchor],
         [sidebarBackground.topAnchor constraintEqualToAnchor:background.topAnchor],
@@ -396,7 +454,11 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
         [self.pageTitle.leadingAnchor constraintEqualToAnchor:pane.leadingAnchor constant:24],
         [self.pageTitle.topAnchor constraintEqualToAnchor:pane.topAnchor constant:24],
         [self.pageTitle.trailingAnchor constraintLessThanOrEqualToAnchor:background.trailingAnchor constant:-24],
-        [self.pageScrollView.topAnchor constraintEqualToAnchor:self.pageTitle.bottomAnchor constant:20],
+        self.pageTopConstraint,
+        [self.categoryTabs.topAnchor constraintEqualToAnchor:self.pageTitle.bottomAnchor constant:16],
+        [self.categoryTabs.leadingAnchor constraintEqualToAnchor:pane.leadingAnchor constant:24],
+        [self.categoryTabs.trailingAnchor constraintEqualToAnchor:pane.trailingAnchor constant:-24],
+        [self.categoryTabs.heightAnchor constraintEqualToConstant:28],
         [self.pageScrollView.leadingAnchor constraintEqualToAnchor:pane.leadingAnchor],
         [self.pageScrollView.trailingAnchor constraintEqualToAnchor:pane.trailingAnchor],
         [self.pageScrollView.bottomAnchor constraintEqualToAnchor:pane.bottomAnchor constant:-12],
@@ -483,23 +545,15 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 }
 
 - (NSArray<NSString *> *)tabIdentifiers {
-    return @[
-        RCPreferencesTabGeneral,
-        RCPreferencesTabAppearance,
-        RCPreferencesTabMenu,
-        RCPreferencesTabType,
-        RCPreferencesTabExclude,
-        RCPreferencesTabShortcuts,
-        @"ocr",
-        @"permissions",
-        RCPreferencesTabUpdates,
-        RCPreferencesTabAgents,
-        RCPreferencesTabBugReport,
-        RCPreferencesTabPanic,
-    ];
+    return @[RCPreferencesTabGeneral, RCPreferencesTabAppearance, RCPreferencesTabShortcuts,
+             @"ocr", @"privacy", RCPreferencesTabUpdates, @"advanced"];
 }
 
 - (nullable NSViewController *)viewControllerForTabIdentifier:(NSString *)tabIdentifier {
+    if ([tabIdentifier isEqualToString:@"links"]) {
+        if (!self.linkViewController) self.linkViewController = [RCLinkPreferencesViewController new];
+        return self.linkViewController;
+    }
     if ([tabIdentifier isEqualToString:@"permissions"]) {
         if (!self.permissionsViewController) self.permissionsViewController = [RCPermissionsPreferencesController new];
         return self.permissionsViewController;
@@ -576,6 +630,9 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 }
 
 - (NSString *)titleForTabIdentifier:(NSString *)tabIdentifier {
+    if ([tabIdentifier isEqualToString:@"links"]) return RCLocalizedString(@"Links", nil);
+    if ([tabIdentifier isEqualToString:@"advanced"]) return RCLocalizedString(@"Advanced Settings", nil);
+    if ([tabIdentifier isEqualToString:@"privacy"]) return RCLocalizedString(@"Privacy", nil);
     if ([tabIdentifier isEqualToString:@"permissions"]) return RCLocalizedString(@"Permission Status", nil);
     if ([tabIdentifier isEqualToString:@"ocr"]) return @"faster OCR";
     if ([tabIdentifier isEqualToString:RCPreferencesTabBugReport]) return RCLocalizedString(@"Bug Report", nil);
@@ -606,6 +663,8 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 }
 
 - (NSString *)symbolNameForTabIdentifier:(NSString *)tabIdentifier {
+    if ([tabIdentifier isEqualToString:@"advanced"]) return @"slider.horizontal.3";
+    if ([tabIdentifier isEqualToString:@"privacy"]) return @"hand.raised";
     if ([tabIdentifier isEqualToString:@"permissions"]) return @"checkmark.shield";
     if ([tabIdentifier isEqualToString:@"ocr"]) return @"viewfinder";
     if ([tabIdentifier isEqualToString:RCPreferencesTabBugReport]) {

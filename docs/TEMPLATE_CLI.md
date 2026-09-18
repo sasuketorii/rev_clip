@@ -86,13 +86,13 @@ prose, multiple URLs, email addresses, and mailto links use ordinary text previe
 and do not trigger link/favicons requests. Explicit HTTP URLs show a yellow warning
 icon. Accepted URLs are at most 2,048 characters.
 
-Opening a template folder asynchronously fetches favicons for its link items.
+Manual fetching is the default. Opening a folder or hovering does not start a network request. Highlight a URL and press Option-P to request that preview explicitly. Privacy → Links also offers automatic fetching and Never fetch. Permission changes cancel pending work and clear cached previews. In automatic mode, opening a template folder asynchronously fetches favicons for its link items.
 The favicon sits beside the template title, in the same slot as color swatches.
 Preview images and favicons share one metadata request and one cache entry.
 At most two requests run concurrently, with up to 32 unique URLs pending.
 The memory cache holds up to 32 entries / approximately 32 MiB, with a 24-hour
 TTL. Failed requests are held for 60 seconds; restarting the app clears the cache.
-The first folder opening or hover contacts the URL through macOS LinkPresentation. Image retrieval
+An explicitly requested fetch, or automatic mode, contacts the URL through macOS LinkPresentation; this can reveal the IP address and full URL to the site. Image retrieval
 has an 8-second application deadline; missing images keep the title/URL visible.
 This is the site-provided social preview image, not a live webpage screenshot.
 

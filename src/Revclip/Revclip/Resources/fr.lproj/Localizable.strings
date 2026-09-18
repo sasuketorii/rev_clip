@@ -400,3 +400,31 @@
 "Shortcut Open Feature Settings" = "Open “%@” Settings";
 "Shortcut Open Keyboard Settings" = "Open Keyboard Settings";
 "OCR Enable Unsupported Language" = "The saved recognition language is not available on this macOS. Choose a recognition language, then turn faster OCR on.";
+
+"Advanced Settings" = "Réglages avancés";
+
+"Privacy" = "Confidentialité";
+
+"Settings categories" = "Catégories des réglages";
+
+"Links" = "Liens";
+
+"Never fetch" = "Ne jamais charger";
+
+"Fetch on request" = "Charger sur demande";
+
+"Fetch automatically" = "Charger automatiquement";
+
+"Link previews and website icons" = "Aperçus des liens et icônes des sites";
+
+"Fetching a preview connects to the website and may reveal your IP address and the full URL. Manual mode does not connect when you open a menu or hover over a link." = "Le chargement d’un aperçu se connecte au site et peut révéler votre adresse IP et l’URL complète. En mode manuel, ouvrir un menu ou survoler un lien ne déclenche aucune connexion.";
+
+"In manual mode, highlight a link and press Option-P to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "En mode manuel, sélectionnez un lien et appuyez sur Option-P pour charger son aperçu. « Ne jamais charger » annule aussi les requêtes en attente et efface les aperçus en cache.";
+
+"Option-P: Fetch preview (connects to website)" = "Option-P : charger l’aperçu (connexion au site)";
+
+"Online previews are disabled" = "Les aperçus en ligne sont désactivés";
+
+"Fetching preview…" = "Chargement de l’aperçu…";
+
+"No preview available. Try again in a minute." = "Aucun aperçu disponible. Réessayez dans une minute.";

@@ -42,6 +42,8 @@ static NSString * const kRCSnippetMenuFolderIdentifierKey = @"folderIdentifier";
 static NSString * const kRCSnippetMenuSnippetIdentifierKey = @"snippetIdentifier";
 static NSInteger const kRCClipDataFallbackPrefetchStateInFlight = 1;
 static NSInteger const kRCClipDataFallbackPrefetchStateDone = 2;
+static NSInteger const kRCClipDataFallbackHadTooltip = 4;
+static NSInteger const kRCClipDataFallbackHadColor = 8;
 
 static os_log_t RCMenuManagerLog(void) {
     static os_log_t logger = nil;
@@ -80,6 +82,8 @@ static os_log_t RCMenuManagerLog(void) {
 @property (nonatomic, strong) NSMapTable<NSMenuItem *, NSData *> *previewImageData;
 @property (nonatomic, strong) NSMapTable<NSMenuItem *, NSURL *> *previewURLs;
 @property (nonatomic) NSUInteger cacheGeneration;
+@property (nonatomic, strong) NSMutableSet<NSString *> *fallbackInFlightKeys;
+@property (nonatomic, strong) NSMutableDictionary<NSString *, NSURL *> *historyLinkURLs;
 @property (nonatomic) BOOL historyClearInProgress;
 @property (nonatomic, strong) NSLock *cacheLock;
 @property (nonatomic, strong) NSMapTable<NSMenuItem *, RCClipItem *> *clipItemsByMenuItem;
@@ -182,6 +186,16 @@ static os_log_t RCMenuManagerLog(void) {
         _clipDataColorStringCache = [[NSCache alloc] init];
         _clipDataTooltipCache = [[NSCache alloc] init];
         _clipDataFallbackPrefetchStateCache = [[NSCache alloc] init];
+        // Bounded reusable results. In-flight ownership is separate: NSCache may
+        // evict at any time and must not admit duplicate queued archive reads.
+        _colorPreviewEligibilityCache.countLimit = 512;
+        _clipDataColorStringCache.countLimit = 512;
+        _clipDataColorStringCache.totalCostLimit = 1024 * 1024;
+        _clipDataTooltipCache.countLimit = 512;
+        _clipDataTooltipCache.totalCostLimit = 4 * 1024 * 1024;
+        _clipDataFallbackPrefetchStateCache.countLimit = 512;
+        _fallbackInFlightKeys = [NSMutableSet set];
+        _historyLinkURLs = [NSMutableDictionary dictionary];
         _thumbnailGenerationQueue = dispatch_queue_create("com.revclip.menu.thumbnail", dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_UTILITY, 0));
         _clipDataFallbackQueue = dispatch_queue_create("com.revclip.menu.clipdata-fallback", dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_UTILITY, 0));
 
@@ -251,13 +265,53 @@ static os_log_t RCMenuManagerLog(void) {
 #pragma mark - Notification
 
 - (void)handleClipboardDidChange:(NSNotification *)notification {
-    (void)notification;
+    if ([notification.userInfo[@"historyRemoved"] boolValue]) {
+        NSArray *removed = notification.userInfo[@"removedItems"];
+        if ([removed isKindOfClass:NSArray.class]) [self invalidateRemovedHistoryItems:removed];
+        else [self clearThumbnailCache]; // Compatibility for whole-history invalidation.
+    }
     [self rebuildMenu];
+}
+
+- (void)invalidateRemovedHistoryItems:(NSArray<RCClipItem *> *)items {
+    NSAssert(NSThread.isMainThread, @"Main-thread history invalidation");
+    NSMutableSet<NSString *> *removedKeys = [NSMutableSet set];
+    NSMutableArray<NSURL *> *urls = [NSMutableArray array];
+    [self.cacheLock lock];
+    self.cacheGeneration++;
+    // Cancel old publications while retaining unrelated completed payloads.
+    for (NSString *key in self.fallbackInFlightKeys) [self.clipDataFallbackPrefetchStateCache removeObjectForKey:key];
+    [self.fallbackInFlightKeys removeAllObjects];
+    for (RCClipItem *item in items) {
+        NSString *key = [self colorPreviewCacheKeyForClipItem:item];
+        [removedKeys addObject:key];
+        [self.colorPreviewEligibilityCache removeObjectForKey:key];
+        [self.clipDataColorStringCache removeObjectForKey:key];
+        [self.clipDataTooltipCache removeObjectForKey:key];
+        [self.clipDataFallbackPrefetchStateCache removeObjectForKey:key];
+        NSString *thumbnailKey = [self thumbnailCacheKeyForClipItem:item];
+        [self.thumbnailCache removeObjectForKey:thumbnailKey];
+        [self.thumbnailCache removeObjectForKey:[@"hover:" stringByAppendingString:thumbnailKey]];
+        NSURL *url = self.historyLinkURLs[key];
+        if (url) [urls addObject:url];
+        [self.historyLinkURLs removeObjectForKey:key];
+    }
+    [self.cacheLock unlock];
+    for (NSMenuItem *row in self.clipItemsByMenuItem.keyEnumerator.allObjects) {
+        RCClipItem *clip = [self.clipItemsByMenuItem objectForKey:row];
+        if (![removedKeys containsObject:[self colorPreviewCacheKeyForClipItem:clip]]) continue;
+        if (row.menu.highlightedItem == row) [self.previewController hide];
+        [self.previewImageData removeObjectForKey:row];
+        [self.previewTexts removeObjectForKey:row];
+        [self.previewURLs removeObjectForKey:row];
+        row.toolTip = nil; row.image = nil; row.enabled = NO;
+    }
+    [[RCLinkPreviewService shared] removeURLs:urls];
 }
 
 - (NSDictionary *)menuPreferenceSnapshot {
     // Framework/user defaults notifications are not menu configuration changes.
-    NSArray *keys = @[kRCOCRKeyComboKey, kRCOCREnabledKey, @"RCAppAppearance",kRCAddNumericKeyEquivalentsKey,kRCMaxLengthOfToolTipKey,kRCMenuItemsAreMarkedWithNumbersKey,kRCPrefAddClearHistoryMenuItemKey,kRCPrefMaxHistorySizeKey,kRCPrefMaxMenuItemTitleLengthKey,kRCPrefMenuIconSizeKey,kRCPrefMenuItemsTitleStartWithZeroKey,kRCPrefNumberOfItemsPlaceInlineKey,kRCPrefNumberOfItemsPlaceInsideFolderKey,kRCPrefShowAlertBeforeClearHistoryKey,kRCPrefShowColorPreviewInTheMenu,kRCPrefShowIconInTheMenuKey,kRCPrefShowStatusItemKey,kRCShowImageInTheMenuKey,kRCShowToolTipOnMenuItemKey,kRCThumbnailHeightKey,kRCThumbnailWidthKey];
+    NSArray *keys = @[RCLinkPreviewModeKey, kRCOCRKeyComboKey, kRCOCREnabledKey, @"RCAppAppearance",kRCAddNumericKeyEquivalentsKey,kRCMaxLengthOfToolTipKey,kRCMenuItemsAreMarkedWithNumbersKey,kRCPrefAddClearHistoryMenuItemKey,kRCPrefMaxHistorySizeKey,kRCPrefMaxMenuItemTitleLengthKey,kRCPrefMenuIconSizeKey,kRCPrefMenuItemsTitleStartWithZeroKey,kRCPrefNumberOfItemsPlaceInlineKey,kRCPrefNumberOfItemsPlaceInsideFolderKey,kRCPrefShowAlertBeforeClearHistoryKey,kRCPrefShowColorPreviewInTheMenu,kRCPrefShowIconInTheMenuKey,kRCPrefShowStatusItemKey,kRCShowImageInTheMenuKey,kRCShowToolTipOnMenuItemKey,kRCThumbnailHeightKey,kRCThumbnailWidthKey];
     NSMutableDictionary *snapshot = [NSMutableDictionary dictionary];
     for (NSString *key in keys) snapshot[key] = [NSUserDefaults.standardUserDefaults objectForKey:key] ?: NSNull.null;
     return snapshot;
@@ -274,6 +328,7 @@ static os_log_t RCMenuManagerLog(void) {
     if ([snapshot isEqual:self.menuPreferences]) return;
     self.menuPreferences = snapshot;
     [self clearMenuCaches];
+    if (RCLinkPreviewService.shared.previewMode == RCLinkPreviewModeDisabled) [self.historyLinkURLs removeAllObjects];
 
     if (self.defaultsChangeDebounceBlock != nil) {
         dispatch_block_cancel(self.defaultsChangeDebounceBlock);
@@ -328,7 +383,7 @@ static os_log_t RCMenuManagerLog(void) {
 
 - (void)handleApplicationDidReceiveMemoryWarning:(NSNotification *)notification {
     (void)notification;
-    [self clearMenuCaches];
+    [self clearThumbnailCache];
 }
 
 #pragma mark - Status Item
@@ -1068,7 +1123,20 @@ static os_log_t RCMenuManagerLog(void) {
 }
 
 - (NSString *)previewTextForMenuItem:(NSMenuItem *)item {
-    return item ? [self.previewTexts objectForKey:item] : nil;
+    NSString *text = item ? [self.previewTexts objectForKey:item] : nil;
+    RCClipItem *clip = item ? [self.clipItemsByMenuItem objectForKey:item] : nil;
+    NSURL *url = clip ? [RCLinkPreviewService URLForText:text] : nil;
+    if (url && RCLinkPreviewService.shared.previewMode != RCLinkPreviewModeDisabled) {
+        NSString *key = [self colorPreviewCacheKeyForClipItem:clip];
+        // Keep provenance independently from payload eviction. At the bounded
+        // registry limit, clear remote results before forgetting their owners.
+        if (!self.historyLinkURLs[key] && self.historyLinkURLs.count >= 512) {
+            [[RCLinkPreviewService shared] clearCache];
+            [self.historyLinkURLs removeAllObjects];
+        }
+        self.historyLinkURLs[key] = url;
+    }
+    return text;
 }
 
 - (void)menuWillOpen:(NSMenu *)menu {
@@ -1506,8 +1574,20 @@ static os_log_t RCMenuManagerLog(void) {
         // install its InFlight marker in a newer generation for the same hash.
         [self.cacheLock lock];
         BOOL current = self.cacheGeneration == generation;
-        BOOL shouldPrefetch = current && [self.clipDataFallbackPrefetchStateCache objectForKey:cacheKey] == nil;
+        NSNumber *cachedState = [self.clipDataFallbackPrefetchStateCache objectForKey:cacheKey];
+        NSInteger state = cachedState.integerValue;
+        // NSCache may evict payloads independently from the completion marker.
+        // Retry only a previously produced value that is now missing; retain
+        // negative results so unreadable archives are not reread on every hover.
+        BOOL payloadEvicted = (needsTooltipFallback && (state & kRCClipDataFallbackHadTooltip) &&
+                               ![self.clipDataTooltipCache objectForKey:cacheKey]) ||
+                              (needsColorFallback && (state & kRCClipDataFallbackHadColor) &&
+                               ![self.clipDataColorStringCache objectForKey:cacheKey]);
+        BOOL shouldPrefetch = current && self.fallbackInFlightKeys.count < 32 &&
+            ![self.fallbackInFlightKeys containsObject:cacheKey] &&
+            (cachedState == nil || payloadEvicted);
         if (shouldPrefetch) {
+            [self.fallbackInFlightKeys addObject:cacheKey];
             [self.clipDataFallbackPrefetchStateCache setObject:@(kRCClipDataFallbackPrefetchStateInFlight) forKey:cacheKey];
         }
         [self.cacheLock unlock];
@@ -1584,10 +1664,14 @@ static os_log_t RCMenuManagerLog(void) {
                 // completion cannot overwrite a new same-hash InFlight marker.
                 [strongSelf.cacheLock lock];
                 if (strongSelf.cacheGeneration == generation) {
-                    if (tooltip.length > 0) [strongSelf.clipDataTooltipCache setObject:tooltip forKey:cacheKey];
-                    if (colorString != nil) [strongSelf.clipDataColorStringCache setObject:colorString forKey:cacheKey];
+                    if (tooltip.length > 0) [strongSelf.clipDataTooltipCache setObject:tooltip forKey:cacheKey cost:tooltip.length * sizeof(unichar)];
+                    if (colorString != nil) [strongSelf.clipDataColorStringCache setObject:colorString forKey:cacheKey cost:colorString.length * sizeof(unichar)];
                     if (shouldCacheEligibility) [strongSelf.colorPreviewEligibilityCache setObject:@(colorEligible) forKey:cacheKey];
-                    [strongSelf.clipDataFallbackPrefetchStateCache setObject:@(kRCClipDataFallbackPrefetchStateDone) forKey:cacheKey];
+                    NSInteger state = kRCClipDataFallbackPrefetchStateDone |
+                        (tooltip.length > 0 ? kRCClipDataFallbackHadTooltip : 0) |
+                        (colorString != nil ? kRCClipDataFallbackHadColor : 0);
+                    [strongSelf.clipDataFallbackPrefetchStateCache setObject:@(state) forKey:cacheKey];
+                    [strongSelf.fallbackInFlightKeys removeObject:cacheKey];
                 }
                 [strongSelf.cacheLock unlock];
             }
@@ -2142,7 +2226,7 @@ static NSTimeInterval const kRCServiceMenuLimit = 50.0; // below NSTimeout (60 s
     os_log_debug(RCMenuManagerLog(),
                  "Removed orphaned clip row for missing clip data. data_hash=%{private}@ (%{public}@)",
                  dataHash, safeReason);
-    [self clearMenuCaches];
+    [self invalidateRemovedHistoryItems:@[clipItem]];
     [self rebuildMenu];
 }
 
@@ -2322,6 +2406,7 @@ static NSTimeInterval const kRCServiceMenuLimit = 50.0; // below NSTimeout (60 s
     [self.previewTexts removeAllObjects];
     [self.previewURLs removeAllObjects];
     [[RCLinkPreviewService shared] clearCache];
+    [self.historyLinkURLs removeAllObjects];
 }
 
 // Fallback work runs off-main; use the invalidation lock instead of reading
@@ -2341,6 +2426,7 @@ static NSTimeInterval const kRCServiceMenuLimit = 50.0; // below NSTimeout (60 s
     [self.clipDataColorStringCache removeAllObjects];
     [self.clipDataTooltipCache removeAllObjects];
     [self.clipDataFallbackPrefetchStateCache removeAllObjects];
+    [self.fallbackInFlightKeys removeAllObjects];
     [self.cacheLock unlock];
 }
 

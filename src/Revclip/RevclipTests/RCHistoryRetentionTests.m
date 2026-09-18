@@ -1,6 +1,7 @@
 #import <XCTest/XCTest.h>
 #import "RCDatabaseManager.h"
 #import "RCDataCleanService.h"
+#import "RCClipboardService.h"
 #import "RCMenuManager.h"
 #import "RCClipItem.h"
 #import "RCConstants.h"
@@ -60,7 +61,12 @@
 }
 - (void)testLimitDeletesRowsAndFilesAndSurvivesDatabaseReopen {
     [self seed]; [NSUserDefaults.standardUserDefaults setInteger:2 forKey:kRCPrefMaxHistorySizeKey];
-    [[RCDataCleanService new] trimHistoryIfNeededWithDatabaseManager:self.db];
+    RCDataCleanService *cleaner = [RCDataCleanService new];
+    XCTestExpectation *invalidated = [self expectationForNotification:RCClipboardDidChangeNotification object:cleaner handler:^BOOL(NSNotification *note) {
+        return [note.userInfo[@"historyRemoved"] boolValue] && NSThread.isMainThread;
+    }];
+    [cleaner trimHistoryIfNeededWithDatabaseManager:self.db];
+    [self waitForExpectations:@[invalidated] timeout:2];
     XCTAssertEqual(self.db.clipItemCount,2);
     XCTAssertNil([self.db clipItemWithDataHash:@"retention-0"]);
     XCTAssertNotNil([self.db clipItemWithDataHash:@"retention-3"]);

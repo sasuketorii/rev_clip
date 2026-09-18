@@ -399,3 +399,31 @@
 "Shortcut Open Feature Settings" = "Open “%@” Settings";
 "Shortcut Open Keyboard Settings" = "Open Keyboard Settings";
 "OCR Enable Unsupported Language" = "The saved recognition language is not available on this macOS. Choose a recognition language, then turn faster OCR on.";
+
+"Advanced Settings" = "Advanced Settings";
+
+"Privacy" = "Privacy";
+
+"Settings categories" = "Settings categories";
+
+"Links" = "Links";
+
+"Never fetch" = "Never fetch";
+
+"Fetch on request" = "Fetch on request";
+
+"Fetch automatically" = "Fetch automatically";
+
+"Link previews and website icons" = "Link previews and website icons";
+
+"Fetching a preview connects to the website and may reveal your IP address and the full URL. Manual mode does not connect when you open a menu or hover over a link." = "Fetching a preview connects to the website and may reveal your IP address and the full URL. Manual mode does not connect when you open a menu or hover over a link.";
+
+"In manual mode, highlight a link and press Option-P to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "In manual mode, highlight a link and press Option-P to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews.";
+
+"Option-P: Fetch preview (connects to website)" = "Option-P: Fetch preview (connects to website)";
+
+"Online previews are disabled" = "Online previews are disabled";
+
+"Fetching preview…" = "Fetching preview…";
+
+"No preview available. Try again in a minute." = "No preview available. Try again in a minute.";

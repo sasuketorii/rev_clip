@@ -6,6 +6,7 @@
 #import "RCClipData.h"
 #import "RCClipItem.h"
 #import "RCConstants.h"
+#import "RCLinkPreviewService.h"
 
 // Existing private seams only: the real admission, cache, menu construction and
 // completion paths run. No general pasteboard, database, file or network is used.
@@ -22,6 +23,7 @@
 - (void)appendClipItems:(NSArray<RCClipItem *> *)items toMenu:(NSMenu *)menu;
 - (void)prepareVisibleItemsOfOpenedMenu:(NSMenu *)menu;
 - (void)menu:(NSMenu *)menu willHighlightItem:(NSMenuItem *)item;
+- (void)handleClipboardDidChange:(NSNotification *)notification;
 - (void)loadFaviconForMenuItem:(NSMenuItem *)item;
 - (void)loadThumbnailForClipItem:(RCClipItem *)clip cacheKey:(NSString *)key
               updatingMenuItem:(NSMenuItem *)item numberPrefix:(NSString *)number baseTitle:(NSString *)title;
@@ -36,6 +38,7 @@
 @end
 
 @implementation RCMenuFallbackProbe
+- (void)rebuildMenu {} // This fixture has no database-backed menu.
 - (instancetype)init {
     self = [super init];
     if (self) {
@@ -126,7 +129,9 @@
     [self waitForExpectations:@[drained] timeout:5];
 }
 
-- (void)testClearDuringReadRejectsPayloadAndStopsRemainingBatch {
+- (void)testClearDuringReadRejectsPayloadAndStopsRemainingBatch { [self assertInvalidationDuringRead:NO]; }
+- (void)testRetentionDuringReadRejectsPayloadAndStopsRemainingBatch { [self assertInvalidationDuringRead:YES]; }
+- (void)assertInvalidationDuringRead:(BOOL)retention {
     RCClipItem *first = [self clipWithKey:@"first"];
     RCClipItem *second = [self clipWithKey:@"second"];
     dispatch_semaphore_t release = dispatch_semaphore_create(0);
@@ -146,7 +151,9 @@
             XCTAssertTrue(NSThread.isMainThread); completions++; [completed fulfill];
         }];
         [self waitForExpectations:@[reading] timeout:5];
-        [self.manager clearThumbnailCache];
+        if (retention) [self.manager handleClipboardDidChange:[NSNotification notificationWithName:@"fixture" object:nil
+            userInfo:@{@"historyRemoved": @YES, @"removedItems": @[first]}]];
+        else [self.manager clearThumbnailCache];
         dispatch_semaphore_signal(release);
         [self waitForExpectations:@[completed] timeout:5];
         XCTAssertEqual(self.manager.archiveReads, 1u);
@@ -218,7 +225,7 @@
         XCTAssertEqualObjects([self.manager cachedTooltipForClipItem:clip], @"#5678AB");
         XCTAssertEqualObjects([self.manager cachedColorStringForClipItem:clip], @"#5678AB");
         XCTAssertEqualObjects([self cachedValue:@"colorPreviewEligibilityCache" key:clip.dataHash], @YES);
-        XCTAssertEqualObjects([self cachedValue:@"clipDataFallbackPrefetchStateCache" key:clip.dataHash], @2);
+        XCTAssertEqual([[self cachedValue:@"clipDataFallbackPrefetchStateCache" key:clip.dataHash] integerValue] & 2, 2);
         XCTAssertEqual(self.manager.archiveReads - readsBefore, 2u);
     } @finally {
         dispatch_semaphore_signal(oldRelease); dispatch_semaphore_signal(newRelease);
@@ -284,7 +291,7 @@
     XCTAssertEqualObjects([self.manager cachedTooltipForClipItem:url], @"https...");
     XCTAssertNil([self.manager cachedTooltipForClipItem:missing]);
     for (RCClipItem *clip in clips) {
-        XCTAssertEqualObjects([self cachedValue:@"clipDataFallbackPrefetchStateCache" key:clip.dataHash], @2);
+        XCTAssertEqual([[self cachedValue:@"clipDataFallbackPrefetchStateCache" key:clip.dataHash] integerValue] & 2, 2);
     }
 }
 
@@ -314,5 +321,128 @@
     [self drainFallbackQueue];
     XCTAssertEqual(self.manager.thumbnailRequests, 10u);
     XCTAssertEqual(self.manager.archiveReads, 0u);
+}
+- (void)testAdmissionStaysBoundedAndEvictionCannotDuplicateInFlightRead {
+    NSMutableArray *clips = [NSMutableArray array];
+    for (NSUInteger index = 0; index < 100; index++) [clips addObject:[self clipWithKey:[NSString stringWithFormat:@"bounded-%lu", (unsigned long)index]]];
+    dispatch_semaphore_t release = dispatch_semaphore_create(0);
+    dispatch_queue_t queue = [self.manager valueForKey:@"clipDataFallbackQueue"];
+    dispatch_async(queue, ^{ [self waitForWorkerRelease:release]; });
+    @try {
+        [self.manager prefetchClipDataFallbackForClipItems:clips completion:nil];
+        NSSet *pending = [self.manager valueForKey:@"fallbackInFlightKeys"];
+        XCTAssertEqual(pending.count, 32u);
+        NSCache *states = [self.manager valueForKey:@"clipDataFallbackPrefetchStateCache"];
+        [states removeAllObjects]; // Model arbitrary memory-pressure eviction.
+        [self.manager prefetchClipDataFallbackForClipItems:@[clips.firstObject] completion:nil];
+        XCTAssertEqual(pending.count, 32u);
+        dispatch_semaphore_signal(release);
+        [self drainFallbackQueue];
+        XCTAssertEqual(self.manager.archiveReads, 32u);
+        XCTAssertEqual(pending.count, 0u);
+        [self.manager prefetchClipDataFallbackForClipItems:@[clips.lastObject] completion:nil];
+        [self drainFallbackQueue];
+        XCTAssertEqual(self.manager.archiveReads, 33u); // backpressure does not mark unaccepted items Done
+    } @finally { dispatch_semaphore_signal(release); [self drainFallbackQueue]; }
+}
+- (void)testPayloadEvictionCanRefetchWithoutRereadingNegativeResults {
+    RCClipItem *clip = [self clipWithKey:@"evicted-payload"];
+    RCClipItem *missing = [self clipWithKey:@"missing-payload"];
+    self.manager.reader = ^RCClipData *(NSString *path) {
+        if ([path isEqual:missing.dataPath]) return nil;
+        RCClipData *data = [RCClipData new]; data.stringValue = @"#12AB34"; return data;
+    };
+    NSArray *clips = @[clip, missing];
+    [self.manager prefetchClipDataFallbackForClipItems:clips completion:nil];
+    [self drainFallbackQueue];
+    XCTAssertEqual(self.manager.archiveReads, 2u);
+    [[self.manager valueForKey:@"clipDataTooltipCache"] removeAllObjects];
+    [[self.manager valueForKey:@"clipDataColorStringCache"] removeAllObjects];
+    [self.manager prefetchClipDataFallbackForClipItems:clips completion:nil];
+    [self drainFallbackQueue];
+    XCTAssertEqual(self.manager.archiveReads, 3u);
+    XCTAssertEqualObjects([self.manager cachedTooltipForClipItem:clip], @"#12AB34");
+    XCTAssertEqualObjects([self.manager cachedColorStringForClipItem:clip], @"#12AB34");
+}
+- (void)testHistoryRemovalNotificationClearsCachedPayload {
+    RCClipItem *clip = [self clipWithKey:@"retained"];
+    self.manager.reader = ^RCClipData *(NSString *path) { RCClipData *data = [RCClipData new]; data.stringValue = @"synthetic retained text"; return data; };
+    [self.manager prefetchClipDataFallbackForClipItems:@[clip] completion:nil];
+    [self drainFallbackQueue];
+    XCTAssertNotNil([self.manager cachedTooltipForClipItem:clip]);
+    [self.manager handleClipboardDidChange:[NSNotification notificationWithName:@"fixture" object:nil userInfo:@{@"historyRemoved": @YES}]];
+    [self assertNoPayloadCachedForKey:clip.dataHash];
+    XCTAssertEqual([[self.manager valueForKey:@"fallbackInFlightKeys"] count], 0u);
+}
+- (void)testRetentionInvalidatesOnlyRemovedPayloads {
+    RCClipItem *removed = [self clipWithKey:@"removed"];
+    RCClipItem *retained = [self clipWithKey:@"retained"];
+    self.manager.reader = ^RCClipData *(NSString *path) { RCClipData *data = [RCClipData new]; data.stringValue = path; return data; };
+    [self.manager prefetchClipDataFallbackForClipItems:@[removed, retained] completion:nil];
+    [self drainFallbackQueue];
+    NSMenuItem *removedRow = [self.manager clipMenuItemForClipItem:removed globalIndex:0];
+    NSMenuItem *retainedRow = [self.manager clipMenuItemForClipItem:retained globalIndex:1];
+    XCTAssertNotNil([self.manager previewTextForMenuItem:retainedRow]);
+    [self.manager handleClipboardDidChange:[NSNotification notificationWithName:@"fixture" object:nil
+        userInfo:@{@"historyRemoved": @YES, @"removedItems": @[removed]}]];
+    XCTAssertNil([self.manager previewTextForMenuItem:removedRow]);
+    XCTAssertNotNil([self.manager previewTextForMenuItem:retainedRow]);
+    XCTAssertFalse(removedRow.enabled);
+    XCTAssertTrue(retainedRow.enabled);
+    [self assertNoPayloadCachedForKey:removed.dataHash];
+    XCTAssertNotNil([self.manager cachedTooltipForClipItem:retained]);
+}
+- (void)testHistoryURLProvenanceIsBoundedAndRoutesSelectiveRemoval {
+    id saved = [NSUserDefaults.standardUserDefaults objectForKey:RCLinkPreviewModeKey];
+    RCLinkPreviewService *service = RCLinkPreviewService.shared;
+    @try {
+        service.previewMode = RCLinkPreviewModeManual;
+        NSCache *cache = [service valueForKey:@"cache"];
+        NSString *url = @"https://removed.example/";
+        [cache setObject:[NSObject new] forKey:url]; // no provider/network in this fixture
+        [cache setObject:[NSObject new] forKey:@"https://retained.example/"];
+        RCClipItem *clip = [self clipWithKey:@"url-owner"];
+        NSMenuItem *row = [self.manager clipMenuItemForClipItem:clip globalIndex:0];
+        [[self.manager valueForKey:@"previewTexts"] setObject:url forKey:row];
+        XCTAssertEqualObjects([self.manager previewTextForMenuItem:row], url);
+        [self.manager handleClipboardDidChange:[NSNotification notificationWithName:@"fixture" object:nil
+            userInfo:@{@"historyRemoved": @YES, @"removedItems": @[clip]}]];
+        XCTAssertNil([cache objectForKey:url]);
+        XCTAssertNotNil([cache objectForKey:@"https://retained.example/"]);
+        for (NSUInteger index = 0; index < 513; index++) {
+            RCClipItem *item = [self clipWithKey:[NSString stringWithFormat:@"owner-%lu", (unsigned long)index]];
+            NSMenuItem *itemRow = [self.manager clipMenuItemForClipItem:item globalIndex:0];
+            [[self.manager valueForKey:@"previewTexts"] setObject:url forKey:itemRow];
+            [self.manager previewTextForMenuItem:itemRow];
+            XCTAssertLessThanOrEqual([[self.manager valueForKey:@"historyLinkURLs"] count], 512u);
+        }
+        XCTAssertEqual([[self.manager valueForKey:@"historyLinkURLs"] count], 1u);
+        XCTAssertNil([cache objectForKey:@"https://retained.example/"]);
+    } @finally {
+        [service clearCache];
+        if (saved) [NSUserDefaults.standardUserDefaults setObject:saved forKey:RCLinkPreviewModeKey];
+        else [NSUserDefaults.standardUserDefaults removeObjectForKey:RCLinkPreviewModeKey];
+    }
+}
+- (void)testUniqueHistoryChurnReleasesSyntheticPayloads {
+    NSHashTable *payloads = [NSHashTable weakObjectsHashTable];
+    self.manager.reader = ^RCClipData *(NSString *path) {
+        RCClipData *data = [RCClipData new];
+        data.stringValue = [path stringByPaddingToLength:10000 withString:@"synthetic" startingAtIndex:0];
+        [payloads addObject:data];
+        return data;
+    };
+    for (NSUInteger batch = 0; batch < 64; batch++) {
+        @autoreleasepool {
+            NSMutableArray *clips = [NSMutableArray array];
+            for (NSUInteger row = 0; row < 32; row++) [clips addObject:[self clipWithKey:[NSString stringWithFormat:@"churn-%lu-%lu", (unsigned long)batch, (unsigned long)row]]];
+            [self.manager prefetchClipDataFallbackForClipItems:clips completion:nil];
+            [self drainFallbackQueue];
+            XCTAssertEqual(payloads.allObjects.count, 0u);
+            XCTAssertEqual([[self.manager valueForKey:@"fallbackInFlightKeys"] count], 0u);
+        }
+    }
+    XCTAssertEqual(self.manager.archiveReads, 2048u);
+    [self.manager clearThumbnailCache];
 }
 @end

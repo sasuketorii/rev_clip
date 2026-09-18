@@ -3,6 +3,7 @@
 #import "RCLinkPreviewService.h"
 #import "RCSVGPreview.h"
 #import "RCMenuStyle.h"
+#import "RCLocalization.h"
 
 @interface RCNonactivatingPreviewPanel : NSPanel
 @end
@@ -13,6 +14,11 @@
 
 @interface RCFastPreviewController ()
 @property NSPanel *panel;
+@property (nonatomic, strong) id linkKeyMonitor;
+@property (nonatomic, copy) NSString *linkRequestStatus;
+@property (weak) NSMenuItem *linkItem;
+@property NSURL *linkURL;
+@property RCLinkPreviewMode observedLinkMode;
 @property NSTimer *timer;
 @property NSUInteger generation;
 @property NSOperationQueue *svgQueue;
@@ -21,10 +27,26 @@
 @end
 
 @implementation RCFastPreviewController
+- (instancetype)init {
+    if ((self = [super init])) {
+        _observedLinkMode = RCLinkPreviewService.shared.previewMode;
+        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(linkPolicyChanged:) name:NSUserDefaultsDidChangeNotification object:nil];
+    }
+    return self;
+}
+- (void)linkPolicyChanged:(NSNotification *)notification {
+    if (!NSThread.isMainThread) { dispatch_async(dispatch_get_main_queue(), ^{ [self linkPolicyChanged:nil]; }); return; }
+    RCLinkPreviewMode mode = RCLinkPreviewService.shared.previewMode;
+    if (mode != self.observedLinkMode) { self.observedLinkMode = mode; [self hide]; }
+}
 - (void)dealloc {
+    [NSNotificationCenter.defaultCenter removeObserver:self];
+    if (_linkKeyMonitor) [NSEvent removeMonitor:_linkKeyMonitor];
     [_timer invalidate]; [_svgQueue cancelAllOperations]; [_pendingSVGOperation cancel]; [_panel orderOut:nil];
 }
 - (void)hide {
+    if (self.linkKeyMonitor) { [NSEvent removeMonitor:self.linkKeyMonitor]; self.linkKeyMonitor = nil; }
+    self.linkItem = nil; self.linkURL = nil; self.linkRequestStatus = nil;
     self.generation += 1;
     [self.svgQueue cancelAllOperations];
     [self.pendingSVGOperation cancel];
@@ -65,6 +87,9 @@
         if (imageData.length && !image) return;
         NSURL *url = linkURL;
         if (url) {
+            strongSelf.linkItem = selected;
+            strongSelf.linkURL = url;
+            [strongSelf installLinkRequestShortcut];
             NSUInteger generation = strongSelf.generation;
             [strongSelf showLinkURL:url title:selected.accessibilityLabel ?: selected.title image:nil menu:selected.menu];
             [[RCLinkPreviewService shared] imageForURL:url completion:^(NSImage *preview) {
@@ -151,9 +176,48 @@
 - (void)showText:(NSString *)text image:(NSImage *)image menu:(NSMenu *)menu {
     [self showText:text image:image menu:menu aspectRatio:0];
 }
+// Local to a visible link card; no global shortcut, key synthesis, or paste action.
+- (BOOL)handleLinkRequestEvent:(NSEvent *)event {
+    NSEventModifierFlags flags = event.modifierFlags & NSEventModifierFlagDeviceIndependentFlagsMask;
+    flags &= ~NSEventModifierFlagCapsLock;
+    if (event.type != NSEventTypeKeyDown || ![[event charactersByApplyingModifiers:0].lowercaseString isEqualToString:@"p"] || flags != NSEventModifierFlagOption || event.isARepeat ||
+        !self.panel.isVisible || !self.linkItem.menu || self.linkItem.menu.highlightedItem != self.linkItem ||
+        RCLinkPreviewService.shared.previewMode != RCLinkPreviewModeManual) return NO;
+    [self requestLinkPreview];
+    return YES;
+}
+- (void)installLinkRequestShortcut {
+    if (self.linkKeyMonitor || RCLinkPreviewService.shared.previewMode != RCLinkPreviewModeManual) return;
+    __weak typeof(self) weakSelf = self;
+    self.linkKeyMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown handler:^NSEvent *(NSEvent *event) {
+        return [weakSelf handleLinkRequestEvent:event] ? nil : event;
+    }];
+}
+- (void)requestLinkPreview {
+    NSMenuItem *item = self.linkItem;
+    NSURL *url = self.linkURL;
+    if (!url || !item.menu || item.menu.highlightedItem != item) return;
+    NSUInteger generation = self.generation;
+    __weak typeof(self) weakSelf = self;
+    __weak NSMenuItem *weakItem = item;
+    self.linkRequestStatus = RCLocalizedString(@"Fetching preview…", nil);
+    [self showLinkURL:url title:item.accessibilityLabel ?: item.title image:nil menu:item.menu];
+    [[RCLinkPreviewService shared] assetsForURL:url userInitiated:YES completion:^(RCLinkPreviewAssets *assets) {
+        RCFastPreviewController *owner = weakSelf; NSMenuItem *row = weakItem;
+        if (!owner || owner.generation != generation || !row.menu || row.menu.highlightedItem != row) return;
+        owner.linkRequestStatus = assets.image ? nil : RCLocalizedString(@"No preview available. Try again in a minute.", nil);
+        [owner showLinkURL:url title:row.accessibilityLabel ?: row.title image:assets.image menu:row.menu];
+    }];
+}
 - (void)showLinkURL:(NSURL *)url title:(NSString *)title image:(NSImage *)image menu:(NSMenu *)menu {
     NSString *link = [url.scheme.lowercaseString isEqual:@"http"] ? [@"⚠️ " stringByAppendingString:url.absoluteString] : url.absoluteString;
-    [self showText:url.host image:image menu:menu aspectRatio:16.0/9.0 caption:[NSString stringWithFormat:@"%@\n%@",title,link]];
+    NSString *body = url.host;
+    if (!image && RCLinkPreviewService.shared.previewMode == RCLinkPreviewModeManual) {
+        body = [NSString stringWithFormat:@"%@\n\n%@", url.host, self.linkRequestStatus ?: RCLocalizedString(@"Option-P: Fetch preview (connects to website)", nil)];
+    } else if (!image && RCLinkPreviewService.shared.previewMode == RCLinkPreviewModeDisabled) {
+        body = [NSString stringWithFormat:@"%@\n\n%@", url.host, RCLocalizedString(@"Online previews are disabled", nil)];
+    }
+    [self showText:body image:image menu:menu aspectRatio:16.0/9.0 caption:[NSString stringWithFormat:@"%@\n%@",title,link]];
 }
 - (void)showText:(NSString *)text image:(NSImage *)image menu:(NSMenu *)menu aspectRatio:(CGFloat)aspectRatio {
     [self showText:text image:image menu:menu aspectRatio:aspectRatio caption:nil];

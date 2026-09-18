@@ -400,3 +400,31 @@
 "Shortcut Open Feature Settings" = "Open “%@” Settings";
 "Shortcut Open Keyboard Settings" = "Open Keyboard Settings";
 "OCR Enable Unsupported Language" = "The saved recognition language is not available on this macOS. Choose a recognition language, then turn faster OCR on.";
+
+"Advanced Settings" = "Erweiterte Einstellungen";
+
+"Privacy" = "Datenschutz";
+
+"Settings categories" = "Einstellungskategorien";
+
+"Links" = "Links";
+
+"Never fetch" = "Nie laden";
+
+"Fetch on request" = "Auf Anfrage laden";
+
+"Fetch automatically" = "Automatisch laden";
+
+"Link previews and website icons" = "Linkvorschauen und Website-Symbole";
+
+"Fetching a preview connects to the website and may reveal your IP address and the full URL. Manual mode does not connect when you open a menu or hover over a link." = "Beim Laden einer Vorschau wird eine Verbindung zur Website hergestellt. Dabei können Ihre IP-Adresse und die vollständige URL übermittelt werden. Im manuellen Modus wird beim Öffnen eines Menüs oder Bewegen des Zeigers über einen Link keine Verbindung hergestellt.";
+
+"In manual mode, highlight a link and press Option-P to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "Markieren Sie im manuellen Modus einen Link und drücken Sie Option-P, um die Vorschau zu laden. „Nie laden“ bricht auch laufende Anfragen ab und löscht zwischengespeicherte Vorschauen.";
+
+"Option-P: Fetch preview (connects to website)" = "Option-P: Vorschau laden (Verbindung zur Website)";
+
+"Online previews are disabled" = "Online-Vorschauen sind deaktiviert";
+
+"Fetching preview…" = "Vorschau wird geladen…";
+
+"No preview available. Try again in a minute." = "Keine Vorschau verfügbar. Versuchen Sie es in einer Minute erneut.";

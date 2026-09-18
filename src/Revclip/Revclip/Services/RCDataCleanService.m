@@ -252,6 +252,7 @@ static os_log_t RCDataCleanServiceLog(void) {
     NSInteger nowMs = (NSInteger)([[NSDate date] timeIntervalSince1970] * 1000.0);
     NSInteger cutoffMs = nowMs - expiryDurationMs;
     NSArray<RCClipItem *> *expiredItems = [databaseManager clipItemsOlderThan:cutoffMs];
+    NSMutableArray<RCClipItem *> *removed = [NSMutableArray array];
     for (RCClipItem *expiredItem in expiredItems) {
         if (expiredItem.dataHash.length == 0) {
             continue;
@@ -259,8 +260,18 @@ static os_log_t RCDataCleanServiceLog(void) {
 
         if ([databaseManager deleteClipItemWithDataHash:expiredItem.dataHash olderThan:cutoffMs]) {
             [self removeFilesForClipItem:expiredItem];
+            [removed addObject:expiredItem];
         }
     }
+    if (removed.count) [self notifyHistoryRemoval:removed];
+}
+
+- (void)notifyHistoryRemoval:(NSArray<RCClipItem *> *)items {
+    NSArray *removed = [items copy];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [NSNotificationCenter.defaultCenter postNotificationName:RCClipboardDidChangeNotification
+                                                        object:self userInfo:@{@"historyRemoved": @YES, @"removedItems": removed}];
+    });
 }
 
 - (void)trimHistoryIfNeededWithDatabaseManager:(RCDatabaseManager *)databaseManager {
@@ -279,11 +290,7 @@ static os_log_t RCDataCleanServiceLog(void) {
 
     NSArray<RCClipItem *> *removed = [databaseManager trimClipItemsToLimit:maxHistorySize];
     for (RCClipItem *item in removed) [self removeFilesForClipItem:item];
-    if (removed.count) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [NSNotificationCenter.defaultCenter postNotificationName:RCClipboardDidChangeNotification object:self];
-        });
-    }
+    if (removed.count) [self notifyHistoryRemoval:removed];
 }
 
 - (void)runDatabaseMaintenanceWithDatabaseManager:(RCDatabaseManager *)databaseManager {

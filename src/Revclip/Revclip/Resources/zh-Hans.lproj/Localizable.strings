@@ -400,3 +400,31 @@
 "Shortcut Open Feature Settings" = "Open “%@” Settings";
 "Shortcut Open Keyboard Settings" = "Open Keyboard Settings";
 "OCR Enable Unsupported Language" = "The saved recognition language is not available on this macOS. Choose a recognition language, then turn faster OCR on.";
+
+"Advanced Settings" = "高级设置";
+
+"Privacy" = "隐私";
+
+"Settings categories" = "设置类别";
+
+"Links" = "链接";
+
+"Never fetch" = "不获取";
+
+"Fetch on request" = "手动获取";
+
+"Fetch automatically" = "自动获取";
+
+"Link previews and website icons" = "链接预览和网站图标";
+
+"Fetching a preview connects to the website and may reveal your IP address and the full URL. Manual mode does not connect when you open a menu or hover over a link." = "获取预览会连接到网站，并可能透露您的 IP 地址和完整 URL。手动模式下，打开菜单或将鼠标悬停在链接上不会建立连接。";
+
+"In manual mode, highlight a link and press Option-P to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "在手动模式下，高亮显示链接并按 Option-P 可获取预览。选择“从不获取”也会取消待处理的请求并清除缓存的预览。";
+
+"Option-P: Fetch preview (connects to website)" = "Option-P：获取预览（连接到网站）";
+
+"Online previews are disabled" = "在线预览已关闭";
+
+"Fetching preview…" = "正在获取预览…";
+
+"No preview available. Try again in a minute." = "无法获取预览。请在一分钟后重试。";

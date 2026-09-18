@@ -66,7 +66,10 @@ v0.2.0（build 58）の公開ジョブは、署名・公証・公開まで成功
 - Woodpeckerの `.woodpecker/check.yaml` は、PythonのCLI・インストーラ・配信検証、通常版／Demo版の機能差チェック、Node.jsのフィードバック中継テストを実行します。署名鍵・配信権限・ホストのボリュームを渡しません。
 - Woodpeckerの共有checkoutには書込可能な親ディレクトリがあるため、インストーラ試験はコンテナ内で作成した所有者専用のコピーで実行します。製品の親ディレクトリ権限チェックを緩めたり、共有ボリューム全体をchmodしたりしません。
 - `.github/workflows/ci.yml` はmacOS上のXcodeテスト（Debug／Release）とUniversalビルド、ネイティブCLIを確認します。Linuxの検証成功でAppKit・Vision・ScreenCaptureKitの動作合格を代用しません。
-- `.github/workflows/release.yml` はmacOSで署名・公証・GitHub Releasesへの配信を行います。Woodpeckerの検証パイプラインは公開処理を行いません。
+- `.github/workflows/release.yml` の `build-sign` は読み取り権限でビルド・署名・公証・EdDSA署名を行います。鍵を削除してから署名済み成果物をartifactへ渡し、別の `publish` ジョブだけが書込み権限で公開します。公開ジョブには署名用secretsを渡さず、artifact IDとSHA-256を照合します。
+- `scripts/build-tools.json` はXcodeGenとSparkleの版・公式URL・SHA-256の共通定義です。XcodeGenとDMGツールは証明書import前に準備します。`scripts/verify_sparkle.py` は公式archiveとVendorのバイト列・symlink・実行属性・LICENSEを比較し、Woodpeckerでも実行します。
+- `scripts/verify_app_signature.py` は配布appと同梱CLI・Sparkle各部品のDeveloper ID、Team、Hardened Runtime、timestampを検証します。appのentitlementは現状空が期待値です。不要だったApple Events entitlementを除去し、再署名時にも期待値を明示しています。
+- Woodpeckerは公開処理を行いません。macOSビルドの実行環境・GitHubの利用枠と、署名公開runが実際に成功したかは別途確認します。
 - 開発コミットは、対象ブランチのクリーンな状態で `wp-check`、続いて `wp-verify --push` を実行します。Giteaの `ci` remoteで **pushイベント・同一ブランチ・同一SHA・初回実行** の成功を確認してから、GitHubの `origin` へ送ります。mainに公開する変更はmain上でこの経路を使います。
 - タグ付けの前に、そのSHAのmacOS CIも確認してください。WoodpeckerとmacOS CIの結果、公開後の配信検証を別々に記録します。
 

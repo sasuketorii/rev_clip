@@ -62,25 +62,20 @@
 - (void)testBugReportSidebarOrderTitleIconAndLazyFactory {
     RCPreferencesRefreshProbe *controller = [self refreshController];
     NSArray *tabs = [controller valueForKey:@"tabIdentifiers"];
-    NSUInteger index = [tabs indexOfObject:RCPreferencesTabBugReport];
-    XCTAssertEqualObjects(RCPreferencesTabBugReport, @"bug-report");
-    XCTAssertNotEqual(index, NSNotFound);
-    if (index == NSNotFound || index == 0 || index + 1 >= tabs.count) { return; }
-    XCTAssertEqualObjects(tabs[index - 1], RCPreferencesTabAgents);
-    XCTAssertEqualObjects(tabs[index + 1], RCPreferencesTabPanic);
+    XCTAssertEqual(tabs.count, 7u);
+    XCTAssertFalse([tabs containsObject:RCPreferencesTabBugReport]);
+    XCTAssertTrue([tabs containsObject:@"advanced"]);
+    XCTAssertTrue([[controller valueForKey:@"advancedTabIdentifiers"] containsObject:RCPreferencesTabBugReport]);
     XCTAssertNil([controller valueForKey:@"bugReportViewController"]);
-    NSTableView *sidebar = [controller valueForKey:@"sidebar"];
-    NSTableCellView *cell = (NSTableCellView *)[sidebar.delegate tableView:sidebar viewForTableColumn:sidebar.tableColumns.firstObject row:(NSInteger)index];
-    XCTAssertEqualObjects(cell.textField.stringValue, RCLocalizedString(@"Bug Report", nil));
-    XCTAssertNotNil(cell.imageView.image);
     [controller showTab:RCPreferencesTabBugReport];
     NSViewController *report = [controller valueForKey:@"bugReportViewController"];
     XCTAssertTrue([report isKindOfClass:RCBugReportPreferencesViewController.class]);
-    XCTAssertEqualObjects([(NSTextField *)[controller valueForKey:@"pageTitle"] stringValue], RCLocalizedString(@"Bug Report", nil));
+    XCTAssertEqualObjects([(NSTextField *)[controller valueForKey:@"pageTitle"] stringValue], RCLocalizedString(@"Advanced Settings", nil));
     [controller showTab:RCPreferencesTabGeneral];
     [controller showTab:RCPreferencesTabBugReport];
     XCTAssertEqual([controller valueForKey:@"bugReportViewController"], report);
-    XCTAssertEqual(sidebar.selectedRow, (NSInteger)index);
+    NSTableView *sidebar = [controller valueForKey:@"sidebar"];
+    XCTAssertEqual(sidebar.selectedRow, (NSInteger)[tabs indexOfObject:@"advanced"]);
 }
 
 - (void)testBugReportDraftSurvivesCLIRefreshWithoutSending {
@@ -403,7 +398,7 @@
         XCTAssertEqualWithAccuracy(NSHeight(footer.frame), NSWidth(footer.frame) / (2089.0 / 200.0), pixel);
         XCTAssertGreaterThanOrEqual(NSMinY(navigation.frame), NSMaxY(footer.frame) + 15.5);
         NSRect pinnedFrame = footer.frame;
-        NSInteger panicRow = [[controller valueForKey:@"tabIdentifiers"] indexOfObject:RCPreferencesTabPanic];
+        NSInteger panicRow = [[controller valueForKey:@"tabIdentifiers"] indexOfObject:@"advanced"];
         [sidebar scrollRowToVisible:panicRow];
         [window.contentView layoutSubtreeIfNeeded];
         XCTAssertTrue(NSIntersectsRect([sidebar rectOfRow:panicRow], sidebar.visibleRect));
@@ -493,5 +488,25 @@
     NSScrollView *scroll = [controller valueForKey:@"pageScrollView"];
     XCTAssertGreaterThan(scroll.documentView.frame.size.height, scroll.contentView.bounds.size.height);
     [window orderOut:nil];
+}
+- (void)testAdvancedTabsPreserveDeepLinksAndRememberCategory {
+    RCPreferencesRefreshProbe *controller = [self refreshController];
+    [controller showTab:@"type"];
+    NSSegmentedControl *categories = [controller valueForKey:@"categoryTabs"];
+    NSTableView *sidebar = [controller valueForKey:@"sidebar"];
+    XCTAssertFalse(categories.hidden);
+    XCTAssertEqual(categories.segmentCount, 5);
+    XCTAssertEqualObjects([[controller valueForKey:@"tabIdentifiers"] objectAtIndex:sidebar.selectedRow], @"advanced");
+    XCTAssertEqualObjects([controller valueForKey:@"selectedTab"], @"type");
+    [controller showTab:@"general"];
+    XCTAssertTrue(categories.hidden);
+    [controller showTab:@"advanced"];
+    XCTAssertEqualObjects([controller valueForKey:@"selectedTab"], @"type");
+    [controller showTab:@"permissions"];
+    XCTAssertEqualObjects([[controller valueForKey:@"tabIdentifiers"] objectAtIndex:sidebar.selectedRow], @"privacy");
+    XCTAssertEqual(categories.segmentCount, 3);
+    [controller showTab:@"general"];
+    [controller showTab:@"privacy"];
+    XCTAssertEqualObjects([controller valueForKey:@"selectedTab"], @"permissions");
 }
 @end

@@ -400,3 +400,31 @@
 "Shortcut Open Feature Settings" = "Open “%@” Settings";
 "Shortcut Open Keyboard Settings" = "Open Keyboard Settings";
 "OCR Enable Unsupported Language" = "The saved recognition language is not available on this macOS. Choose a recognition language, then turn faster OCR on.";
+
+"Advanced Settings" = "Cài đặt nâng cao";
+
+"Privacy" = "Quyền riêng tư";
+
+"Settings categories" = "Danh mục cài đặt";
+
+"Links" = "Liên kết";
+
+"Never fetch" = "Không bao giờ tải";
+
+"Fetch on request" = "Tải khi yêu cầu";
+
+"Fetch automatically" = "Tự động tải";
+
+"Link previews and website icons" = "Xem trước liên kết và biểu tượng trang web";
+
+"Fetching a preview connects to the website and may reveal your IP address and the full URL. Manual mode does not connect when you open a menu or hover over a link." = "Tải bản xem trước sẽ kết nối với trang web và có thể tiết lộ địa chỉ IP cùng URL đầy đủ của bạn. Chế độ thủ công không kết nối khi mở menu hoặc di chuột lên liên kết.";
+
+"In manual mode, highlight a link and press Option-P to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "Ở chế độ thủ công, hãy chọn liên kết rồi nhấn Option-P để tải bản xem trước. Chọn Không bao giờ tải cũng hủy các yêu cầu đang chờ và xóa bản xem trước trong bộ nhớ đệm.";
+
+"Option-P: Fetch preview (connects to website)" = "Option-P: tải bản xem trước (kết nối với trang web)";
+
+"Online previews are disabled" = "Bản xem trước trực tuyến đã bị tắt";
+
+"Fetching preview…" = "Đang tải bản xem trước…";
+
+"No preview available. Try again in a minute." = "Không có bản xem trước. Hãy thử lại sau một phút.";

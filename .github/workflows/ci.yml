@@ -15,10 +15,21 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.14'
+      - name: Verify Python runtime
+        run: python3 --version
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_26.6.app
       - name: Install XcodeGen
-        run: command -v xcodegen || brew install xcodegen
+        run: |
+          bash scripts/install_xcodegen.sh "${RUNNER_TEMP}/xcodegen"
+          echo "${RUNNER_TEMP}/xcodegen/bin" >> "$GITHUB_PATH"
+      - name: Verify vendored Sparkle
+        run: |
+          python3 -m unittest discover -s scripts/tests -p test_build_provenance.py -v
+          python3 scripts/verify_sparkle.py
       - name: Audit demo feature parity
         run: python3 scripts/check_demo_parity.py
       - name: Test release delivery guard

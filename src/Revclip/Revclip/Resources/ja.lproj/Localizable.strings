@@ -399,3 +399,31 @@
 "Shortcut Open Feature Settings" = "「%@」の設定を開く";
 "Shortcut Open Keyboard Settings" = "キーボード設定を開く";
 "OCR Enable Unsupported Language" = "保存済みの認識言語は、このmacOSでは使用できません。認識言語を選び直してから、有効にしてください。";
+
+"Advanced Settings" = "高度な設定";
+
+"Privacy" = "プライバシー";
+
+"Settings categories" = "設定のジャンル";
+
+"Links" = "リンク";
+
+"Never fetch" = "取得しない";
+
+"Fetch on request" = "操作したときだけ取得";
+
+"Fetch automatically" = "自動で取得";
+
+"Link previews and website icons" = "リンクプレビューとサイトアイコン";
+
+"Fetching a preview connects to the website and may reveal your IP address and the full URL. Manual mode does not connect when you open a menu or hover over a link." = "取得するとサイトへ接続し、IPアドレスやURL全体が相手に伝わる場合があります。手動取得では、メニューを開く・リンクにカーソルを合わせるだけでは通信しません。";
+
+"In manual mode, highlight a link and press Option-P to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "手動取得ではリンクにカーソルを合わせて⌥Pを押すと取得します。「取得しない」にすると、処理中の取得を中止し、保存済みのプレビューも消去します。";
+
+"Option-P: Fetch preview (connects to website)" = "⌥P：プレビューを取得（サイトに接続）";
+
+"Online previews are disabled" = "オンラインプレビューは無効です";
+
+"Fetching preview…" = "プレビューを取得中…";
+
+"No preview available. Try again in a minute." = "プレビューを取得できませんでした。1分後に再度お試しください。";

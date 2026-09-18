@@ -1,5 +1,6 @@
 #import "RCLinkPreviewService.h"
 @import LinkPresentation;
+NSString * const RCLinkPreviewModeKey = @"RCLinkPreviewMode";
 
 static const NSUInteger RCLinkMaxActive = 2;
 static const NSUInteger RCLinkMaxPending = 32;
@@ -35,6 +36,7 @@ static const NSTimeInterval RCLinkFailureTTL = 60;
 @property NSMutableDictionary<NSString *, RCLinkPreviewWork *> *pending;
 @property NSMutableArray<RCLinkPreviewWork *> *queue;
 @property NSUInteger activeCount;
+@property RCLinkPreviewMode observedMode;
 @property dispatch_queue_t renderQueue;
 @property (copy) LPMetadataProvider *(^providerFactory)(void);
 @end
@@ -50,9 +52,38 @@ static const NSTimeInterval RCLinkFailureTTL = 60;
     if ((self = [super init])) {
         _cache = [NSCache new]; _cache.countLimit = 32; _cache.totalCostLimit = 32*1024*1024;
         _pending = [NSMutableDictionary dictionary]; _queue = [NSMutableArray array];
+        _observedMode = self.previewMode;
+        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(preferencesChanged:) name:NSUserDefaultsDidChangeNotification object:nil];
         _providerFactory = [factory copy];
         _renderQueue = dispatch_queue_create("com.revclip.link-art", dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL,QOS_CLASS_UTILITY,0));
     } return self;
+}
+- (void)dealloc { [NSNotificationCenter.defaultCenter removeObserver:self]; }
+- (NSUserDefaults *)preferences { return NSUserDefaults.standardUserDefaults; }
+- (RCLinkPreviewMode)previewMode {
+    id value = [self.preferences objectForKey:RCLinkPreviewModeKey];
+    if (!value) return RCLinkPreviewModeManual;
+    if (![value isKindOfClass:NSNumber.class]) return RCLinkPreviewModeDisabled;
+    NSInteger mode = [value integerValue];
+    return mode >= RCLinkPreviewModeDisabled && mode <= RCLinkPreviewModeAutomatic &&
+        [value isEqualToNumber:@(mode)] ? mode : RCLinkPreviewModeDisabled;
+}
+- (void)setPreviewMode:(RCLinkPreviewMode)mode {
+    NSAssert(NSThread.isMainThread, @"Main-thread link policy");
+    if (mode < RCLinkPreviewModeDisabled || mode > RCLinkPreviewModeAutomatic) mode = RCLinkPreviewModeDisabled;
+    [self.preferences setInteger:mode forKey:RCLinkPreviewModeKey];
+    [self preferencesChanged:nil];
+}
+- (void)preferencesChanged:(NSNotification *)notification {
+    if (!NSThread.isMainThread) {
+        dispatch_async(dispatch_get_main_queue(), ^{ [self preferencesChanged:nil]; });
+        return;
+    }
+    RCLinkPreviewMode mode = self.previewMode;
+    if (mode == self.observedMode) return;
+    self.observedMode = mode;
+    // Revoking permission cancels work and discards cache before callbacks run.
+    [self clearCache];
 }
 - (NSTimeInterval)now { return NSProcessInfo.processInfo.systemUptime; }
 + (NSURL *)URLForText:(NSString *)text {
@@ -77,15 +108,26 @@ static const NSTimeInterval RCLinkFailureTTL = 60;
 }
 - (NSImage *)cachedFaviconForURL:(NSURL *)url {
     NSAssert(NSThread.isMainThread,@"Main-thread link cache");
-    return [self entryForURL:url].assets.favicon;
+    return self.previewMode == RCLinkPreviewModeDisabled ? nil : [self entryForURL:url].assets.favicon;
 }
 - (void)imageForURL:(NSURL *)url completion:(void (^)(NSImage *))completion {
     [self assetsForURL:url completion:^(RCLinkPreviewAssets *assets) { completion(assets.image); }];
 }
 - (void)assetsForURL:(NSURL *)url completion:(void (^)(RCLinkPreviewAssets *))completion {
+    [self assetsForURL:url userInitiated:NO completion:completion];
+}
+- (void)assetsForURL:(NSURL *)url userInitiated:(BOOL)userInitiated completion:(void (^)(RCLinkPreviewAssets *))completion {
     NSAssert(NSThread.isMainThread,@"Main-thread link cache");
+    [self preferencesChanged:nil];
+    RCLinkPreviewMode mode = self.previewMode;
+    if (mode == RCLinkPreviewModeDisabled || ![RCLinkPreviewService URLForText:url.absoluteString]) {
+        completion([RCLinkPreviewAssets new]); return;
+    }
     RCLinkPreviewEntry *entry = [self entryForURL:url];
     if (entry) { completion(entry.assets); return; }
+    if (mode == RCLinkPreviewModeManual && !userInitiated) {
+        completion([RCLinkPreviewAssets new]); return;
+    }
     RCLinkPreviewWork *work = self.pending[url.absoluteString];
     if (work) {
         if (work.callbacks.count < RCLinkMaxPending) [work.callbacks addObject:[completion copy]];
@@ -172,6 +214,27 @@ static const NSTimeInterval RCLinkFailureTTL = 60;
             [self loadArt:metadata.iconProvider icon:YES work:work];
         });
     }];
+}
+- (void)removeURLs:(NSArray<NSURL *> *)urls {
+    NSAssert(NSThread.isMainThread,@"Main-thread link cache");
+    NSMutableArray *removed = [NSMutableArray array];
+    for (NSURL *url in urls) {
+        [self.cache removeObjectForKey:url.absoluteString];
+        RCLinkPreviewWork *work = self.pending[url.absoluteString];
+        if (!work) continue;
+        if ([self.queue containsObject:work]) [self.queue removeObject:work];
+        else self.activeCount--;
+        [self.pending removeObjectForKey:url.absoluteString];
+        [work.provider cancel]; work.provider = nil;
+        if (work.deadline) dispatch_block_cancel(work.deadline); work.deadline = nil;
+        for (NSProgress *load in work.loads) [load cancel];
+        [removed addObject:work];
+    }
+    [self drainQueue];
+    for (RCLinkPreviewWork *work in removed) {
+        NSArray *callbacks = [work.callbacks copy]; [work.callbacks removeAllObjects];
+        for (void (^callback)(RCLinkPreviewAssets *) in callbacks) callback([RCLinkPreviewAssets new]);
+    }
 }
 - (void)clearCache {
     NSAssert(NSThread.isMainThread,@"Main-thread link cache");

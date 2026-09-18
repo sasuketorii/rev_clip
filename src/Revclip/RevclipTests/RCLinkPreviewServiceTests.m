@@ -8,9 +8,11 @@
 @end
 @interface RCTestLinkService : RCLinkPreviewService
 @property NSTimeInterval time;
+@property NSUserDefaults *fixtureDefaults;
 @end
 @implementation RCTestLinkService
 - (NSTimeInterval)now { return self.time; }
+- (NSUserDefaults *)preferences { return self.fixtureDefaults; }
 @end
 @interface RCFakeLinkProvider : LPMetadataProvider
 @property (copy) void (^reply)(LPLinkMetadata *, NSError *);
@@ -23,6 +25,7 @@
 @interface RCLinkPreviewServiceTests : XCTestCase
 @property RCTestLinkService *service;
 @property NSMutableArray<RCFakeLinkProvider *> *providers;
+@property (nonatomic, copy) NSString *suiteName;
 @end
 @implementation RCLinkPreviewServiceTests
 - (void)setUp {
@@ -31,9 +34,15 @@
     self.service = [[RCTestLinkService alloc] initWithProviderFactory:^{
         RCFakeLinkProvider *provider = [RCFakeLinkProvider new]; [providers addObject:provider]; return provider;
     }];
+    self.suiteName = [@"revclip-link-tests-" stringByAppendingString:NSUUID.UUID.UUIDString];
+    self.service.fixtureDefaults = [[NSUserDefaults alloc] initWithSuiteName:self.suiteName];
+    self.service.previewMode = RCLinkPreviewModeAutomatic;
     self.service.time = 100;
 }
-- (void)tearDown { [self.service clearCache]; }
+- (void)tearDown {
+    [self.service clearCache];
+    [self.service.fixtureDefaults removePersistentDomainForName:self.suiteName];
+}
 - (void)tick {
     XCTestExpectation *tick = [self expectationWithDescription:@"main queue drained"];
     dispatch_async(dispatch_get_main_queue(), ^{ [tick fulfill]; });
@@ -56,6 +65,29 @@
     XCTAssertEqual(self.providers.count,3); // waits behind the two active requests
     self.providers[1].reply(nil,nil); [self tick];
     XCTAssertEqual(self.providers.count,4);
+}
+- (void)testSelectiveRemovalCancelsOnlyRemovedURLsAndRejectsLateReplies {
+    NSURL *a = [NSURL URLWithString:@"https://removed.example/"];
+    NSURL *b = [NSURL URLWithString:@"https://retained.example/"];
+    NSURL *c = [NSURL URLWithString:@"https://queued.example/"];
+    __block NSUInteger removedReplies = 0, retainedReplies = 0;
+    [self.service assetsForURL:a completion:^(RCLinkPreviewAssets *assets) { removedReplies++; }];
+    [self.service assetsForURL:b completion:^(RCLinkPreviewAssets *assets) { retainedReplies++; }];
+    [self.service assetsForURL:c completion:^(RCLinkPreviewAssets *assets) { removedReplies++; }];
+    [self.service removeURLs:@[a, c]];
+    XCTAssertEqual(removedReplies, 2u);
+    XCTAssertEqual(retainedReplies, 0u);
+    XCTAssertTrue(self.providers[0].cancelled);
+    XCTAssertFalse(self.providers[1].cancelled);
+    XCTAssertEqual(self.providers.count, 2u);
+    self.providers[0].reply(nil, nil); [self tick];
+    XCTAssertEqual(removedReplies, 2u);
+    self.providers[1].reply(nil, nil); [self tick];
+    [self.service assetsForURL:b completion:^(RCLinkPreviewAssets *assets) { retainedReplies++; }];
+    XCTAssertEqual(retainedReplies, 2u);
+    XCTAssertEqual(self.providers.count, 2u); // unrelated result remains cached
+    [self.service assetsForURL:a completion:^(RCLinkPreviewAssets *assets) {}];
+    XCTAssertEqual(self.providers.count, 3u);
 }
 - (void)testClearCancelsRequestsAndLateRepliesCannotRepopulateCache {
     NSURL *url = [NSURL URLWithString:@"https://a.example/"];
@@ -91,5 +123,42 @@
     XCTAssertTrue(cacheHit); XCTAssertEqual(self.providers.count,1);
     self.service.time += 24*60*60+1;
     XCTAssertNil([self.service cachedFaviconForURL:url]);
+}
+- (void)testDefaultAndManualModeNeverStartImplicitRequests {
+    [self.service.fixtureDefaults removeObjectForKey:RCLinkPreviewModeKey];
+    XCTAssertEqual(self.service.previewMode, RCLinkPreviewModeManual);
+    NSURL *url = [NSURL URLWithString:@"https://example.invalid/private?token=synthetic"];
+    __block NSUInteger completions = 0;
+    [self.service assetsForURL:url completion:^(RCLinkPreviewAssets *assets) { completions++; }];
+    [self.service imageForURL:url completion:^(NSImage *image) { completions++; }];
+    XCTAssertNil([self.service cachedFaviconForURL:url]);
+    XCTAssertEqual(completions, 2u);
+    XCTAssertEqual(self.providers.count, 0u);
+    [self.service assetsForURL:url userInitiated:YES completion:^(RCLinkPreviewAssets *assets) { completions++; }];
+    XCTAssertEqual(self.providers.count, 1u);
+    [self.service assetsForURL:[NSURL URLWithString:@"https://other.invalid/"] completion:^(RCLinkPreviewAssets *assets) {}];
+    XCTAssertEqual(self.providers.count, 1u); // approval applies only to that invocation
+}
+- (void)testRevocationCancelsActiveAndQueuedWorkAndRejectsLateReplies {
+    for (NSUInteger index = 0; index < 3; index++) {
+        NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"https://site%lu.invalid/", (unsigned long)index]];
+        [self.service assetsForURL:url completion:^(RCLinkPreviewAssets *assets) {}];
+    }
+    NSArray *old = [self.providers copy];
+    XCTAssertEqual(old.count, 2u);
+    self.service.previewMode = RCLinkPreviewModeDisabled;
+    for (RCFakeLinkProvider *provider in old) { XCTAssertTrue(provider.cancelled); provider.reply(nil, nil); }
+    [self tick];
+    [self.service assetsForURL:[NSURL URLWithString:@"https://site0.invalid/"] userInitiated:YES completion:^(RCLinkPreviewAssets *assets) {}];
+    XCTAssertEqual(self.providers.count, 2u);
+    self.service.previewMode = RCLinkPreviewModeManual;
+    [self.service assetsForURL:[NSURL URLWithString:@"https://site0.invalid/"] userInitiated:YES completion:^(RCLinkPreviewAssets *assets) {}];
+    XCTAssertEqual(self.providers.count, 3u);
+}
+- (void)testMalformedPolicyFailsClosed {
+    [self.service.fixtureDefaults setObject:@"automatic" forKey:RCLinkPreviewModeKey];
+    XCTAssertEqual(self.service.previewMode, RCLinkPreviewModeDisabled);
+    [self.service assetsForURL:[NSURL URLWithString:@"https://example.invalid/"] userInitiated:YES completion:^(RCLinkPreviewAssets *assets) {}];
+    XCTAssertEqual(self.providers.count, 0u);
 }
 @end

@@ -400,3 +400,31 @@
 "Shortcut Open Feature Settings" = "Open “%@” Settings";
 "Shortcut Open Keyboard Settings" = "Open Keyboard Settings";
 "OCR Enable Unsupported Language" = "The saved recognition language is not available on this macOS. Choose a recognition language, then turn faster OCR on.";
+
+"Advanced Settings" = "고급 설정";
+
+"Privacy" = "개인정보 보호";
+
+"Settings categories" = "설정 범주";
+
+"Links" = "링크";
+
+"Never fetch" = "가져오지 않음";
+
+"Fetch on request" = "요청할 때 가져오기";
+
+"Fetch automatically" = "자동으로 가져오기";
+
+"Link previews and website icons" = "링크 미리보기 및 사이트 아이콘";
+
+"Fetching a preview connects to the website and may reveal your IP address and the full URL. Manual mode does not connect when you open a menu or hover over a link." = "미리보기를 가져오면 웹사이트에 연결되며 IP 주소와 전체 URL이 전달될 수 있습니다. 수동 모드에서는 메뉴를 열거나 링크 위에 포인터를 올려도 연결하지 않습니다.";
+
+"In manual mode, highlight a link and press Option-P to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "수동 모드에서는 링크를 강조 표시한 후 Option-P를 눌러 미리보기를 가져오세요. 가져오지 않음을 선택하면 대기 중인 요청을 취소하고 캐시된 미리보기도 삭제합니다.";
+
+"Option-P: Fetch preview (connects to website)" = "Option-P: 미리보기 가져오기 (웹사이트에 연결)";
+
+"Online previews are disabled" = "온라인 미리보기가 꺼져 있습니다";
+
+"Fetching preview…" = "미리보기를 가져오는 중…";
+
+"No preview available. Try again in a minute." = "미리보기를 가져올 수 없습니다. 1분 후 다시 시도하세요.";
