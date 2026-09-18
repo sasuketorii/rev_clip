@@ -19,6 +19,7 @@
 - (void)showLinkURL:(NSURL *)url title:(NSString *)title image:(NSImage *)image menu:(NSMenu *)menu;
 - (NSEventModifierFlags)previewModifierFlags;
 - (void)requestLinkPreview;
+- (void)pollLinkPreviewModifiers;
 @end
 @interface RCPreviewTestMenu : NSMenu
 @property NSMenuItem *testHighlightedItem;
@@ -418,18 +419,26 @@
         [controller highlightItem:item text:@"https://example.invalid/fixture"];
         [self waitForTrackingTimer];
         XCTAssertEqual(controller.requests, 0u);
+        XCTAssertNotNil([controller valueForKey:@"linkModifierTimer"]);
         controller.fixtureModifiers = NSEventModifierFlagOption;
-        [controller highlightItem:item text:@"https://example.invalid/fixture"];
-        [self waitForTrackingTimer];
+        [self waitForTrackingTimer]; // Real repeating timer; pointer has not moved.
         XCTAssertEqual(controller.requests, 1u);
+        [controller pollLinkPreviewModifiers];
+        XCTAssertEqual(controller.requests, 1u); // Holding Option does not repeat.
+        controller.fixtureModifiers = 0;
+        [controller pollLinkPreviewModifiers];
+        controller.fixtureModifiers = NSEventModifierFlagOption;
+        [controller pollLinkPreviewModifiers];
+        XCTAssertEqual(controller.requests, 2u);
         [controller highlightItem:item text:@"https://example.invalid/fixture"];
         NSTimer *cancelled = controller.timer;
         [controller hide]; [cancelled fire];
-        XCTAssertEqual(controller.requests, 1u);
+        XCTAssertNil([controller valueForKey:@"linkModifierTimer"]);
+        XCTAssertEqual(controller.requests, 2u);
         controller.fixtureModifiers = NSEventModifierFlagOption | NSEventModifierFlagCommand;
         [controller highlightItem:item text:@"https://example.invalid/fixture"];
         [self waitForTrackingTimer];
-        XCTAssertEqual(controller.requests, 1u);
+        XCTAssertEqual(controller.requests, 2u);
     } @finally {
         [controller hide];
         if (saved) [NSUserDefaults.standardUserDefaults setObject:saved forKey:RCLinkPreviewModeKey];

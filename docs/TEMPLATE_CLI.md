@@ -86,7 +86,7 @@ prose, multiple URLs, email addresses, and mailto links use ordinary text previe
 and do not trigger link/favicons requests. Explicit HTTP URLs show a yellow warning
 icon. Accepted URLs are at most 2,048 characters.
 
-Automatic fetching is the default. Privacy → Links also offers manual fetching and Never fetch. In manual mode, ordinary hovering does not start a request; hold Option while moving the pointer onto a URL to request its preview explicitly. Permission changes cancel pending work and clear cached previews. In automatic mode, opening a template folder asynchronously fetches favicons for its link items.
+Automatic fetching is the default. Privacy → Links also offers manual fetching and Never fetch. In manual mode, ordinary hovering does not start a request; point at a URL and press Option to request its preview explicitly. Permission changes cancel pending work and clear cached previews. In automatic mode, opening a template folder asynchronously fetches favicons for its link items.
 The favicon sits beside the template title, in the same slot as color swatches.
 Preview images and favicons share one metadata request and one cache entry.
 At most two requests run concurrently, with up to 32 unique URLs pending.

@@ -419,9 +419,9 @@
 
 "Fetching a preview connects to the website and may reveal your IP address and the full URL. Manual mode does not connect when you open a menu or hover over a link." = "Tải bản xem trước sẽ kết nối với trang web và có thể tiết lộ địa chỉ IP cùng URL đầy đủ của bạn. Chế độ thủ công không kết nối khi mở menu hoặc di chuột lên liên kết.";
 
-"In manual mode, hold Option while moving the pointer onto a link to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "Ở chế độ thủ công, giữ Option khi di chuyển con trỏ lên liên kết để tải bản xem trước. Chọn Không bao giờ tải cũng hủy yêu cầu đang chờ và xóa bản xem trước trong bộ nhớ đệm.";
+"In manual mode, point at a link and press Option to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "Ở chế độ thủ công, trỏ vào liên kết rồi nhấn Option để tải bản xem trước. Chọn Không bao giờ tải cũng hủy yêu cầu đang chờ và xóa bản xem trước trong bộ nhớ đệm.";
 
-"Hold Option and hover over the link to fetch (connects to website)" = "Giữ Option và di chuột lên liên kết (kết nối với trang web)";
+"Press Option to fetch this link preview (connects to website)" = "Nhấn Option để tải bản xem trước (kết nối với trang web)";
 
 "Online previews are disabled" = "Bản xem trước trực tuyến đã bị tắt";
 

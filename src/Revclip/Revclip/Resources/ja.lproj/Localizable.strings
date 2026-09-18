@@ -418,9 +418,9 @@
 
 "Fetching a preview connects to the website and may reveal your IP address and the full URL. Manual mode does not connect when you open a menu or hover over a link." = "取得するとサイトへ接続し、IPアドレスやURL全体が相手に伝わる場合があります。手動取得では、メニューを開く・リンクにカーソルを合わせるだけでは通信しません。";
 
-"In manual mode, hold Option while moving the pointer onto a link to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "手動取得では⌥キーを押しながらリンクにカーソルを合わせると取得します。「取得しない」にすると、処理中の取得を中止し、保存済みのプレビューも消去します。";
+"In manual mode, point at a link and press Option to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "手動取得ではリンクにカーソルを合わせて⌥キーを押すと取得します。カーソルを動かし直す必要はありません。「取得しない」にすると、処理中の取得を中止し、保存済みのプレビューも消去します。";
 
-"Hold Option and hover over the link to fetch (connects to website)" = "⌥を押しながらリンクにカーソルを合わせて取得（サイトに接続）";
+"Press Option to fetch this link preview (connects to website)" = "⌥を押してプレビューを取得（サイトに接続）";
 
 "Online previews are disabled" = "オンラインプレビューは無効です";
 

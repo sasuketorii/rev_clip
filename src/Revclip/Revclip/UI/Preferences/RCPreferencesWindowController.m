@@ -295,10 +295,10 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 }
 
 - (NSArray<NSString *> *)advancedTabIdentifiers {
-    return @[RCPreferencesTabMenu, RCPreferencesTabType, RCPreferencesTabAgents, RCPreferencesTabPanic, RCPreferencesTabBugReport];
+    return @[RCPreferencesTabMenu, RCPreferencesTabType, RCPreferencesTabAgents, RCPreferencesTabBugReport];
 }
 - (NSArray<NSString *> *)privacyTabIdentifiers {
-    return @[@"links", RCPreferencesTabExclude, @"permissions"];
+    return @[@"links", RCPreferencesTabExclude];
 }
 - (NSString *)sidebarIdentifierForTab:(NSString *)tab {
     if ([self.advancedTabIdentifiers containsObject:tab]) return @"advanced";
@@ -546,7 +546,7 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 
 - (NSArray<NSString *> *)tabIdentifiers {
     return @[RCPreferencesTabGeneral, RCPreferencesTabAppearance, RCPreferencesTabShortcuts,
-             @"ocr", @"privacy", RCPreferencesTabUpdates, @"advanced"];
+             @"ocr", @"privacy", @"permissions", RCPreferencesTabPanic, RCPreferencesTabUpdates, @"advanced"];
 }
 
 - (nullable NSViewController *)viewControllerForTabIdentifier:(NSString *)tabIdentifier {

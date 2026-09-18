@@ -19,6 +19,8 @@
 @property NSURL *linkURL;
 @property RCLinkPreviewMode observedLinkMode;
 @property NSTimer *timer;
+@property (nonatomic, strong) NSTimer *linkModifierTimer;
+@property BOOL linkOptionWasDown;
 @property NSUInteger generation;
 @property NSOperationQueue *svgQueue;
 @property NSBlockOperation *svgOperation;
@@ -40,9 +42,11 @@
 }
 - (void)dealloc {
     [NSNotificationCenter.defaultCenter removeObserver:self];
+    [_linkModifierTimer invalidate];
     [_timer invalidate]; [_svgQueue cancelAllOperations]; [_pendingSVGOperation cancel]; [_panel orderOut:nil];
 }
 - (void)hide {
+    [self.linkModifierTimer invalidate]; self.linkModifierTimer = nil;
     self.linkItem = nil; self.linkURL = nil; self.linkRequestStatus = nil;
     self.generation += 1;
     [self.svgQueue cancelAllOperations];
@@ -93,6 +97,10 @@
             strongSelf.linkURL = url;
             NSUInteger generation = strongSelf.generation;
             [strongSelf showLinkURL:url title:selected.accessibilityLabel ?: selected.title image:nil menu:selected.menu];
+            if (RCLinkPreviewService.shared.previewMode == RCLinkPreviewModeManual) {
+                strongSelf.linkOptionWasDown = requestedByHover;
+                [strongSelf startLinkModifierObservation];
+            }
             if (requestedByHover && RCLinkPreviewService.shared.previewMode == RCLinkPreviewModeManual) {
                 [strongSelf requestLinkPreview];
                 return;
@@ -182,6 +190,30 @@
     [self showText:text image:image menu:menu aspectRatio:0];
 }
 - (NSEventModifierFlags)previewModifierFlags { return NSEvent.modifierFlags; }
+// Native menu tracking can bypass NSEvent monitors. Read modifier state only
+// while a manual link card is visible; no global monitor or idle polling.
+- (void)startLinkModifierObservation {
+    [self.linkModifierTimer invalidate];
+    __weak typeof(self) weakSelf = self;
+    self.linkModifierTimer = [NSTimer timerWithTimeInterval:0.05 repeats:YES block:^(NSTimer *timer) {
+        [weakSelf pollLinkPreviewModifiers];
+    }];
+    self.linkModifierTimer.tolerance = 0.02;
+    [NSRunLoop.mainRunLoop addTimer:self.linkModifierTimer forMode:NSEventTrackingRunLoopMode];
+    [NSRunLoop.mainRunLoop addTimer:self.linkModifierTimer forMode:NSRunLoopCommonModes];
+}
+- (void)pollLinkPreviewModifiers {
+    if (!self.panel.isVisible || !self.linkItem.menu || self.linkItem.menu.highlightedItem != self.linkItem ||
+        RCLinkPreviewService.shared.previewMode != RCLinkPreviewModeManual) {
+        [self.linkModifierTimer invalidate]; self.linkModifierTimer = nil; return;
+    }
+    NSEventModifierFlags flags = [self previewModifierFlags] &
+        (NSEventModifierFlagCommand | NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagShift);
+    BOOL optionDown = flags == NSEventModifierFlagOption;
+    BOOL pressed = optionDown && !self.linkOptionWasDown;
+    self.linkOptionWasDown = optionDown;
+    if (pressed) [self requestLinkPreview];
+}
 - (void)requestLinkPreview {
     NSMenuItem *item = self.linkItem;
     NSURL *url = self.linkURL;
@@ -202,7 +234,7 @@
     NSString *link = [url.scheme.lowercaseString isEqual:@"http"] ? [@"⚠️ " stringByAppendingString:url.absoluteString] : url.absoluteString;
     NSString *body = url.host;
     if (!image && RCLinkPreviewService.shared.previewMode == RCLinkPreviewModeManual) {
-        body = [NSString stringWithFormat:@"%@\n\n%@", url.host, self.linkRequestStatus ?: RCLocalizedString(@"Hold Option and hover over the link to fetch (connects to website)", nil)];
+        body = [NSString stringWithFormat:@"%@\n\n%@", url.host, self.linkRequestStatus ?: RCLocalizedString(@"Press Option to fetch this link preview (connects to website)", nil)];
     } else if (!image && RCLinkPreviewService.shared.previewMode == RCLinkPreviewModeDisabled) {
         body = [NSString stringWithFormat:@"%@\n\n%@", url.host, RCLocalizedString(@"Online previews are disabled", nil)];
     }

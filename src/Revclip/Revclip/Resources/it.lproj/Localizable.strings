@@ -419,9 +419,9 @@
 
 "Fetching a preview connects to the website and may reveal your IP address and the full URL. Manual mode does not connect when you open a menu or hover over a link." = "Il caricamento di un’anteprima si connette al sito e può rivelare il tuo indirizzo IP e l’URL completo. In modalità manuale, aprire un menu o passare sopra un link non avvia connessioni.";
 
-"In manual mode, hold Option while moving the pointer onto a link to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "In modalità manuale, tieni premuto Opzione mentre sposti il puntatore su un link per caricare l’anteprima. «Non caricare mai» annulla le richieste in sospeso e cancella le anteprime memorizzate.";
+"In manual mode, point at a link and press Option to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "In modalità manuale, punta a un link e premi Opzione per caricare l’anteprima. «Non caricare mai» annulla le richieste in sospeso e cancella le anteprime memorizzate.";
 
-"Hold Option and hover over the link to fetch (connects to website)" = "Tieni premuto Opzione e passa sul link (connessione al sito)";
+"Press Option to fetch this link preview (connects to website)" = "Premi Opzione per caricare l’anteprima (connessione al sito)";
 
 "Online previews are disabled" = "Le anteprime online sono disattivate";
 

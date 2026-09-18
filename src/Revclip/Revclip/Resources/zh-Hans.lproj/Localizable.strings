@@ -419,9 +419,9 @@
 
 "Fetching a preview connects to the website and may reveal your IP address and the full URL. Manual mode does not connect when you open a menu or hover over a link." = "获取预览会连接到网站，并可能透露您的 IP 地址和完整 URL。手动模式下，打开菜单或将鼠标悬停在链接上不会建立连接。";
 
-"In manual mode, hold Option while moving the pointer onto a link to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "在手动模式下，按住 Option 并将指针移到链接上以获取预览。选择“从不获取”也会取消待处理的请求并清除缓存的预览。";
+"In manual mode, point at a link and press Option to fetch its preview. Choosing Never fetch also cancels pending requests and clears cached previews." = "在手动模式下，将指针放在链接上并按 Option 以获取预览。选择“从不获取”也会取消待处理的请求并清除缓存的预览。";
 
-"Hold Option and hover over the link to fetch (connects to website)" = "按住 Option 并将指针移到链接上以获取预览（连接到网站）";
+"Press Option to fetch this link preview (connects to website)" = "按 Option 获取此链接的预览（连接到网站）";
 
 "Online previews are disabled" = "在线预览已关闭";
 

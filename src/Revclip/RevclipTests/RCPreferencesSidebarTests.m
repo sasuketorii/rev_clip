@@ -62,7 +62,7 @@
 - (void)testBugReportSidebarOrderTitleIconAndLazyFactory {
     RCPreferencesRefreshProbe *controller = [self refreshController];
     NSArray *tabs = [controller valueForKey:@"tabIdentifiers"];
-    XCTAssertEqual(tabs.count, 7u);
+    XCTAssertEqual(tabs.count, 9u);
     XCTAssertFalse([tabs containsObject:RCPreferencesTabBugReport]);
     XCTAssertTrue([tabs containsObject:@"advanced"]);
     XCTAssertTrue([[controller valueForKey:@"advancedTabIdentifiers"] containsObject:RCPreferencesTabBugReport]);
@@ -398,7 +398,7 @@
         XCTAssertEqualWithAccuracy(NSHeight(footer.frame), NSWidth(footer.frame) / (2089.0 / 200.0), pixel);
         XCTAssertGreaterThanOrEqual(NSMinY(navigation.frame), NSMaxY(footer.frame) + 15.5);
         NSRect pinnedFrame = footer.frame;
-        NSInteger panicRow = [[controller valueForKey:@"tabIdentifiers"] indexOfObject:@"advanced"];
+        NSInteger panicRow = [[controller valueForKey:@"tabIdentifiers"] indexOfObject:RCPreferencesTabPanic];
         [sidebar scrollRowToVisible:panicRow];
         [window.contentView layoutSubtreeIfNeeded];
         XCTAssertTrue(NSIntersectsRect([sidebar rectOfRow:panicRow], sidebar.visibleRect));
@@ -495,7 +495,7 @@
     NSSegmentedControl *categories = [controller valueForKey:@"categoryTabs"];
     NSTableView *sidebar = [controller valueForKey:@"sidebar"];
     XCTAssertFalse(categories.hidden);
-    XCTAssertEqual(categories.segmentCount, 5);
+    XCTAssertEqual(categories.segmentCount, 4);
     XCTAssertEqualObjects([[controller valueForKey:@"tabIdentifiers"] objectAtIndex:sidebar.selectedRow], @"advanced");
     XCTAssertEqualObjects([controller valueForKey:@"selectedTab"], @"type");
     [controller showTab:@"general"];
@@ -503,10 +503,15 @@
     [controller showTab:@"advanced"];
     XCTAssertEqualObjects([controller valueForKey:@"selectedTab"], @"type");
     [controller showTab:@"permissions"];
-    XCTAssertEqualObjects([[controller valueForKey:@"tabIdentifiers"] objectAtIndex:sidebar.selectedRow], @"privacy");
-    XCTAssertEqual(categories.segmentCount, 3);
+    XCTAssertEqualObjects([[controller valueForKey:@"tabIdentifiers"] objectAtIndex:sidebar.selectedRow], @"permissions");
+    XCTAssertTrue(categories.hidden);
+    [controller showTab:@"panic"];
+    XCTAssertEqualObjects([[controller valueForKey:@"tabIdentifiers"] objectAtIndex:sidebar.selectedRow], @"panic");
+    XCTAssertTrue(categories.hidden);
+    [controller showTab:@"exclude"];
+    XCTAssertEqual(categories.segmentCount, 2);
     [controller showTab:@"general"];
     [controller showTab:@"privacy"];
-    XCTAssertEqualObjects([controller valueForKey:@"selectedTab"], @"permissions");
+    XCTAssertEqualObjects([controller valueForKey:@"selectedTab"], @"exclude");
 }
 @end
