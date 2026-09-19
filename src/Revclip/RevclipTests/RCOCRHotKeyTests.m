@@ -19,7 +19,7 @@
 - (instancetype)init {
     if ((self = [super init])) {
         _calls = [NSMutableArray array]; _liveCarbonIDs = [NSMutableDictionary dictionary];
-        _refused = [NSMutableSet set]; _systemHotKeys = @[]; _folders = @{}; _nextRef = 0x1000;
+        _refused = [NSMutableSet set]; _systemHotKeys = @[]; _folders = @{}; _nextRef = 0x1000; _menuPreferencesCode = kVK_ANSI_Comma;
     }
     return self;
 }
@@ -41,8 +41,13 @@
     return noErr;
 }
 - (NSArray<NSDictionary *> *)rc_systemSymbolicHotKeys { return self.systemHotKeys; }
+- (NSArray<NSData *> *)rc_cleanShotShortcutData { return self.externalShortcutData ?: @[]; }
 - (NSDictionary<NSString *, NSValue *> *)rc_activeFolderKeyCombos { return self.folders; }
 - (BOOL)rc_panicInProgress { return self.panic; }
+- (UInt16)rc_menuPreferencesKeyCode { return self.menuPreferencesCode; }
+- (BOOL)rc_menuTrackingContextActive { return !self.outsideMenuTracking; }
+- (BOOL)rc_startMenuPreferencesCapture { self.menuCaptureStarts++; return !self.refuseMenuCapture; }
+- (void)rc_stopMenuPreferencesCapture { self.menuCaptureStops++; }
 @end
 
 @interface RCHotKeyContractTests : XCTestCase
@@ -50,6 +55,85 @@
 @end
 @implementation RCHotKeyContractTests
 static RCKeyCombo RCCombo(UInt32 code, UInt32 modifiers) { return RCMakeKeyCombo(code, modifiers); }
+- (void)testStandardCommandsAreRejectedAndSavedCopyIsFlagged {
+    for (NSNumber *code in @[@(kVK_ANSI_C), @(kVK_ANSI_X), @(kVK_ANSI_V), @(kVK_ANSI_A), @(kVK_ANSI_Z), @(kVK_ANSI_Q), @(kVK_ANSI_W), @(kVK_ANSI_Comma)]) {
+        RCHotKeyAssignmentResult *result = [self.service applyAssignments:@[[RCHotKeyAssignment assignmentSettingSlot:RCHotKeySlotMain combo:RCCombo(code.unsignedIntValue, cmdKey)]]];
+        XCTAssertEqual(result.status, RCHotKeyAssignmentStatusStandardReserved);
+        XCTAssertEqual(self.service.calls.count, 0u);
+    }
+    [RCHotKeyService saveKeyCombo:RCCombo(kVK_ANSI_C, cmdKey) toUserDefaults:kRCHotKeyMainKeyCombo];
+    XCTAssertEqual([self.service validateAssignments:@[[RCHotKeyAssignment assignmentKeepingSlot:RCHotKeySlotMain]]].status, RCHotKeyAssignmentStatusStandardReserved);
+    [self.service loadAndRegisterHotKeysFromDefaults];
+    XCTAssertNil(self.service.liveCarbonIDs[@"8:256"]);
+    XCTAssertEqual([self.service configuredKeyComboForSlot:RCHotKeySlotMain].keyCode, (UInt32)kVK_ANSI_C);
+    XCTAssertTrue([self.service applyAssignments:@[[RCHotKeyAssignment assignmentRestoringDefaultForSlot:RCHotKeySlotMain]]].succeeded);
+    XCTAssertTrue([self.service validateAssignments:@[[RCHotKeyAssignment assignmentRestoringDefaultForSlot:RCHotKeySlotOCR]]].succeeded);
+}
+- (void)testMenuPreferencesCaptureConsumesOnlyCommaAndCancelsQueuedWorkOnClose {
+    NSObject *owner = [NSObject new];
+    __block NSUInteger actions = 0;
+    [self.service beginMenuPreferencesShortcutForOwner:owner action:^{ actions++; }];
+    [self.service beginMenuPreferencesShortcutForOwner:owner action:^{ actions += 100; }];
+    XCTAssertEqual(self.service.menuCaptureStarts, 1u);
+    CGEventRef event = CGEventCreateKeyboardEvent(NULL, kVK_ANSI_Comma, true);
+    CGEventSetFlags(event, kCGEventFlagMaskCommand | kCGEventFlagMaskShift);
+    XCTAssertEqual([self.service captureMenuPreferencesEvent:event type:kCGEventKeyDown], event);
+    CGEventSetFlags(event, kCGEventFlagMaskCommand);
+    XCTAssertEqual([self.service captureMenuPreferencesEvent:event type:kCGEventKeyDown], NULL);
+    XCTAssertEqual([self.service captureMenuPreferencesEvent:event type:kCGEventKeyUp], NULL);
+    XCTestExpectation *drained = [self expectationWithDescription:@"capture delivered outside callback"];
+    dispatch_async(dispatch_get_main_queue(), ^{ [drained fulfill]; });
+    [self waitForExpectations:@[drained] timeout:2];
+    XCTAssertEqual(actions, 1u);
+    XCTAssertEqual([self.service captureMenuPreferencesEvent:event type:kCGEventKeyDown], NULL);
+    XCTAssertEqual([self.service captureMenuPreferencesEvent:event type:kCGEventKeyUp], NULL);
+    [self.service endMenuPreferencesShortcutForOwner:owner];
+    drained = [self expectationWithDescription:@"stale capture discarded"];
+    dispatch_async(dispatch_get_main_queue(), ^{ [drained fulfill]; });
+    [self waitForExpectations:@[drained] timeout:2];
+    XCTAssertEqual(actions, 1u);
+    XCTAssertEqual([self.service captureMenuPreferencesEvent:event type:kCGEventKeyDown], event);
+    CFRelease(event);
+}
+- (void)testMenuPreferencesCaptureUsesResolvedLayoutAndPassesThroughOutsideTracking {
+    NSObject *owner = [NSObject new]; self.service.menuPreferencesCode = 13;
+    [self.service beginMenuPreferencesShortcutForOwner:owner action:^{ XCTFail(@"No keyUp delivered"); }];
+    CGEventRef event = CGEventCreateKeyboardEvent(NULL, kVK_ANSI_Comma, true);
+    CGEventSetFlags(event, kCGEventFlagMaskCommand);
+    XCTAssertEqual([self.service captureMenuPreferencesEvent:event type:kCGEventKeyDown], event);
+    CGEventSetIntegerValueField(event, kCGKeyboardEventKeycode, 13);
+    XCTAssertEqual([self.service captureMenuPreferencesEvent:event type:kCGEventKeyDown], NULL);
+    self.service.outsideMenuTracking = YES;
+    XCTAssertEqual([self.service captureMenuPreferencesEvent:event type:kCGEventKeyDown], event);
+    CFRelease(event);
+    [self.service endMenuPreferencesShortcutForOwner:owner];
+}
+- (void)testMenuPreferencesCaptureUnavailableLeavesExistingHotkeysAlone {
+    self.service.refuseMenuCapture = YES;
+    NSObject *owner = [NSObject new];
+    [self.service beginMenuPreferencesShortcutForOwner:owner action:^{ XCTFail(@"Capture unavailable"); }];
+    XCTAssertEqual(self.service.calls.count, 0u);
+    XCTAssertEqual([self.service configuredKeyComboForSlot:RCHotKeySlotMain].keyCode, 9u);
+}
+- (void)testExternalShortcutRefusalPreservesRegistrationAndSavedValue {
+    RCKeyCombo before = [self.service configuredKeyComboForSlot:RCHotKeySlotMain];
+    self.service.externalShortcutData = @[[@"{\"carbonKey\":21,\"carbonModifiers\":768}" dataUsingEncoding:NSUTF8StringEncoding]];
+    RCHotKeyAssignmentResult *result = [self.service applyAssignments:@[[RCHotKeyAssignment assignmentSettingSlot:RCHotKeySlotMain combo:RCCombo(21, cmdKey | shiftKey)]]];
+    XCTAssertEqual(result.status, RCHotKeyAssignmentStatusExternalConflict);
+    XCTAssertEqualObjects(result.conflictingApplication, @"CleanShot X");
+    XCTAssertEqual([self.service configuredKeyComboForSlot:RCHotKeySlotMain].keyCode, before.keyCode);
+    XCTAssertEqual(self.service.calls.count, 0u);
+    // Stored conflicts must also be visible without registering or changing keys.
+    self.service.externalShortcutData = @[[[NSString stringWithFormat:@"{\"carbonKey\":%u,\"carbonModifiers\":%u}", before.keyCode, before.modifiers] dataUsingEncoding:NSUTF8StringEncoding]];
+    XCTAssertEqual([self.service validateAssignments:@[[RCHotKeyAssignment assignmentKeepingSlot:RCHotKeySlotMain]]].status, RCHotKeyAssignmentStatusExternalConflict);
+    XCTAssertEqual(self.service.calls.count, 0u);
+}
+- (void)testMalformedExternalShortcutDataIsIgnored {
+    NSMutableArray *data = [NSMutableArray array];
+    for (NSString *json in @[@"null", @"[]", @"{", @"{\"carbonKey\":true,\"carbonModifiers\":768}", @"{\"carbonKey\":21.5,\"carbonModifiers\":768}", @"{\"carbonKey\":21,\"carbonModifiers\":-1}", @"{\"carbonKey\":\"21\",\"carbonModifiers\":768}"]) [data addObject:[json dataUsingEncoding:NSUTF8StringEncoding]];
+    self.service.externalShortcutData = data;
+    XCTAssertTrue([self.service validateAssignments:@[[RCHotKeyAssignment assignmentSettingSlot:RCHotKeySlotMain combo:RCCombo(21, cmdKey | shiftKey)]]].succeeded);
+}
 - (NSArray<NSString *> *)storageKeys {
     return @[kRCHotKeyMainKeyCombo, kRCHotKeyHistoryKeyCombo, kRCHotKeySnippetKeyCombo, kRCClearHistoryKeyCombo, kRCOCRKeyComboKey, kRCOCREnabledKey, kRCFolderKeyCombos];
 }
@@ -99,8 +183,8 @@ static RCKeyCombo RCCombo(UInt32 code, UInt32 modifiers) { return RCMakeKeyCombo
     XCTAssertEqualObjects(result.conflictingSlot, RCHotKeySlotMain);
     XCTAssertEqual(self.service.calls.count, 0u, @"No OS call, no release of the working shortcut");
     XCTAssertEqualObjects([self stored:RCHotKeySlotOCR], @"19:768");
-    self.service.folders = @{@"folder-1": [NSValue valueWithBytes:&(RCKeyCombo){3, cmdKey | controlKey} objCType:@encode(RCKeyCombo)]};
-    result = [self set:RCHotKeySlotOCR to:RCCombo(3, cmdKey | controlKey)];
+    self.service.folders = @{@"folder-1": [NSValue valueWithBytes:&(RCKeyCombo){7, cmdKey | controlKey} objCType:@encode(RCKeyCombo)]};
+    result = [self set:RCHotKeySlotOCR to:RCCombo(7, cmdKey | controlKey)];
     XCTAssertEqualObjects(result.conflictingSlot, @"folder:folder-1");
 }
 - (void)testTwoSlotsExchangeInOneBatchWithoutAnyOSRegistrationAndDeliveryFollowsTheNewOwner {
@@ -119,27 +203,27 @@ static RCKeyCombo RCCombo(UInt32 code, UInt32 modifiers) { return RCMakeKeyCombo
     XCTAssertEqual([self set:RCHotKeySlotSnippet to:RCCombo(9, cmdKey | shiftKey)].status, RCHotKeyAssignmentStatusInternalConflict);
 }
 - (void)testOSRefusalKeepsOldRegistrationAndStorageAndReleasesOnlyWhatThisBatchPrepared {
-    [self.service.refused addObject:@"5:768"];
+    [self.service.refused addObject:@"7:768"];
     RCHotKeyAssignmentResult *result = [self.service applyAssignments:@[
         [RCHotKeyAssignment assignmentSettingSlot:RCHotKeySlotMain combo:RCCombo(4, cmdKey | shiftKey)],
-        [RCHotKeyAssignment assignmentSettingSlot:RCHotKeySlotHistory combo:RCCombo(5, cmdKey | shiftKey)]]];
+        [RCHotKeyAssignment assignmentSettingSlot:RCHotKeySlotHistory combo:RCCombo(7, cmdKey | shiftKey)]]];
     XCTAssertEqual(result.status, RCHotKeyAssignmentStatusRegistrationFailed);
     XCTAssertEqualObjects(result.failedSlot, RCHotKeySlotHistory);
     XCTAssertEqual(result.osStatus, (OSStatus)eventHotKeyExistsErr);
-    XCTAssertEqualObjects(self.service.calls, (@[@"register 4:768", @"refuse 5:768", @"unregister 4:768"]));
+    XCTAssertEqualObjects(self.service.calls, (@[@"register 4:768", @"refuse 7:768", @"unregister 4:768"]));
     XCTAssertNotNil(self.service.liveCarbonIDs[@"9:768"]); XCTAssertNotNil(self.service.liveCarbonIDs[@"9:4352"]);
     XCTAssertEqualObjects([self stored:RCHotKeySlotMain], @"9:768");
     XCTAssertEqualObjects([self stored:RCHotKeySlotHistory], @"9:4352");
 }
 - (void)testPrepareCanBeDiscardedForAnotherFallibleStepAndCommitCannotFail {
     id transaction = nil;
-    RCHotKeyAssignmentResult *result = [self.service prepareAssignments:@[[RCHotKeyAssignment assignmentSettingSlot:RCHotKeySlotMain combo:RCCombo(6, cmdKey | shiftKey)]]
+    RCHotKeyAssignmentResult *result = [self.service prepareAssignments:@[[RCHotKeyAssignment assignmentSettingSlot:RCHotKeySlotMain combo:RCCombo(18, cmdKey | shiftKey)]]
                                                    ocrEnabledAfterCommit:nil transaction:&transaction];
     XCTAssertTrue(result.succeeded); XCTAssertNotNil(transaction);
     XCTAssertEqualObjects([self stored:RCHotKeySlotMain], @"9:768", @"Nothing is stored by prepare");
     XCTAssertNotNil(self.service.liveCarbonIDs[@"9:768"], @"The working shortcut stays registered");
     [self.service discardPreparedAssignments:transaction];
-    XCTAssertEqualObjects(self.service.calls, (@[@"register 6:768", @"unregister 6:768"]));
+    XCTAssertEqualObjects(self.service.calls, (@[@"register 18:768", @"unregister 18:768"]));
     [self.service commitPreparedAssignments:transaction];
     XCTAssertEqualObjects([self stored:RCHotKeySlotMain], @"9:768", @"A finished transaction cannot be committed later");
 }

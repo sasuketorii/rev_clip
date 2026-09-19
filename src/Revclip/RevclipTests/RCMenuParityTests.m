@@ -93,6 +93,16 @@ static void captureMediaPaste(id object, SEL selector, RCClipData *clip, NSRunni
 @interface RCMenuParityTests : XCTestCase
 @end
 @implementation RCMenuParityTests
+- (void)testTrackingEndNotificationCleansUpEvenWithoutDelegateClose {
+    RCTrackingTestManager *manager = [RCTrackingTestManager new];
+    NSMenu *root = [NSMenu new], *child = [NSMenu new];
+    NSMenuItem *folder = [NSMenuItem new]; folder.submenu = child; [root addItem:folder];
+    [manager menuWillOpen:root]; [manager menuWillOpen:child];
+    [NSNotificationCenter.defaultCenter postNotificationName:NSMenuDidEndTrackingNotification object:root];
+    XCTAssertEqual([[manager valueForKey:@"trackingMenus"] count], 0u);
+    [manager menuDidClose:child]; [manager menuDidClose:root];
+    XCTAssertEqual([[manager valueForKey:@"trackingMenus"] count], 0u);
+}
 - (void)settle {
     XCTestExpectation *e=[self expectationWithDescription:@"Debounce"];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW,500*NSEC_PER_MSEC),dispatch_get_main_queue(),^{[e fulfill];});

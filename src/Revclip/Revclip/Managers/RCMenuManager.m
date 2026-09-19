@@ -56,6 +56,7 @@ static os_log_t RCMenuManagerLog(void) {
 
 @interface RCMenuManager () <NSMenuDelegate>
 @property (nonatomic, strong) NSHashTable<NSMenu *> *trackingMenus;
+@property (nonatomic, weak) NSMenu *trackingRootMenu;
 @property BOOL pendingMenuRebuild;
 // Main-thread-owned; one command waiting for every tracking menu to close. It
 // stays set until it actually runs, so a second entry cannot slip in between
@@ -171,6 +172,7 @@ static os_log_t RCMenuManagerLog(void) {
     self = [super init];
     if (self) {
         _trackingMenus = [NSHashTable weakObjectsHashTable];
+        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(menuTrackingDidEnd:) name:NSMenuDidEndTrackingNotification object:nil];
         _menuPreferences = [self menuPreferenceSnapshot];
         _previewImageData = [NSMapTable weakToStrongObjectsMapTable];
         _previewURLs = [NSMapTable weakToStrongObjectsMapTable];
@@ -241,6 +243,7 @@ static os_log_t RCMenuManagerLog(void) {
 }
 
 - (void)dealloc {
+    [[RCHotKeyService shared] endMenuPreferencesShortcutForOwner:self];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
@@ -651,7 +654,12 @@ static os_log_t RCMenuManagerLog(void) {
 }
 
 - (void)trackMenu:(NSMenu *)menu atLocation:(NSPoint)location {
-    [menu popUpMenuPositioningItem:nil atLocation:location inView:nil];
+    @try {
+        [menu popUpMenuPositioningItem:nil atLocation:location inView:nil];
+    } @finally {
+        // The synchronous popup return is an independent teardown boundary.
+        [self finishTrackingRootMenu:menu];
+    }
 }
 
 #pragma mark - Menu Build
@@ -1094,8 +1102,21 @@ static os_log_t RCMenuManagerLog(void) {
     });
 }
 
+- (void)menuTrackingDidEnd:(NSNotification *)notification {
+    NSMenu *menu = notification.object;
+    if ([menu isKindOfClass:NSMenu.class] && menu.supermenu == nil) [self finishTrackingRootMenu:menu];
+}
+- (void)finishTrackingRootMenu:(NSMenu *)menu {
+    if (self.trackingRootMenu != menu) return;
+    for (NSMenu *tracked in self.trackingMenus.allObjects) [self menuDidClose:tracked];
+    self.trackingRootMenu = nil;
+}
 - (void)menuDidClose:(NSMenu *)menu {
     [self.trackingMenus removeObject:menu];
+    if (!self.trackingMenus.count) {
+        [[RCHotKeyService shared] endMenuPreferencesShortcutForOwner:self];
+        self.trackingRootMenu = nil;
+    }
     os_log_debug(RCMenuManagerLog(), "menu closed; tracking=%lu pending=%d", (unsigned long)self.trackingMenus.count, self.pendingMenuRebuild);
     [self.previewController hide];
     if (!self.trackingMenus.count && self.pendingMenuRebuild) {
@@ -1140,7 +1161,18 @@ static os_log_t RCMenuManagerLog(void) {
 }
 
 - (void)menuWillOpen:(NSMenu *)menu {
+    BOOL firstMenu = self.trackingMenus.count == 0;
     [self.trackingMenus addObject:menu];
+    if (firstMenu) {
+        self.trackingRootMenu = menu;
+        while (self.trackingRootMenu.supermenu) self.trackingRootMenu = self.trackingRootMenu.supermenu;
+        __weak typeof(self) weakSelf = self;
+        [[RCHotKeyService shared] beginMenuPreferencesShortcutForOwner:self action:^{
+            RCMenuManager *owner = weakSelf;
+            if (!owner || !owner.trackingMenus.count || owner.serviceSessionActive) return;
+            [owner performAfterMenuTrackingEnds:^{ [weakSelf openPreferences:nil]; }];
+        }];
+    }
     os_log_debug(RCMenuManagerLog(), "menu opened; tracking=%lu", (unsigned long)self.trackingMenus.count);
     [self.previewController hide];
     if (menu.supermenu == nil) {
@@ -1775,23 +1807,16 @@ static os_log_t RCMenuManagerLog(void) {
 
 - (nullable NSImage *)typeIconForClipItem:(RCClipItem *)clipItem {
     NSInteger preferredIconSize = [self integerPreferenceForKey:kRCPrefMenuIconSizeKey defaultValue:16];
-    CGFloat iconSide = (CGFloat)MAX(8, preferredIconSize);
-    NSSize iconSize = NSMakeSize(iconSide, iconSide);
-
-    NSImage *typeImage = [self primaryTypeIconForType:clipItem.primaryType];
-    NSImage *resizedImage = [typeImage resizedImageToFitSize:iconSize];
-    if (resizedImage == nil) {
-        resizedImage = [typeImage resizedImageToSize:iconSize];
-    }
-    if (resizedImage != nil) {
-        resizedImage.template = YES;
-        return resizedImage;
-    }
-
-    NSImage *iconCopy = [typeImage copy];
-    iconCopy.size = iconSize;
-    iconCopy.template = YES;
-    return iconCopy;
+    CGFloat iconSide = (CGFloat)MIN(64, MAX(8, preferredIconSize));
+    NSImage *icon = [[self primaryTypeIconForType:clipItem.primaryType] copy];
+    CGFloat longestSide = MAX(icon.size.width, icon.size.height);
+    if (longestSide <= 0) return nil;
+    // Type icons may grow as well as shrink. Thumbnail fitting deliberately never
+    // enlarges images, so it must not be used for the user's icon-size setting.
+    CGFloat scale = iconSide / longestSide;
+    icon.size = NSMakeSize(icon.size.width * scale, icon.size.height * scale);
+    icon.template = YES;
+    return icon;
 }
 
 - (NSImage *)primaryTypeIconForType:(NSString *)primaryType {

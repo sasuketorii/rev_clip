@@ -444,3 +444,7 @@
 // Scheduled update reminders
 "Revclip update available" = "Revclip update available";
 "Click to review and install the update." = "Click to review and install the update.";
+
+"Shortcut Conflict External" = "This shortcut is already used by %@. Change either shortcut.";
+
+"Shortcut Conflict Standard" = "This shortcut is a standard macOS or application command. Choose another shortcut.";

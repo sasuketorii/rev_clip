@@ -23,6 +23,7 @@
 - (void)appendClipItems:(NSArray<RCClipItem *> *)items toMenu:(NSMenu *)menu;
 - (void)prepareVisibleItemsOfOpenedMenu:(NSMenu *)menu;
 - (void)menu:(NSMenu *)menu willHighlightItem:(NSMenuItem *)item;
+- (NSImage *)typeIconForClipItem:(RCClipItem *)item;
 - (void)handleClipboardDidChange:(NSNotification *)notification;
 - (void)loadFaviconForMenuItem:(NSMenuItem *)item;
 - (void)loadThumbnailForClipItem:(RCClipItem *)clip cacheKey:(NSString *)key
@@ -84,6 +85,19 @@
 @end
 
 @implementation RCMenuFallbackLifecycleTests
+- (void)testTypeIconTracksConfiguredSizeInBothDirections {
+    RCMenuFallbackProbe *manager = [RCMenuFallbackProbe new];
+    RCClipItem *clip = [RCClipItem new];
+    clip.primaryType = NSPasteboardTypeString;
+    for (NSNumber *size in @[@16, @48, @64, @8, @128, @4]) {
+        manager.fixturePreferences = @{kRCPrefMenuIconSizeKey:size};
+        NSImage *icon = [manager typeIconForClipItem:clip];
+        XCTAssertNotNil(icon);
+        XCTAssertTrue(icon.isTemplate);
+        XCTAssertEqualWithAccuracy(MAX(icon.size.width, icon.size.height), MIN(64, MAX(8, size.integerValue)), 0.01);
+    }
+}
+
 - (void)setUp {
     [super setUp];
     XCTAssertTrue(NSThread.isMainThread);

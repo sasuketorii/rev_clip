@@ -118,7 +118,8 @@ final class RCPermissionsPreferencesController: NSViewController {
             CGPreflightScreenCaptureAccess() ? .granted : .required
         ]
         for (index, status) in values.enumerated() {
-            indicators[index].contentTintColor = status.isReady ? .systemGreen : .systemYellow
+            indicators[index].contentTintColor = status.isReady ? .systemGreen : .systemRed
+            statuses[index].textColor = status.isReady ? .secondaryLabelColor : .systemRed
             statuses[index].stringValue = text(status.titleKey)
             statuses[index].setAccessibilityLabel(text(names[index]) + ": " + text(status.titleKey))
         }

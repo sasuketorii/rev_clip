@@ -41,6 +41,7 @@ static OSType const kRCHotKeySignature = 'RCHK';
 
 static UInt32 const kRCHotKeyIdentifierOCR = 5;
 
+
 static UInt32 const kRCHotKeyIdentifierMain = 1;
 static UInt32 const kRCHotKeyIdentifierHistory = 2;
 static UInt32 const kRCHotKeyIdentifierSnippet = 3;
@@ -173,6 +174,7 @@ static UInt32 RCHotKeySlotIdentifier(NSString *slot) {
 @property (nonatomic, readwrite) RCHotKeyAssignmentStatus status;
 @property (nonatomic, readwrite, copy, nullable) NSString *failedSlot;
 @property (nonatomic, readwrite, copy, nullable) NSString *conflictingSlot;
+@property (nonatomic, readwrite, copy, nullable) NSString *conflictingApplication;
 @property (nonatomic, readwrite) OSStatus osStatus;
 @end
 @implementation RCHotKeyAssignmentResult
@@ -208,6 +210,14 @@ static RCKeyCombo RCKeyComboFromValue(NSValue *value) {
 @interface RCHotKeyService () {
     EventHandlerRef _hotKeyEventHandlerRef;
     EventHotKeyRef _ocrHotKeyRef;
+    CFMachPortRef _menuPreferencesTap;
+    CFRunLoopSourceRef _menuPreferencesSource;
+    BOOL _menuPreferencesKeyDown;
+    UInt16 _menuPreferencesKeyCode;
+    NSUInteger _menuPreferencesGeneration;
+    __weak id _menuPreferencesOwner;
+    dispatch_block_t _menuPreferencesAction;
+
     EventHotKeyRef _mainHotKeyRef;
     EventHotKeyRef _historyHotKeyRef;
     EventHotKeyRef _snippetHotKeyRef;
@@ -253,6 +263,8 @@ static RCKeyCombo RCKeyComboFromValue(NSValue *value) {
 - (void)performOnMainThreadSync:(dispatch_block_t)block;
 
 @end
+
+static CGEventRef RCMenuPreferencesEventTap(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *context);
 
 @implementation RCHotKeyService
 
@@ -404,8 +416,98 @@ static RCKeyCombo RCKeyComboFromValue(NSValue *value) {
     }];
 }
 
+- (UInt16)rc_menuPreferencesKeyCode {
+    // Resolve once per opening, never perform layout work in the event callback.
+    if ([[RCHotKeyService baseCharacterForKeyCode:kVK_ANSI_Comma] isEqualToString:@","]) return kVK_ANSI_Comma;
+    for (UInt16 code = 0; code < 128; code++) {
+        if ([[RCHotKeyService baseCharacterForKeyCode:code] isEqualToString:@","]) return code;
+    }
+    return UINT16_MAX;
+}
+- (BOOL)rc_startMenuPreferencesCapture {
+#if RC_TESTING
+    return NO; // Fake capture in tests; never intercept the user's keyboard.
+#else
+    if (!AXIsProcessTrusted() || IsSecureEventInputEnabled()) return NO;
+    CGEventMask mask = CGEventMaskBit(kCGEventKeyDown) | CGEventMaskBit(kCGEventKeyUp);
+    _menuPreferencesTap = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap, kCGEventTapOptionDefault,
+                                         mask, RCMenuPreferencesEventTap, (__bridge void *)self);
+    if (!_menuPreferencesTap) return NO;
+    _menuPreferencesSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, _menuPreferencesTap, 0);
+    if (!_menuPreferencesSource) { CFRelease(_menuPreferencesTap); _menuPreferencesTap = NULL; return NO; }
+    CFRunLoopAddSource(CFRunLoopGetMain(), _menuPreferencesSource, kCFRunLoopCommonModes);
+    CFRunLoopAddSource(CFRunLoopGetMain(), _menuPreferencesSource, (__bridge CFStringRef)NSEventTrackingRunLoopMode);
+    return YES;
+#endif
+}
+- (void)rc_stopMenuPreferencesCapture {
+    if (_menuPreferencesTap) CGEventTapEnable(_menuPreferencesTap, false);
+    if (_menuPreferencesSource) { CFRunLoopSourceInvalidate(_menuPreferencesSource); CFRelease(_menuPreferencesSource); _menuPreferencesSource = NULL; }
+    if (_menuPreferencesTap) { CFMachPortInvalidate(_menuPreferencesTap); CFRelease(_menuPreferencesTap); _menuPreferencesTap = NULL; }
+}
+- (void)beginMenuPreferencesShortcutForOwner:(id)owner action:(dispatch_block_t)action {
+    NSAssert(NSThread.isMainThread, @"Menu shortcuts are main-thread scoped");
+    if (_menuPreferencesOwner == owner && _menuPreferencesAction) return;
+    [self endMenuPreferencesShortcutForOwner:_menuPreferencesOwner];
+    if ([self rc_panicInProgress] || !owner || !action) return;
+    _menuPreferencesKeyCode = [self rc_menuPreferencesKeyCode];
+    if (_menuPreferencesKeyCode == UINT16_MAX || ![self rc_startMenuPreferencesCapture]) return;
+    _menuPreferencesOwner = owner; _menuPreferencesAction = [action copy];
+    _menuPreferencesGeneration++;
+}
+- (void)endMenuPreferencesShortcutForOwner:(id)owner {
+    NSAssert(NSThread.isMainThread, @"Menu shortcuts are main-thread scoped");
+    if (_menuPreferencesOwner && _menuPreferencesOwner != owner) return;
+    [self rc_stopMenuPreferencesCapture];
+    _menuPreferencesOwner = nil; _menuPreferencesAction = nil;
+    _menuPreferencesKeyDown = NO; _menuPreferencesGeneration++;
+}
+- (BOOL)rc_menuTrackingContextActive {
+    return [NSRunLoop.currentRunLoop.currentMode isEqualToString:NSEventTrackingRunLoopMode];
+}
+- (CGEventRef)captureMenuPreferencesEvent:(CGEventRef)event type:(CGEventType)type {
+    if (type == kCGEventTapDisabledByTimeout || type == kCGEventTapDisabledByUserInput) {
+        if (_menuPreferencesTap) CGEventTapEnable(_menuPreferencesTap, false);
+        NSUInteger generation = _menuPreferencesGeneration;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (generation == _menuPreferencesGeneration) [self endMenuPreferencesShortcutForOwner:_menuPreferencesOwner];
+        });
+        return event;
+    }
+    if (![self rc_menuTrackingContextActive] || !_menuPreferencesOwner) {
+        if (_menuPreferencesTap) CGEventTapEnable(_menuPreferencesTap, false);
+        NSUInteger generation = _menuPreferencesGeneration;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (generation == _menuPreferencesGeneration) [self endMenuPreferencesShortcutForOwner:_menuPreferencesOwner];
+        });
+        return event;
+    }
+    if (self.shortcutRecordingOwner || !event) return event;
+    UInt16 code = (UInt16)CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
+    if (code != _menuPreferencesKeyCode) return event;
+    CGEventFlags mask = kCGEventFlagMaskCommand | kCGEventFlagMaskShift | kCGEventFlagMaskAlternate | kCGEventFlagMaskControl;
+    if (type == kCGEventKeyDown && (CGEventGetFlags(event) & mask) == kCGEventFlagMaskCommand) {
+        _menuPreferencesKeyDown = YES;
+        return NULL;
+    }
+    if (type == kCGEventKeyUp && _menuPreferencesKeyDown) {
+        _menuPreferencesKeyDown = NO;
+        NSUInteger generation = _menuPreferencesGeneration;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (generation == _menuPreferencesGeneration && _menuPreferencesOwner && _menuPreferencesAction &&
+                !self.shortcutRecordingOwner && ![self rc_panicInProgress]) {
+                dispatch_block_t action = _menuPreferencesAction;
+                action();
+            }
+        });
+        return NULL;
+    }
+    return event;
+}
+
 - (void)unregisterAllHotKeys {
     [self performOnMainThreadSync:^{
+        [self endMenuPreferencesShortcutForOwner:_menuPreferencesOwner];
         [self unregisterHotKeyRef:&_ocrHotKeyRef];
         [self unregisterHotKeyRef:&_mainHotKeyRef];
         [self unregisterHotKeyRef:&_historyHotKeyRef];
@@ -637,6 +739,141 @@ static RCKeyCombo RCKeyComboFromValue(NSValue *value) {
     return combos;
 }
 
+// CleanShot X 5 stores LAVA shortcut assignments as small JSON blobs. Read only
+// this namespace; never load its license, history, or other preference values.
+// This is a bounded compatibility adapter, not a universal OS hotkey registry.
+- (NSArray<NSData *> *)rc_cleanShotShortcutData {
+    if ([NSRunningApplication runningApplicationsWithBundleIdentifier:@"pl.maketheweb.cleanshotx"].count == 0) return @[];
+    CFStringRef domain = CFSTR("pl.maketheweb.cleanshotx");
+    NSArray *keys = CFBridgingRelease(CFPreferencesCopyKeyList(domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost));
+    NSMutableArray *values = [NSMutableArray array];
+    if (keys.count > 2048) return values;
+    for (id key in keys) {
+        if (![key isKindOfClass:NSString.class] || ![key hasPrefix:@"LAVA"] || [key length] > 128) continue;
+        id value = CFBridgingRelease(CFPreferencesCopyAppValue((__bridge CFStringRef)key, domain));
+        if ([value isKindOfClass:NSData.class] && [value length] <= 1024) [values addObject:value];
+        if (values.count >= 128) break;
+    }
+    return values;
+}
+- (BOOL)rc_isCleanShotHotKey:(RCKeyCombo)combo {
+    for (id data in [self rc_cleanShotShortcutData]) {
+        if (![data isKindOfClass:NSData.class] || [data length] > 1024) continue;
+        id entry = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+        if (![entry isKindOfClass:NSDictionary.class]) continue;
+        id code = entry[@"carbonKey"], mods = entry[@"carbonModifiers"];
+        if (![code isKindOfClass:NSNumber.class] || ![mods isKindOfClass:NSNumber.class]) continue;
+        if (CFGetTypeID((__bridge CFTypeRef)code) == CFBooleanGetTypeID() ||
+            CFGetTypeID((__bridge CFTypeRef)mods) == CFBooleanGetTypeID()) continue;
+        UInt32 mask = cmdKey | shiftKey | optionKey | controlKey;
+        if ([code doubleValue] != [code unsignedIntValue] || [code unsignedIntValue] > 127 ||
+            [mods doubleValue] != [mods unsignedIntValue] || ([mods unsignedIntValue] & ~mask) != 0 ||
+            [mods unsignedIntValue] == 0) continue;
+        if ([code unsignedIntValue] == combo.keyCode && [mods unsignedIntValue] == (combo.modifiers & mask)) return YES;
+    }
+    return NO;
+}
+
++ (NSString *)baseCharacterForKeyCode:(UInt16)keyCode {
+    TISInputSourceRef inputSource = TISCopyCurrentKeyboardLayoutInputSource();
+    CFDataRef layoutData = NULL;
+    if (inputSource != NULL) {
+        layoutData = TISGetInputSourceProperty(inputSource, kTISPropertyUnicodeKeyLayoutData);
+    }
+    if (layoutData == NULL || CFDataGetLength(layoutData) == 0) {
+        if (inputSource != NULL) {
+            CFRelease(inputSource);
+        }
+        inputSource = TISCopyCurrentASCIICapableKeyboardLayoutInputSource();
+        if (inputSource != NULL) {
+            layoutData = TISGetInputSourceProperty(inputSource, kTISPropertyUnicodeKeyLayoutData);
+        }
+    }
+    if (layoutData == NULL || CFDataGetLength(layoutData) == 0) {
+        if (inputSource != NULL) {
+            CFRelease(inputSource);
+        }
+        return @"";
+    }
+
+    const UCKeyboardLayout *keyboardLayout = (const UCKeyboardLayout *)CFDataGetBytePtr(layoutData);
+    if (keyboardLayout == NULL) {
+        if (inputSource != NULL) {
+            CFRelease(inputSource);
+        }
+        return @"";
+    }
+
+    UInt32 deadKeyState = 0;
+    UniChar characters[8];
+    UniCharCount length = 0;
+    // Modifier glyphs are already shown separately; translate the base key.
+    NSEventModifierFlags displayModifiers = 0;
+    UInt32 carbonModifiers = [RCHotKeyService carbonModifiersFromCocoaModifiers:displayModifiers];
+    UInt32 modifierKeyState = (carbonModifiers >> 8) & 0xFF;
+
+    OSStatus status = UCKeyTranslate(keyboardLayout,
+                                     keyCode,
+                                     kUCKeyActionDisplay,
+                                     modifierKeyState,
+                                     LMGetKbdType(),
+                                     kUCKeyTranslateNoDeadKeysBit,
+                                     &deadKeyState,
+                                     (UniCharCount)(sizeof(characters) / sizeof(characters[0])),
+                                     &length,
+                                     characters);
+
+    if (length > 0 && characters[0] < 0x0020) {
+        deadKeyState = 0;
+        length = 0;
+        status = UCKeyTranslate(keyboardLayout,
+                                keyCode,
+                                kUCKeyActionDisplay,
+                                0,
+                                LMGetKbdType(),
+                                kUCKeyTranslateNoDeadKeysBit,
+                                &deadKeyState,
+                                (UniCharCount)(sizeof(characters) / sizeof(characters[0])),
+                                &length,
+                                characters);
+    }
+
+    if (inputSource != NULL) {
+        CFRelease(inputSource);
+    }
+
+    if (status != noErr || length == 0) {
+        return @"";
+    }
+
+    NSString *translated = [[NSString alloc] initWithCharacters:characters length:(NSUInteger)length];
+    translated = [translated stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (translated.length == 0) {
+        return @"";
+    }
+
+    return translated.localizedUppercaseString;
+}
+
+// Standard application commands are not part of CopySymbolicHotKeys. Match the
+// active keyboard layout, not US physical positions. Configurable OS shortcuts
+// remain governed by CopySymbolicHotKeys below.
+- (BOOL)rc_isStandardCommand:(RCKeyCombo)combo {
+    UInt32 modifiers = combo.modifiers & (cmdKey | shiftKey | optionKey | controlKey);
+    NSString *key = [RCHotKeyService baseCharacterForKeyCode:(UInt16)combo.keyCode];
+    if (modifiers == cmdKey) {
+        if (combo.keyCode == kVK_Tab || combo.keyCode == kVK_ANSI_Grave) return YES;
+        return key.length == 1 && [@"CXVAZFGHMOPQSTWN," containsString:key];
+    }
+    if (modifiers == (cmdKey | shiftKey))
+        return combo.keyCode == kVK_Tab || (key.length == 1 && [@"ZGQ" containsString:key]);
+    if (modifiers == (cmdKey | optionKey))
+        return combo.keyCode == kVK_Escape || (key.length == 1 && [@"HMW" containsString:key]);
+    if (modifiers == (cmdKey | controlKey)) return [key isEqualToString:@"F"] || [key isEqualToString:@"Q"];
+    if (modifiers == (cmdKey | optionKey | shiftKey)) return [key isEqualToString:@"Q"];
+    return NO;
+}
+
 - (BOOL)rc_isEnabledSystemHotKey:(RCKeyCombo)combo {
     UInt32 mask = cmdKey | shiftKey | optionKey | controlKey;
     for (NSDictionary *entry in [self rc_systemSymbolicHotKeys]) {
@@ -653,7 +890,8 @@ static RCKeyCombo RCKeyComboFromValue(NSValue *value) {
 
 - (RCHotKeyAssignmentResult *)rc_planAssignments:(NSArray<RCHotKeyAssignment *> *)assignments
                                          targets:(NSMutableDictionary<NSString *, NSValue *> *)targets
-                                      ocrEnabled:(NSNumber *)ocrEnabled {
+                                      ocrEnabled:(NSNumber *)ocrEnabled
+                                   validationOnly:(BOOL)validationOnly {
     RCHotKeyAssignmentResult *(^fail)(RCHotKeyAssignmentStatus, NSString *, NSString *) =
     ^(RCHotKeyAssignmentStatus status, NSString *slot, NSString *conflict) {
         return [RCHotKeyAssignmentResult resultWithStatus:status failedSlot:slot conflictingSlot:conflict osStatus:noErr];
@@ -691,6 +929,15 @@ static RCKeyCombo RCKeyComboFromValue(NSValue *value) {
         // out of a duplicate stored by an older version. Keeping a value is only checked
         // when it is about to be registered; a newly chosen value is always checked.
         if (assignment.kind == RCHotKeyAssignmentKindKeep && ![self rc_slotRegistersHotKey:slot ocrEnabled:ocrEnabled]) { continue; }
+        if ([self rc_isStandardCommand:target])
+            return fail(RCHotKeyAssignmentStatusStandardReserved, slot, nil);
+        RCKeyCombo current = [self configuredKeyComboForSlot:slot];
+        BOOL unchanged = current.keyCode == target.keyCode && current.modifiers == target.modifiers;
+        if ((validationOnly || (!unchanged && assignment.kind != RCHotKeyAssignmentKindKeep)) && [self rc_isCleanShotHotKey:target]) {
+            RCHotKeyAssignmentResult *result = fail(RCHotKeyAssignmentStatusExternalConflict, slot, nil);
+            result.conflictingApplication = @"CleanShot X";
+            return result;
+        }
         NSString *targetKey = RCStringFromKeyCombo(target);
         for (NSString *other in [RCHotKeyService assignableSlots]) {
             if ([other isEqualToString:slot]) { continue; }
@@ -724,7 +971,7 @@ static RCKeyCombo RCKeyComboFromValue(NSValue *value) {
 - (RCHotKeyAssignmentResult *)validateAssignments:(NSArray<RCHotKeyAssignment *> *)assignments {
     __block RCHotKeyAssignmentResult *result = nil;
     [self performOnMainThreadSync:^{
-        result = [self rc_planAssignments:assignments targets:[NSMutableDictionary dictionary] ocrEnabled:nil];
+        result = [self rc_planAssignments:assignments targets:[NSMutableDictionary dictionary] ocrEnabled:nil validationOnly:YES];
     }];
     return result;
 }
@@ -741,7 +988,7 @@ static RCKeyCombo RCKeyComboFromValue(NSValue *value) {
     __block RCHotKeyTransaction *transaction = nil;
     [self performOnMainThreadSync:^{
         NSMutableDictionary<NSString *, NSValue *> *targets = [NSMutableDictionary dictionary];
-        result = [self rc_planAssignments:assignments targets:targets ocrEnabled:ocrEnabledAfterCommit];
+        result = [self rc_planAssignments:assignments targets:targets ocrEnabled:ocrEnabledAfterCommit validationOnly:NO];
         if (!result.succeeded) { return; }
 
         NSMutableDictionary<NSString *, NSString *> *holders = [NSMutableDictionary dictionary];
@@ -977,6 +1224,13 @@ static RCKeyCombo RCKeyComboFromValue(NSValue *value) {
         return YES;
     }
 
+    // Legacy saved assignments must not intercept Copy/Paste on the next launch.
+    // Keep the stored value visible so the user can choose a replacement.
+    if ([self rc_isStandardCommand:combo]) {
+        [self postRegistrationFailureNotificationWithIdentifier:identifier combo:combo status:eventHotKeyInvalidErr folderIdentifier:nil];
+        return NO;
+    }
+
     UInt32 carbonID = _nextCarbonID++;
     EventHotKeyRef registeredRef = NULL;
     OSStatus status = [self rc_registerEventHotKey:combo carbonID:carbonID ref:&registeredRef];
@@ -1027,6 +1281,10 @@ static RCKeyCombo RCKeyComboFromValue(NSValue *value) {
 // The only RegisterEventHotKey call. inOptions stays 0: hot keys are non-exclusive,
 // so Revclip never takes another application's shortcut away.
 - (OSStatus)rc_registerEventHotKey:(RCKeyCombo)combo carbonID:(UInt32)carbonID ref:(EventHotKeyRef *)outRef {
+#if RC_TESTING
+    *outRef = NULL;
+    return eventHotKeyInvalidErr; // Tests use the fake OS override, never user registrations.
+#endif
     EventHotKeyID hotKeyID;
     hotKeyID.signature = kRCHotKeySignature;
     hotKeyID.id = carbonID;
@@ -1089,6 +1347,11 @@ static RCKeyCombo RCKeyComboFromValue(NSValue *value) {
 
     if (!RCIsValidKeyCombo(combo)) {
         return YES;
+    }
+
+    if ([self rc_isStandardCommand:combo]) {
+        [self postRegistrationFailureNotificationWithIdentifier:0 combo:combo status:eventHotKeyInvalidErr folderIdentifier:identifier];
+        return NO;
     }
 
     // Covers start-up, reloadFolderHotKeys and the public folder entry alike.
@@ -1407,4 +1670,8 @@ static OSStatus RCHotKeyEventHandler(EventHandlerCallRef nextHandler, EventRef e
     RCHotKeyService *service = (__bridge RCHotKeyService *)userData;
     [service postNotificationForCarbonHotKeyID:hotKeyID.id eventTime:GetEventTime(event)];
     return noErr;
+}
+
+static CGEventRef RCMenuPreferencesEventTap(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *context) {
+    return [(__bridge RCHotKeyService *)context captureMenuPreferencesEvent:event type:type];
 }

@@ -445,3 +445,7 @@
 // Scheduled update reminders
 "Revclip update available" = "Revclip 업데이트 사용 가능";
 "Click to review and install the update." = "클릭하여 업데이트를 확인하고 설치하세요.";
+
+"Shortcut Conflict External" = "이 단축키는 %@에서 사용 중입니다. 둘 중 하나를 변경하세요.";
+
+"Shortcut Conflict Standard" = "이 단축키는 macOS 또는 앱의 기본 명령에 사용됩니다. 다른 단축키를 선택하세요.";

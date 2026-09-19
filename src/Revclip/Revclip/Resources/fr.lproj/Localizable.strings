@@ -445,3 +445,7 @@
 // Scheduled update reminders
 "Revclip update available" = "Mise à jour Revclip disponible";
 "Click to review and install the update." = "Cliquez pour consulter et installer la mise à jour.";
+
+"Shortcut Conflict External" = "Ce raccourci est déjà utilisé par %@. Modifiez un des raccourcis.";
+
+"Shortcut Conflict Standard" = "Ce raccourci est une commande standard de macOS ou des apps. Choisissez un autre raccourci.";

@@ -273,6 +273,10 @@ static NSDictionary<NSString *, NSDictionary *> *RCSettingsDefinitions(void) {
     switch (result.status) {
         case RCHotKeyAssignmentStatusInternalConflict:
             return [NSString stringWithFormat:@"%@ would use the same keys as %@; change one of them. %@", failed, name(result.conflictingSlot), kept];
+        case RCHotKeyAssignmentStatusStandardReserved:
+            return [NSString stringWithFormat:@"%@ is a standard macOS application command. Choose another shortcut. %@", failed, kept];
+        case RCHotKeyAssignmentStatusExternalConflict:
+            return [NSString stringWithFormat:@"%@ conflicts with %@. %@", failed, result.conflictingApplication, kept];
         case RCHotKeyAssignmentStatusSystemReserved:
             return [NSString stringWithFormat:@"%@ is an enabled macOS keyboard shortcut. %@", failed, kept];
         case RCHotKeyAssignmentStatusRegistrationFailed:
@@ -354,8 +358,8 @@ static NSDictionary<NSString *, NSDictionary *> *RCSettingsDefinitions(void) {
             @"excluded_groups":@[@"panic"],
             @"shortcut_semantics":@{
                 @"validated_against":@"the final state of the whole request, so two shortcuts may be exchanged in one settings-set",
-                @"conflicts_detected":@[@"another Revclip shortcut (named in the error)", @"an enabled macOS keyboard shortcut", @"an OS registration failure"],
-                @"not_detectable":@"other applications using the same keys: hot keys are registered non-exclusively and macOS reports no owner",
+                @"conflicts_detected":@[@"another Revclip shortcut (named in the error)", @"an enabled macOS keyboard shortcut", @"a standard macOS application command", @"a saved shortcut in running CleanShot X 5", @"an OS registration failure"],
+                @"not_detectable":@"arbitrary other applications: macOS reports no hotkey owner; the CleanShot X adapter only covers its recognized saved format",
                 @"on_failure":@"previous registrations and stored shortcuts are kept; registrations prepared for this request are released"},
             @"ocr_boundary":@{@"capture_operation":@NO, @"result_readable":@NO},
             @"set_semantics":@{@"validate_all_before_mutation":@YES, @"transactional":@NO, @"retention_confirmation_required":@NO, @"cleanup":@"scheduled after all settings writes; completion not awaited", @"login":@"registration is attempted first; OS approval may remain required", @"ui_refresh":@"RCSettingsDidChangeNotification on main after writes; userInfo.keys contains applied setting names"}});

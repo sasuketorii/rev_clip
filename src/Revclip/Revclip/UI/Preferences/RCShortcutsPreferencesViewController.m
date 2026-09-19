@@ -127,6 +127,10 @@
     self.historyMenuRecorderView.keyCombo = [service configuredKeyComboForSlot:RCHotKeySlotHistory];
     self.snippetMenuRecorderView.keyCombo = [service configuredKeyComboForSlot:RCHotKeySlotSnippet];
     self.clearHistoryRecorderView.keyCombo = [service configuredKeyComboForSlot:RCHotKeySlotClearHistory];
+    for (NSString *slot in @[RCHotKeySlotMain, RCHotKeySlotHistory, RCHotKeySlotSnippet, RCHotKeySlotClearHistory]) {
+        RCHotKeyAssignmentResult *result = [service validateAssignments:@[[RCHotKeyAssignment assignmentKeepingSlot:slot]]];
+        if (!result.succeeded) { [self.mainMenuRecorderView showAssignmentResult:result]; break; }
+    }
 }
 
 - (void)resetHotKeysToDefaults {

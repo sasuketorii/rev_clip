@@ -65,19 +65,20 @@
     XCTAssertEqual(tabs.count, 10u);
     XCTAssertEqualObjects(tabs.firstObject, @"setup");
     XCTAssertEqualObjects(tabs.lastObject, RCPreferencesTabPanic);
-    XCTAssertFalse([tabs containsObject:RCPreferencesTabBugReport]);
+    XCTAssertTrue([tabs containsObject:RCPreferencesTabBugReport]);
+    XCTAssertFalse([tabs containsObject:@"permissions"]);
     XCTAssertTrue([tabs containsObject:@"advanced"]);
-    XCTAssertTrue([[controller valueForKey:@"advancedTabIdentifiers"] containsObject:RCPreferencesTabBugReport]);
+    XCTAssertFalse([[controller valueForKey:@"advancedTabIdentifiers"] containsObject:RCPreferencesTabBugReport]);
     XCTAssertNil([controller valueForKey:@"bugReportViewController"]);
     [controller showTab:RCPreferencesTabBugReport];
     NSViewController *report = [controller valueForKey:@"bugReportViewController"];
     XCTAssertTrue([report isKindOfClass:RCBugReportPreferencesViewController.class]);
-    XCTAssertEqualObjects([(NSTextField *)[controller valueForKey:@"pageTitle"] stringValue], RCLocalizedString(@"Advanced Settings", nil));
+    XCTAssertEqualObjects([(NSTextField *)[controller valueForKey:@"pageTitle"] stringValue], RCLocalizedString(@"Bug Report", nil));
     [controller showTab:RCPreferencesTabGeneral];
     [controller showTab:RCPreferencesTabBugReport];
     XCTAssertEqual([controller valueForKey:@"bugReportViewController"], report);
     NSTableView *sidebar = [controller valueForKey:@"sidebar"];
-    XCTAssertEqual(sidebar.selectedRow, (NSInteger)[tabs indexOfObject:@"advanced"]);
+    XCTAssertEqual(sidebar.selectedRow, (NSInteger)[tabs indexOfObject:RCPreferencesTabBugReport]);
 }
 
 - (void)testBugReportDraftSurvivesCLIRefreshWithoutSending {
@@ -499,7 +500,7 @@
     NSSegmentedControl *categories = [controller valueForKey:@"categoryTabs"];
     NSTableView *sidebar = [controller valueForKey:@"sidebar"];
     XCTAssertFalse(categories.hidden);
-    XCTAssertEqual(categories.segmentCount, 4);
+    XCTAssertEqual(categories.segmentCount, 3);
     XCTAssertEqualObjects([[controller valueForKey:@"tabIdentifiers"] objectAtIndex:sidebar.selectedRow], @"advanced");
     XCTAssertEqualObjects([controller valueForKey:@"selectedTab"], @"type");
     [controller showTab:@"general"];
@@ -507,7 +508,7 @@
     [controller showTab:@"advanced"];
     XCTAssertEqualObjects([controller valueForKey:@"selectedTab"], @"type");
     [controller showTab:@"permissions"];
-    XCTAssertEqualObjects([[controller valueForKey:@"tabIdentifiers"] objectAtIndex:sidebar.selectedRow], @"permissions");
+    XCTAssertEqualObjects([[controller valueForKey:@"tabIdentifiers"] objectAtIndex:sidebar.selectedRow], @"setup");
     XCTAssertTrue(categories.hidden);
     [controller showTab:@"panic"];
     XCTAssertEqualObjects([[controller valueForKey:@"tabIdentifiers"] objectAtIndex:sidebar.selectedRow], @"panic");

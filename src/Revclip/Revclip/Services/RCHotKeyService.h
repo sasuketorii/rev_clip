@@ -72,6 +72,9 @@ typedef NS_ENUM(NSInteger, RCHotKeyAssignmentStatus) {
     RCHotKeyAssignmentStatusRegistrationFailed,
     // Panic Erase holds the write barrier; nothing is registered or stored.
     RCHotKeyAssignmentStatusUnavailable,
+    // A supported external application has a matching saved assignment.
+    RCHotKeyAssignmentStatusExternalConflict,
+    RCHotKeyAssignmentStatusStandardReserved,
 };
 
 @interface RCHotKeyAssignment : NSObject
@@ -88,6 +91,7 @@ typedef NS_ENUM(NSInteger, RCHotKeyAssignmentStatus) {
 @property (nonatomic, readonly) RCHotKeyAssignmentStatus status;
 @property (nonatomic, readonly, copy, nullable) NSString *failedSlot;
 @property (nonatomic, readonly, copy, nullable) NSString *conflictingSlot;
+@property (nonatomic, readonly, copy, nullable) NSString *conflictingApplication;
 @property (nonatomic, readonly) OSStatus osStatus;
 @property (nonatomic, readonly) BOOL succeeded;
 @end
@@ -98,6 +102,10 @@ typedef NS_ENUM(NSInteger, RCHotKeyAssignmentStatus) {
 // Main-thread scoped capture: registrations stay intact; only action dispatch is
 // suspended while a live recorder owns this weak reference.
 @property (nonatomic, weak, nullable) id shortcutRecordingOwner;
+
+// Scoped Cmd+, routing while a Revclip menu is tracking. Never persisted.
+- (void)beginMenuPreferencesShortcutForOwner:(id)owner action:(dispatch_block_t)action;
+- (void)endMenuPreferencesShortcutForOwner:(id)owner;
 
 // メインホットキー登録（メニュー表示）
 - (BOOL)registerMainHotKey:(RCKeyCombo)combo;
@@ -151,6 +159,9 @@ typedef NS_ENUM(NSInteger, RCHotKeyAssignmentStatus) {
 // KeyCombo ↔ UserDefaults変換
 + (RCKeyCombo)keyComboFromUserDefaults:(NSString *)key;
 + (void)saveKeyCombo:(RCKeyCombo)combo toUserDefaults:(NSString *)key;
+
+// Shared layout-aware base character for display and standard-command checks.
++ (NSString *)baseCharacterForKeyCode:(UInt16)keyCode;
 
 // Cocoa修飾キー ↔ Carbon修飾キー変換
 + (UInt32)carbonModifiersFromCocoaModifiers:(NSEventModifierFlags)cocoaModifiers;

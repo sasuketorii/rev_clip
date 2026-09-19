@@ -384,10 +384,10 @@
 }
 - (void)testPreparedShortcutsAreDiscardedWhenTheLoginItemFailsAndCommittedBeforeTheSwitchIsStored {
     self.api.loginSucceeds = NO;
-    NSDictionary *response = [self setValues:@{@"login_at_startup":@NO, @"shortcut_main":@{@"key_code":@6, @"modifiers":@[@"command", @"shift"]}}];
+    NSDictionary *response = [self setValues:@{@"login_at_startup":@NO, @"shortcut_main":@{@"key_code":@18, @"modifiers":@[@"command", @"shift"]}}];
     XCTAssertEqualObjects(response[@"ok"], @NO);
     XCTAssertEqual(self.api.prepareCalls, 1); XCTAssertEqual(self.api.discardCalls, 1); XCTAssertEqual(self.api.commitCalls, 0);
-    XCTAssertEqualObjects(([self hotKeys].calls), (@[@"register 6:768", @"unregister 6:768"]), @"Only what this request prepared is released");
+    XCTAssertEqualObjects(([self hotKeys].calls), (@[@"register 18:768", @"unregister 18:768"]), @"Only what this request prepared is released");
     XCTAssertEqualObjects([self getValues][@"shortcut_main"][@"key_code"], @9);
     self.api.loginSucceeds = YES; [[self hotKeys].calls removeAllObjects];
     // The switch alone re-evaluates the faster OCR registration, for the state it will have.

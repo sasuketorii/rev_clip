@@ -445,3 +445,7 @@
 // Scheduled update reminders
 "Revclip update available" = "Có bản cập nhật Revclip";
 "Click to review and install the update." = "Nhấp để xem và cài đặt bản cập nhật.";
+
+"Shortcut Conflict External" = "Phím tắt này đang được %@ sử dụng. Hãy đổi một trong hai phím tắt.";
+
+"Shortcut Conflict Standard" = "Phím tắt này là lệnh tiêu chuẩn của macOS hoặc ứng dụng. Hãy chọn phím tắt khác.";

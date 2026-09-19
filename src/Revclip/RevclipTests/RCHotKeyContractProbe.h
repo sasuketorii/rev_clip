@@ -14,8 +14,14 @@ NS_ASSUME_NONNULL_BEGIN
 - (OSStatus)rc_registerEventHotKey:(RCKeyCombo)combo carbonID:(UInt32)carbonID ref:(EventHotKeyRef _Nullable * _Nonnull)outRef;
 - (OSStatus)rc_unregisterEventHotKey:(EventHotKeyRef)ref;
 - (NSArray<NSDictionary *> *)rc_systemSymbolicHotKeys;
+- (NSArray<NSData *> *)rc_cleanShotShortcutData;
 - (NSDictionary<NSString *, NSValue *> *)rc_activeFolderKeyCombos;
 - (BOOL)rc_panicInProgress;
+- (UInt16)rc_menuPreferencesKeyCode;
+- (BOOL)rc_startMenuPreferencesCapture;
+- (BOOL)rc_menuTrackingContextActive;
+- (void)rc_stopMenuPreferencesCapture;
+- (CGEventRef)captureMenuPreferencesEvent:(CGEventRef)event type:(CGEventType)type;
 - (void)postNotificationForCarbonHotKeyID:(UInt32)carbonID eventTime:(EventTime)eventTime;
 @end
 
@@ -27,7 +33,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSMutableSet<NSString *> *refused;
 @property (nonatomic, strong) NSArray<NSDictionary *> *systemHotKeys;
 @property (nonatomic, strong) NSDictionary<NSString *, NSValue *> *folders;
+@property (nonatomic, strong) NSArray<NSData *> *externalShortcutData;
 @property BOOL panic;
+@property NSUInteger menuCaptureStarts;
+@property NSUInteger menuCaptureStops;
+@property BOOL refuseMenuCapture;
+@property BOOL outsideMenuTracking;
+@property UInt16 menuPreferencesCode;
 @property uintptr_t nextRef;
 @end
 

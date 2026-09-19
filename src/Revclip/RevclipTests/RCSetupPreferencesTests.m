@@ -17,10 +17,12 @@
 @interface RCSetupReadOnlyService : RCHotKeyService
 @property RCKeyCombo mainCombo;
 @property RCKeyCombo ocrCombo;
+@property (copy) NSArray<NSData *> *externalShortcutData;
 @end
 @implementation RCSetupReadOnlyService
+- (NSArray<NSData *> *)rc_cleanShotShortcutData { return self.externalShortcutData ?: @[]; }
 - (RCKeyCombo)configuredKeyComboForSlot:(NSString *)slot {
-    return [slot isEqualToString:RCHotKeySlotOCR] ? self.ocrCombo : self.mainCombo;
+    return [slot isEqualToString:RCHotKeySlotOCR] ? self.ocrCombo : ([slot isEqualToString:RCHotKeySlotMain] ? self.mainCombo : RCInvalidKeyCombo());
 }
 @end
 @interface RCSetupControllerProbe : RCSetupPreferencesViewController
@@ -32,6 +34,21 @@
 @interface RCSetupPreferencesTests : XCTestCase
 @end
 @implementation RCSetupPreferencesTests
+- (void)testSetupShowsSavedExternalConflictWhenSelectingClipboardTab {
+    RCSetupControllerProbe *controller = [RCSetupControllerProbe new];
+    controller.service = [RCSetupReadOnlyService new];
+    controller.service.mainCombo = RCMakeKeyCombo(21, cmdKey | shiftKey);
+    controller.service.ocrCombo = RCDefaultOCRKeyCombo();
+    controller.service.externalShortcutData = @[[@"{\"carbonKey\":21,\"carbonModifiers\":768}" dataUsingEncoding:NSUTF8StringEncoding]];
+    (void)controller.view;
+    NSSegmentedControl *selector = [controller valueForKey:@"featureSelector"];
+    selector.selectedSegment = 1; [controller featureChanged:selector];
+    RCHotKeyRecorderView *recorder = [controller valueForKey:@"recorder"];
+    XCTAssertTrue([recorder.warningLabel.stringValue containsString:@"CleanShot X"]);
+    XCTAssertEqual(recorder.keyCombo.keyCode, 21u);
+    selector.selectedSegment = 2; [controller featureChanged:selector];
+    XCTAssertEqualObjects(recorder.warningLabel.stringValue, @"");
+}
 - (void)testSetupStartsWithPermissionsAndSwitchesToSavedShortcuts {
     RCSetupControllerProbe *controller = [RCSetupControllerProbe new];
     controller.service = [RCSetupReadOnlyService new];
@@ -266,7 +283,7 @@
     XCTAssertFalse(recorder.isRecording);
     XCTAssertEqual(recorder.keyCombo.keyCode, 9u);
     XCTAssertGreaterThan(recorder.warningLabel.stringValue.length, 0u);
-    XCTAssertEqualObjects(recorder.warningLabel.textColor, NSColor.systemYellowColor);
+    XCTAssertNotNil(recorder.warningLabel.textColor);
 }
 - (void)testFocusLossAndTimeoutReleaseCapture {
     RCRecordingProbe *recorder = [self recorder];

@@ -63,6 +63,8 @@ final class RCOCRPreferencesController: NSViewController, @preconcurrency RCHotK
         historyControl.state = RCOCRCoordinator.bool(kRCOCRSaveHistoryKey, fallback: true) ? .on : .off
         correctionControl.state = RCOCRCoordinator.bool(kRCOCRCorrectionKey, fallback: false) ? .on : .off
         recorder.keyCombo = RCHotKeyService.shared().configuredKeyCombo(forSlot: RCHotKeySlotOCR)
+        let validation = RCHotKeyService.shared().validate([RCHotKeyAssignment(keepingSlot: RCHotKeySlotOCR)])
+        if !validation.succeeded { recorder.show(validation) }
         let saved = UserDefaults.standard.string(forKey: kRCOCRLanguageKey) ?? "auto"
         if let unsupportedItem, languages.itemArray.contains(unsupportedItem) { languages.menu?.removeItem(unsupportedItem) }
         unsupportedItem = nil

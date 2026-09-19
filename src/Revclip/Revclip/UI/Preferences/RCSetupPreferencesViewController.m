@@ -124,6 +124,21 @@
     BOOL externalKey = RCIsValidKeyCombo(combo) && NSIsEmptyRect([RCKeyboardShortcutView imageRectForKeyCode:combo.keyCode]);
     self.layoutNote.stringValue = RCLocalizedString(externalKey ? @"This key is not on the pictured US keyboard. Your shortcut is shown in the field above." : @"US keyboard illustration. Modifier keys are shown on the left; either side works.", nil);
     self.ocrSettingsButton.hidden = ![self.selectedSlot isEqualToString:RCHotKeySlotOCR];
+    // Revalidate saved assignments too. Preserve a refusal for a newly attempted
+    // value until the user changes context; no registration or preference writes.
+    if (self.featureSelector.selectedSegment != 0 && self.recorder.warningLabel.stringValue.length == 0) {
+        RCHotKeyAssignmentResult *result = [self.hotKeyService validateAssignments:@[[RCHotKeyAssignment assignmentKeepingSlot:self.selectedSlot]]];
+        if (!result.succeeded) {
+            self.warningConflictSlot = result.conflictingSlot;
+            self.warningShortcutState = [self shortcutState];
+            [self.recorder showAssignmentResult:result];
+        }
+    }
+}
+- (void)showPermissions {
+    (void)self.view;
+    self.featureSelector.selectedSegment = 0;
+    [self featureChanged:self.featureSelector];
 }
 - (void)featureChanged:(NSSegmentedControl *)sender {
     [self.recorder stopRecording];

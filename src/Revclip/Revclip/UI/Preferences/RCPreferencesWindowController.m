@@ -90,7 +90,6 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 @property (nonatomic, strong) RCLinkPreferencesViewController *linkViewController;
 @property (nonatomic, strong) RCAgentPreferencesViewController *agentViewController;
 @property (nonatomic, strong) RCOCRPreferencesController *ocrViewController;
-@property (nonatomic, strong) RCPermissionsPreferencesController *permissionsViewController;
 @property (nonatomic, strong, nullable) RCBugReportPreferencesViewController *bugReportViewController;
 @property (nonatomic, assign) BOOL centeredOnFirstShow;
 @property (nonatomic, assign) BOOL refreshScheduled;
@@ -155,7 +154,6 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
         self.appearancePaletteNeedsRefresh = NO;
         self.agentViewController = nil;
         self.ocrViewController = nil;
-        self.permissionsViewController = nil;
         self.linkViewController = nil;
         self.bugReportViewController = nil;
         self.window.title = RCLocalizedString(@"Preferences", nil);
@@ -264,6 +262,8 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 
 - (void)showTab:(NSString *)tabIdentifier {
     NSString *resolvedTabIdentifier = tabIdentifier.length > 0 ? tabIdentifier : RCPreferencesTabGeneral;
+    BOOL showPermissions = [resolvedTabIdentifier isEqualToString:@"permissions"];
+    if (showPermissions) resolvedTabIdentifier = @"setup";
     if ([resolvedTabIdentifier isEqualToString:@"advanced"]) resolvedTabIdentifier = self.lastAdvancedTab ?: RCPreferencesTabMenu;
     if ([resolvedTabIdentifier isEqualToString:@"privacy"]) resolvedTabIdentifier = self.lastPrivacyTab ?: @"links";
     if (self.selectedTab && ![self.selectedTab isEqualToString:resolvedTabIdentifier] &&
@@ -284,6 +284,7 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
         return;
     }
 
+    if (showPermissions && [viewController isKindOfClass:RCSetupPreferencesViewController.class]) [(RCSetupPreferencesViewController *)viewController showPermissions];
     [self switchToViewController:viewController];
     self.selectedTab = resolvedTabIdentifier;
     NSString *group = [self sidebarIdentifierForTab:resolvedTabIdentifier];
@@ -298,7 +299,7 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 }
 
 - (NSArray<NSString *> *)advancedTabIdentifiers {
-    return @[RCPreferencesTabMenu, RCPreferencesTabType, RCPreferencesTabAgents, RCPreferencesTabBugReport];
+    return @[RCPreferencesTabMenu, RCPreferencesTabType, RCPreferencesTabAgents];
 }
 - (NSArray<NSString *> *)privacyTabIdentifiers {
     return @[@"links", RCPreferencesTabExclude];
@@ -483,7 +484,7 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
     label.translatesAutoresizingMaskIntoConstraints = NO;
     NSImageView *icon = [[NSImageView alloc] initWithFrame:NSZeroRect];
     icon.image = [NSImage imageWithSystemSymbolName:[self symbolNameForTabIdentifier:identifier] accessibilityDescription:nil];
-    icon.contentTintColor = NSColor.controlAccentColor;
+    icon.contentTintColor = [identifier isEqualToString:RCPreferencesTabPanic] ? NSColor.systemYellowColor : NSColor.controlAccentColor;
     icon.translatesAutoresizingMaskIntoConstraints = NO;
     [cell addSubview:icon];
     [cell addSubview:label];
@@ -550,7 +551,7 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
 
 - (NSArray<NSString *> *)tabIdentifiers {
     return @[@"setup", RCPreferencesTabGeneral, RCPreferencesTabAppearance, RCPreferencesTabShortcuts,
-             @"ocr", @"privacy", @"permissions", RCPreferencesTabUpdates, @"advanced", RCPreferencesTabPanic];
+             @"ocr", @"privacy", RCPreferencesTabUpdates, @"advanced", RCPreferencesTabBugReport, RCPreferencesTabPanic];
 }
 
 - (nullable NSViewController *)viewControllerForTabIdentifier:(NSString *)tabIdentifier {
@@ -561,10 +562,6 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
     if ([tabIdentifier isEqualToString:@"links"]) {
         if (!self.linkViewController) self.linkViewController = [RCLinkPreferencesViewController new];
         return self.linkViewController;
-    }
-    if ([tabIdentifier isEqualToString:@"permissions"]) {
-        if (!self.permissionsViewController) self.permissionsViewController = [RCPermissionsPreferencesController new];
-        return self.permissionsViewController;
     }
     if ([tabIdentifier isEqualToString:@"ocr"]) {
         if (!self.ocrViewController) self.ocrViewController = [RCOCRPreferencesController new];
@@ -642,7 +639,6 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
     if ([tabIdentifier isEqualToString:@"links"]) return RCLocalizedString(@"Links", nil);
     if ([tabIdentifier isEqualToString:@"advanced"]) return RCLocalizedString(@"Advanced Settings", nil);
     if ([tabIdentifier isEqualToString:@"privacy"]) return RCLocalizedString(@"Privacy", nil);
-    if ([tabIdentifier isEqualToString:@"permissions"]) return RCLocalizedString(@"Permission Status", nil);
     if ([tabIdentifier isEqualToString:@"ocr"]) return @"faster OCR";
     if ([tabIdentifier isEqualToString:RCPreferencesTabBugReport]) return RCLocalizedString(@"Bug Report", nil);
     if ([tabIdentifier isEqualToString:RCPreferencesTabAgents]) return RCLocalizedString(@"Agent Settings", nil);
@@ -675,7 +671,6 @@ static NSString * const RCPreferencesTabAppearance = @"appearance";
     if ([tabIdentifier isEqualToString:@"setup"]) return @"keyboard";
     if ([tabIdentifier isEqualToString:@"advanced"]) return @"slider.horizontal.3";
     if ([tabIdentifier isEqualToString:@"privacy"]) return @"hand.raised";
-    if ([tabIdentifier isEqualToString:@"permissions"]) return @"checkmark.shield";
     if ([tabIdentifier isEqualToString:@"ocr"]) return @"viewfinder";
     if ([tabIdentifier isEqualToString:RCPreferencesTabBugReport]) {
         for (NSString *name in @[@"bubble.left.and.exclamationmark", @"ladybug", @"exclamationmark.triangle"]) {

@@ -21,7 +21,7 @@
 
 A clipboard for working with agents: ask an agent to create, edit, or delete reusable text, prompt, and image templates. Revclip CLI has no commands for reading clipboard history. This defines the CLI’s capabilities; it does not guarantee isolation from an agent with broader OS permissions.
 
-This README describes the **v0.2.3 implementation (build 61, September 19, 2026)**, including faster OCR, permission status, and 44 CLI settings. See [Releases](https://github.com/sasuketorii/rev_clip/releases) for distribution history.
+This README describes the **v0.2.4 implementation (build 62, September 19, 2026)**, including faster OCR, permission status, and 44 CLI settings. See [Releases](https://github.com/sasuketorii/rev_clip/releases) for distribution history.
 
 See the [quality verification report](docs/QUALITY_REPORT.md) for the 0.1.8 termination fix and maintenance release, measured results, and remaining acceptance checks.
 

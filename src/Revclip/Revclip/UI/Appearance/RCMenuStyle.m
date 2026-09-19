@@ -1,6 +1,14 @@
 #import "RCHotKeyRecorderView.h"
 #import "RCMenuStyle.h"
 
+static NSSize RCStyledImageSize(NSImage *image) {
+    if (!image) return NSZeroSize;
+    CGFloat maxWidth = image.isTemplate ? 64 : 56;
+    CGFloat maxHeight = image.isTemplate ? 64 : 32;
+    CGFloat scale = MIN(1, MIN(maxWidth / MAX(1, image.size.width), maxHeight / MAX(1, image.size.height)));
+    return NSMakeSize(image.size.width * scale, image.size.height * scale);
+}
+
 @interface RCStyledMenuRow : NSView
 @property(nonatomic, weak) NSMenuItem *item;
 @property(nonatomic, strong) NSImage *tintedImage;
@@ -59,6 +67,7 @@ static BOOL (^RCMenuStyleSelectionInterceptor)(NSMenuItem *);
     if (!item.isEnabled) { text = [text colorWithAlphaComponent:0.4]; }
     NSFont *font = [NSFont menuFontOfSize:0];
     NSImage *image = item.image;
+    NSSize renderedImageSize = RCStyledImageSize(image);
     if (image.isTemplate) {
         NSColor *tint = highlighted ? text : ([RCMenuStyle colorForKey:@"primary"] ?: NSColor.controlAccentColor);
         if (self.sourceImage != image || ![self.tintColor isEqual:tint]) {
@@ -75,12 +84,11 @@ static BOOL (^RCMenuStyleSelectionInterceptor)(NSMenuItem *);
         image = self.tintedImage;
     }
     BOOL historyRow = [NSStringFromSelector(item.action) isEqualToString:@"selectClipMenuItem:"];
-    CGFloat imageWidth = image ? MIN(56, image.size.width) : 0;
-    CGFloat imageSlot = historyRow ? 56 : imageWidth;
+    CGFloat imageWidth = renderedImageSize.width;
+    CGFloat imageSlot = historyRow ? MAX(56, imageWidth) : imageWidth;
     CGFloat leading = 16;
     if (image) {
-        CGFloat scale = MIN(1, MIN(56 / MAX(1,image.size.width),32 / MAX(1,image.size.height)));
-        NSSize size = NSMakeSize(image.size.width*scale,image.size.height*scale);
+        NSSize size = renderedImageSize;
         NSRect rect = NSMakeRect(leading,(NSHeight(self.bounds)-size.height)/2,size.width,size.height);
         [image drawInRect:rect fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:item.enabled ? 1 : 0.4 respectFlipped:YES hints:nil];
     }
@@ -127,14 +135,19 @@ static BOOL (^RCMenuStyleSelectionInterceptor)(NSMenuItem *);
         return;
     }
     RCStyledMenuRow *row = [item.view isKindOfClass:RCStyledMenuRow.class] ? (id)item.view : nil;
+    NSSize textSize = [item.title sizeWithAttributes:@{NSFontAttributeName:[NSFont menuFontOfSize:0]}];
+    NSSize imageSize = RCStyledImageSize(item.image);
+    BOOL historyRow = [NSStringFromSelector(item.action) isEqualToString:@"selectClipMenuItem:"];
+    CGFloat imageSlot = historyRow ? MAX(56, imageSize.width) : imageSize.width;
+    CGFloat width = MIN(560, MAX(220, textSize.width + (imageSlot ? imageSlot + 8 : 0) + (item.hasSubmenu || item.keyEquivalent.length ? 48 : 32)));
+    CGFloat height = item.isSeparatorItem ? 12 : MAX(historyRow ? 42 : 28, MAX(textSize.height + 10, imageSize.height + 10));
     if (!row) {
-        NSSize textSize = [item.title sizeWithAttributes:@{NSFontAttributeName:[NSFont menuFontOfSize:0]}];
-        BOOL historyRow = [NSStringFromSelector(item.action) isEqualToString:@"selectClipMenuItem:"];
-        CGFloat width = MIN(560, MAX(220, textSize.width + (historyRow ? 64 : item.image ? MIN(56,item.image.size.width)+8 : 0) + (item.hasSubmenu || item.keyEquivalent.length ? 48 : 32)));
-        row = [[RCStyledMenuRow alloc] initWithFrame:NSMakeRect(0,0,width,item.isSeparatorItem ? 12 : MAX(historyRow ? 42 : 28,MAX(textSize.height+10,item.image ? MIN(32,item.image.size.height)+10 : 0)))];
+        row = [[RCStyledMenuRow alloc] initWithFrame:NSMakeRect(0, 0, width, height)];
         row.autoresizingMask = NSViewWidthSizable;
         row.item = item;
         item.view = row;
+    } else {
+        [row setFrameSize:NSMakeSize(width, height)];
     }
     row.needsDisplay = YES;
 }

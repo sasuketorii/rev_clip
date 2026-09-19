@@ -154,10 +154,13 @@ static CGEventRef RCRecorderTap(CGEventTapProxy proxy, CGEventType type, CGEvent
     [self showWarningMessage:message];
 }
 - (void)showWarningMessage:(NSString *)message {
-    self.warningLabel.textColor = NSColor.systemYellowColor;
+    self.warningLabel.textColor = [NSColor colorWithName:@"RCShortcutWarning" dynamicProvider:^NSColor *(NSAppearance *appearance) {
+        BOOL dark = [[appearance bestMatchFromAppearancesWithNames:@[NSAppearanceNameAqua, NSAppearanceNameDarkAqua]] isEqualToString:NSAppearanceNameDarkAqua];
+        return dark ? NSColor.systemYellowColor : [NSColor colorWithSRGBRed:0.55 green:0.40 blue:0 alpha:1];
+    }];
     self.warningLabel.stringValue = message;
     if (self.warningLabel.stringValue.length) {
-        [self.warningLabel.superview layoutSubtreeIfNeeded];
+        [(self.warningLabel.enclosingScrollView.documentView ?: self.window.contentView ?: self.warningLabel.superview) layoutSubtreeIfNeeded];
         [self.warningLabel scrollRectToVisible:self.warningLabel.bounds];
         NSAccessibilityPostNotificationWithUserInfo(self.warningLabel, NSAccessibilityAnnouncementRequestedNotification,
             @{NSAccessibilityAnnouncementKey:self.warningLabel.stringValue, NSAccessibilityPriorityKey:@(NSAccessibilityPriorityHigh)});
@@ -513,6 +516,9 @@ static CGEventRef RCRecorderTap(CGEventTapProxy proxy, CGEventType type, CGEvent
         case RCHotKeyAssignmentStatusInternalConflict:
             return [NSString stringWithFormat:RCLocalizedString(@"Shortcut Conflict Internal", nil),
                     [self localizedNameForSlot:result.conflictingSlot]];
+        case RCHotKeyAssignmentStatusStandardReserved: return RCLocalizedString(@"Shortcut Conflict Standard", nil);
+        case RCHotKeyAssignmentStatusExternalConflict:
+            return [NSString stringWithFormat:RCLocalizedString(@"Shortcut Conflict External", nil), result.conflictingApplication ?: @""];
         case RCHotKeyAssignmentStatusSystemReserved: return RCLocalizedString(@"Shortcut Conflict System", nil);
         case RCHotKeyAssignmentStatusRegistrationFailed:
             // An OS refusal. Another application using the same keys does not cause it and
@@ -634,84 +640,7 @@ static CGEventRef RCRecorderTap(CGEventTapProxy proxy, CGEventType type, CGEvent
 }
 
 + (NSString *)rc_translatedStringForKeyCode:(UInt16)keyCode modifiers:(NSEventModifierFlags)modifiers {
-    TISInputSourceRef inputSource = TISCopyCurrentKeyboardLayoutInputSource();
-    CFDataRef layoutData = NULL;
-    if (inputSource != NULL) {
-        layoutData = TISGetInputSourceProperty(inputSource, kTISPropertyUnicodeKeyLayoutData);
-    }
-    if (layoutData == NULL || CFDataGetLength(layoutData) == 0) {
-        if (inputSource != NULL) {
-            CFRelease(inputSource);
-        }
-        inputSource = TISCopyCurrentASCIICapableKeyboardLayoutInputSource();
-        if (inputSource != NULL) {
-            layoutData = TISGetInputSourceProperty(inputSource, kTISPropertyUnicodeKeyLayoutData);
-        }
-    }
-    if (layoutData == NULL || CFDataGetLength(layoutData) == 0) {
-        if (inputSource != NULL) {
-            CFRelease(inputSource);
-        }
-        return @"";
-    }
-
-    const UCKeyboardLayout *keyboardLayout = (const UCKeyboardLayout *)CFDataGetBytePtr(layoutData);
-    if (keyboardLayout == NULL) {
-        if (inputSource != NULL) {
-            CFRelease(inputSource);
-        }
-        return @"";
-    }
-
-    UInt32 deadKeyState = 0;
-    UniChar characters[8];
-    UniCharCount length = 0;
-    // Modifier glyphs are already shown separately; translate the base key.
-    NSEventModifierFlags displayModifiers = 0;
-    UInt32 carbonModifiers = [RCHotKeyService carbonModifiersFromCocoaModifiers:displayModifiers];
-    UInt32 modifierKeyState = (carbonModifiers >> 8) & 0xFF;
-
-    OSStatus status = UCKeyTranslate(keyboardLayout,
-                                     keyCode,
-                                     kUCKeyActionDisplay,
-                                     modifierKeyState,
-                                     LMGetKbdType(),
-                                     kUCKeyTranslateNoDeadKeysBit,
-                                     &deadKeyState,
-                                     (UniCharCount)(sizeof(characters) / sizeof(characters[0])),
-                                     &length,
-                                     characters);
-
-    if (length > 0 && characters[0] < 0x0020) {
-        deadKeyState = 0;
-        length = 0;
-        status = UCKeyTranslate(keyboardLayout,
-                                keyCode,
-                                kUCKeyActionDisplay,
-                                0,
-                                LMGetKbdType(),
-                                kUCKeyTranslateNoDeadKeysBit,
-                                &deadKeyState,
-                                (UniCharCount)(sizeof(characters) / sizeof(characters[0])),
-                                &length,
-                                characters);
-    }
-
-    if (inputSource != NULL) {
-        CFRelease(inputSource);
-    }
-
-    if (status != noErr || length == 0) {
-        return @"";
-    }
-
-    NSString *translated = [[NSString alloc] initWithCharacters:characters length:(NSUInteger)length];
-    translated = [translated stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    if (translated.length == 0) {
-        return @"";
-    }
-
-    return translated.localizedUppercaseString;
+    return [RCHotKeyService baseCharacterForKeyCode:keyCode];
 }
 
 @end

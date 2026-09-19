@@ -50,6 +50,24 @@
     XCTAssertNil(item.view);
     XCTAssertEqualObjects(item.title, @"Test\nWrapped");
 }
+- (void)testExistingStyledRowResizesForLargeIconsWithoutEnlargingThumbnails {
+    [NSUserDefaults.standardUserDefaults setBool:YES forKey:@"RCMenuCustomColorsEnabled"];
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"Icon" action:nil keyEquivalent:@""];
+    NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(16, 16)];
+    image.template = YES; item.image = image;
+    [RCMenuStyle applyToItem:item];
+    NSView *row = item.view;
+    image.size = NSMakeSize(64, 64);
+    [RCMenuStyle applyToItem:item];
+    XCTAssertEqual(row, item.view);
+    XCTAssertGreaterThanOrEqual(row.frame.size.height, 74);
+    image.template = NO;
+    [RCMenuStyle applyToItem:item];
+    XCTAssertLessThanOrEqual(row.frame.size.height, 42);
+    image.template = YES; image.size = NSMakeSize(16, 16);
+    [RCMenuStyle applyToItem:item];
+    XCTAssertLessThanOrEqual(row.frame.size.height, 42);
+}
 - (void)menuAction:(id)sender { [self.activation fulfill]; }
 - (void)testAccessibleActivationDispatchesExistingActionAndDisabledItemDoesNot {
     [NSUserDefaults.standardUserDefaults setBool:YES forKey:@"RCMenuCustomColorsEnabled"];
