@@ -32,7 +32,7 @@
 5. **メニューの後ろで待っている要求は、チケットを持たない。** 停止の世代（`invalidationEpoch`）と、`RCClipboardService.monitoringGeneration` の両方が一致した時だけ、開始する（`RCOCRNoticeTests.testRequestWaitsBehindMenuGate…`）。
 6. **画面を止める前に、自分のメニューの追跡が終わっている。** かつ、自分のメニュー・通知・プレビューは、取得の対象から外す（`RCMenuParityTests` のメニュー待機の5件、`RCOCRNoticeTests.testCaptureExcludes…`）。
 7. **ショートカットの変更が失敗したら、以前の登録と保存値が残る。** 対象は、全スロットで共通（`RCHotKeyContractTests`）。
-8. **他のアプリを、名指ししない。排他で登録しない。ほかのアプリの設定を読まない。キーボードを常時監視しない。**
+8. **排他で登録しない。キーボードを常時監視しない。** CleanShot Xの既知の設定形式だけを読む競合検出と一時event tapの現行仕様は [DEVELOPMENT_HANDOFF.md](DEVELOPMENT_HANDOFF.md) を参照。
 9. **整形は、文字を削除も書き換えもしない。** 連結するのは、条件を満たした断片だけ。列の境界は、別の行のまま（`RCOCRVisionTests`）。
 10. **通常版とDemoで、機能の差を作らない。** 違うのは、配布のメタデータだけ（[DISTRIBUTIONS.md](DISTRIBUTIONS.md)、`scripts/check_demo_parity.py`）。
 11. **Servicesの応答は、サービス用のペーストボードだけに書く。** 一般のクリップボードへの書き込みと、貼り付けのキー送信は、しない。取消・文字を持たない項目・停止・時間切れでは、何も返さない。応答を待っている間は、ほかのメニューを開かない（`RCMenuParityTests` のServicesの8件）。
@@ -247,3 +247,7 @@ node "$REVH" command run --guard required --class heavy --root "$PWD" --task <�
 ## 8. 未実施の範囲
 
 [REV_OCR.md](REV_OCR.md) の「現在の検証の状態」が正本。ここには、写さない。
+
+## 2026-09-25: 初回権限と認識期限
+
+設定ページを開くだけでは権限を要求しない。画面収録の設定ボタンとOCR許可アラートの続行は、同じ `openScreenRecordingSettings` から未許可時にOSへ登録要求してから設定を開く。初回認識成功までの期限は60秒、以後10秒。Vision requestは対応言語照会より先に取消セルへ登録する。遅延ワーカー・取消・連打の回帰は `RCOCRFirstRunTests`。詳細な原因と観測の限界は [PROJECT_FINDINGS.md](../PROJECT_FINDINGS.md)。

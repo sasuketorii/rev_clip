@@ -192,13 +192,16 @@ enum RCVisionTextRecognizer {
     static func recognizeCrop(_ image: CGImage, settings: RCOCRSettings, cancellation: RCOCRCancellation) throws -> RCOCRRecognition {
         try cancellation.check()
         let request = VNRecognizeTextRequest()
+        // Language discovery can initialize Vision on a fresh installation. Install
+        // cancellation before that work, not only just before perform().
+        try cancellation.install(request)
+        defer { cancellation.releaseRequest() }
         request.recognitionLevel = .accurate
         request.usesLanguageCorrection = settings.correction
         request.automaticallyDetectsLanguage = settings.language == "auto"
         request.minimumTextHeight = 0
         request.recognitionLanguages = try languages(for: settings, supported: request.supportedRecognitionLanguages())
-        try cancellation.install(request)
-        defer { cancellation.releaseRequest() }
+        try cancellation.check()
         let start = ProcessInfo.processInfo.systemUptime
         try VNImageRequestHandler(cgImage: image, orientation: .up, options: [:]).perform([request])
         try cancellation.check()

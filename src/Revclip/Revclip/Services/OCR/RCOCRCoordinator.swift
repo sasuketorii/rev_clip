@@ -35,13 +35,18 @@ final class RCOCRCoordinator: NSObject {
     private(set) var operation: UUID?
     private var context: RCOCRCommitContext?
     private var cancellation: RCOCRCancellation?
-    private var workerBusy = false
+    private(set) var workerBusy = false
+    // Vision initializes its models lazily. A cold run must not inherit the
+    // steady-state deadline; successful initialization lasts for this process.
+    private(set) var recognitionIsWarm = false
+    var recognitionTimeout: Double { recognitionIsWarm ? 10 : 60 }
     private var historyPending = false
     private var selection: RCOCRSelectionController?
     private var frame: CGImage?
     private var timer: Timer?
     private var deadlineLength = 0.0
     private var lastActivity = 0.0
+    var uptime: () -> Double = { ProcessInfo.processInfo.systemUptime }
     // Time of the input event that started the current operation; 0 when unknown.
     private var startingEventTime = 0.0
     private var noticeTimer: Timer?
@@ -51,6 +56,10 @@ final class RCOCRCoordinator: NSObject {
     private var observing = false
     private var enabled = true
     private var saveHistory = true
+    var screenCaptureAccess: () -> Bool = { CGPreflightScreenCaptureAccess() }
+    var commitRecognition: @MainActor (String, RCOCRCommitContext) async -> RCOCRCommitResult = { text, context in
+        await RCClipboardService.shared().commitRecognizedText(text, context: context)
+    }
 
     @objc static func unavailableReason() -> String? {
         guard #available(macOS 14.0, *) else { return RCLocalizedString("OCR OS Unsupported", comment: "") }
@@ -127,7 +136,7 @@ final class RCOCRCoordinator: NSObject {
     }
     private func deadline(_ seconds: Double, id: UUID) {
         timer?.invalidate()
-        deadlineLength = seconds; lastActivity = ProcessInfo.processInfo.systemUptime
+        deadlineLength = seconds; lastActivity = uptime()
         armDeadline(after: seconds, id: id)
     }
     private func armDeadline(after seconds: Double, id: UUID) {
@@ -136,14 +145,20 @@ final class RCOCRCoordinator: NSObject {
                 guard let self, self.operation == id else { return }
                 // Pointer activity only records a time; the one timer re-arms itself for
                 // what is left, instead of being rebuilt on every drag event.
-                let remaining = self.deadlineLength - (ProcessInfo.processInfo.systemUptime - self.lastActivity)
-                if remaining > 0.05 { self.armDeadline(after: remaining, id: id); return }
-                self.cancel(); self.showNotice("OCR Timed Out")
+                if let remaining = self.checkDeadline(id: id) { self.armDeadline(after: remaining, id: id) }
             }
         }
         RunLoop.main.add(timer!, forMode: .common)
     }
-    private func noteActivity() { lastActivity = ProcessInfo.processInfo.systemUptime }
+    // Shared by the real timer and deterministic delayed-worker tests.
+    func checkDeadline(id: UUID) -> Double? {
+        guard operation == id else { return nil }
+        let remaining = deadlineLength - (uptime() - lastActivity)
+        if remaining > 0.05 { return remaining }
+        cancel(); showNotice("OCR Timed Out")
+        return nil
+    }
+    private func noteActivity() { lastActivity = uptime() }
     /// Installed by RCMenuManager: runs the block once no Revclip menu is tracking.
     /// The hotkey can arrive while the status menu is open; that menu must close
     /// through AppKit's own teardown before the screen is frozen.
@@ -242,7 +257,7 @@ final class RCOCRCoordinator: NSObject {
             showNotice(Self.noticeKey(for: refusal)); return
         }
         // No permission request or enumeration happens merely by launching the app.
-        guard CGPreflightScreenCaptureAccess() else {
+        guard screenCaptureAccess() else {
             let permissionID = UUID(); operation = permissionID; context = ticket
             let alert = NSAlert(); permissionAlert = alert
             alert.messageText = RCLocalizedString("OCR Permission Required", comment: "")
@@ -253,7 +268,6 @@ final class RCOCRCoordinator: NSObject {
             let stillActive = operation == permissionID
             cancel()
             if stillActive && response == .alertFirstButtonReturn {
-                _ = CGRequestScreenCaptureAccess()
                 Self.openScreenRecordingSettings()
             }
             return
@@ -328,8 +342,8 @@ final class RCOCRCoordinator: NSObject {
         guard operation == id, let image = frame, let settings = activeSettings else { return }
         guard rect.width * rect.height <= 16_000_000 else { cancel(); showNotice("OCR Input Too Large"); return }
         selection?.close(); selection = nil; frame = nil
-        let cell = RCOCRCancellation(); cancellation = cell; workerBusy = true
-        deadline(10, id: id)
+        let cell = RCOCRCancellation()
+        beginRecognition(cell: cell, id: id)
         Task { @MainActor in
             do {
                 let crop = try await Task.detached(priority: .userInitiated) {
@@ -351,19 +365,27 @@ final class RCOCRCoordinator: NSObject {
     }
     // Separate task owns only the crop, so the capture frame/selection closure
     // cannot retain the full display while Vision is running.
-    private func recognizeCrop(_ crop: CGImage, id: UUID, settings: RCOCRSettings, cell: RCOCRCancellation) {
-        Task { @MainActor in
+    func beginRecognition(cell: RCOCRCancellation, id: UUID) {
+        cancellation = cell
+        workerBusy = true
+        deadline(recognitionTimeout, id: id)
+    }
+    @discardableResult
+    func recognizeCrop(_ crop: CGImage, id: UUID, settings: RCOCRSettings, cell: RCOCRCancellation,
+                       using recognize: @escaping @Sendable (CGImage, RCOCRSettings, RCOCRCancellation) async throws -> RCOCRRecognition = { crop, settings, cell in
+                           try await Task.detached(priority: .userInitiated) {
+                               try autoreleasepool { try RCVisionTextRecognizer.recognizeCrop(crop, settings: settings, cancellation: cell) }
+                           }.value
+                       }) -> Task<Void, Never> {
+        return Task { @MainActor in
             do {
-                let result = try await Task.detached(priority: .userInitiated) {
-                    try autoreleasepool { try RCVisionTextRecognizer.recognizeCrop(crop, settings: settings, cancellation: cell) }
-                }.value
+                let result = try await recognize(crop, settings, cell)
+                self.recognitionIsWarm = true
                 self.workerBusy = false
                 guard self.operation == id, let context = self.context else { return }
-                guard CGPreflightScreenCaptureAccess() else { self.cancel(); self.showNotice("OCR Permission Required"); return }
+                guard self.screenCaptureAccess() else { self.cancel(); self.showNotice("OCR Permission Required"); return }
                 self.timer?.invalidate(); self.dismissNotice()
-                await self.commit(result.text, context: context, id: id) { text, context in
-                    await RCClipboardService.shared().commitRecognizedText(text, context: context)
-                }
+                await self.commit(result.text, context: context, id: id, using: self.commitRecognition)
             } catch {
                 self.workerBusy = false
                 guard self.operation == id else { return }
@@ -402,9 +424,18 @@ final class RCOCRCoordinator: NSObject {
     }
     /// Test access to the state commit(_:context:id:using:) reads and leaves behind.
     var noticeIsVisible: Bool { notice != nil }
-    func adoptOperationForTesting(_ id: UUID?) { operation = id }
+    func adoptOperationForTesting(_ id: UUID?, context: RCOCRCommitContext? = nil) { operation = id; self.context = context }
     @objc static func openScreenRecordingSettings() {
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") { NSWorkspace.shared.open(url) }
+        requestScreenRecordingAccess(preflight: CGPreflightScreenCaptureAccess,
+                                     request: CGRequestScreenCaptureAccess) {
+            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") { NSWorkspace.shared.open(url) }
+        }
+    }
+    /// Called only by an explicit user action, never by loading preferences.
+    /// Request first so a fresh install is registered in the TCC settings list.
+    static func requestScreenRecordingAccess(preflight: () -> Bool, request: () -> Bool, openSettings: () -> Void) {
+        if !preflight() { _ = request() }
+        openSettings()
     }
     private func dismissNotice() {
         noticeTimer?.invalidate(); noticeTimer = nil
