@@ -13,3 +13,7 @@ Debug全443件、最終関連25件、Python/ネイティブCLI 97件が成功。
 ## 2026-09-25 FIRST-RUN-H3: 権限確認の対照実験
 
 製品権限controllerを読み込む新規IDの専用アプリと、Cocoa + CGRequestだけの独立した署名アプリで比較した。どちらもOS側登録完了に至らなかった。ネイティブUIの呼出成功とOS設定の登録完了を分離して記録する。証拠は `.local/first-run/permission-page.json`、`tcc-registration.log`、`control-click.json`。
+
+## 2026-09-25 FIRST-RUN-H4: 実機受入の待機条件
+
+公開後の実機確認前に `IOConsoleUsers` の `CGSSessionScreenIsLocked=Yes` を確認し、利用者へ解除を依頼した。ロック解除なしで権限ダイアログ確認を完了扱いにしない。APIのみの対照実験の失敗を、この後のロック観測だけで説明しない。公開・署名・公証・匿名配信照合は完了しており、実機受入とは別の状態として記録する。

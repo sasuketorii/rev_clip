@@ -1,12 +1,16 @@
-# v0.2.5（build 63）候補の修正・検証 — 2026-09-25
+# v0.2.5（build 63）の修正・配信検証 — 2026-09-25
 
 - セットアップの画面収録ボタンにもOSの権限要求を追加し、OCR許可アラートと共通化。
 - 初回OCR成功までは認識上限60秒、以後10秒。言語照会前からVision requestへ取消を伝える。
-- Debug全443件成功。その後、コピー境界の注入を加えた最終関連25件も成功。Python/ネイティブCLI 97件成功、通常版/Demo機能差チェック成功。
+- [公開版](https://github.com/sasuketorii/rev_clip/releases/tag/v0.2.5)、製品SHA `2ef3d1290edffdfa2e525828347ab314129d9be0`。Woodpecker **#17 success**、[macOS CI 36123893479](https://github.com/sasuketorii/rev_clip/actions/runs/36123893479)でDebug／Release各 **443件成功**、Universalビルド成功。
+- [Release 36125869965](https://github.com/sasuketorii/rev_clip/actions/runs/36125869965)で署名・Apple公証・DMG公開・配信照合がすべて成功。公開DMGを匿名取得し、Developer ID／同梱CLI・Sparkleの署名、空entitlement、Gatekeeper、公証ticket、アプリの公開鍵によるSparkle Ed25519署名を別途検証。
+- latest Release・appcast・DMGの版 **0.2.5 / 63** と公開タグSHAを照合。DMG SHA-256: `b9a951ad072c93965c8647a515b1a511ccd6b58f2190eadb8fc265a5616bc555`。receipt: `.local/first-run/release-delivery.json`。
+- ローカルDebug／Release全443件、最終関連25件ずつ、Python/ネイティブCLI 97件、通常版/Demo機能差チェックが成功。
 - 初回12秒の認識結果が一度だけコピー確定へ進むこと、60秒超の取消、連打で処理を増やさないこと、遅い結果の破棄を検証。
-- 新規bundle IDの署名アプリで製品の権限ページとAPI要求を確認。ただし、このMacではOS一覧への登録が完了しなかった。Revclipを含まない最小署名アプリでも同じだったため、OS側の登録完了は未確認。権限DBや既存アプリの権限は変更していない。
-- 実際に報告された新規端末の初期化時間、Intel/macOS 14、Sparkle経由の更新インストールは未確認。OS呼出自体の永久停止を強制終了できるという保証はしない。
-- 詳細は [原因調査](../PROJECT_FINDINGS.md) と [検証環境の記録](../HARNESS_FINDINGS.md)。ローカル証拠は `.local/first-run/`。公開CI・署名・公証・匿名配信の結果は公開後に追記する。
+- **実機受入は未完了**。新規bundle IDの署名アプリで製品の権限ページとAPI要求を確認したが、このMacではOS一覧への登録が完了しなかった。Revclipを含まない最小署名アプリでも同じだった。後続確認時にはOSの画面ロックを検出し、解除待ち。ロックがそれ以前の登録失敗の原因だったとは断定していない。
+- 実際に報告された新規端末の初期化時間、Intel/macOS 14、Sparkle経由の更新インストールは未確認。OS呼出自体の永久停止を強制終了できるという保証はしない。公開完了をこれらの受入完了として扱わない。
+- 既存の通常版／Demo版のインストール、設定、履歴、TCC権限は変更していない。検証専用アプリと専用データは片付けた。
+- 詳細は [原因調査](../PROJECT_FINDINGS.md) と [検証環境の記録](../HARNESS_FINDINGS.md)。ローカル証拠は `.local/first-run/`。
 
 ---
 
