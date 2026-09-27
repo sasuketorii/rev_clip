@@ -39,7 +39,7 @@ final class RCOCRFirstRunTests: XCTestCase {
     private let settings = RCOCRSettings(language: "ja-en", correction: false, preferredLanguages: ["ja"])
 
     @MainActor
-    func testColdRecognitionSurvivesOldDeadlineAndThenUsesWarmBudget() async throws {
+    func testRecognitionCommitsWithinBoundedDeadline() async throws {
         let coordinator = RCOCRCoordinator()
         defer { coordinator.cancel() }
         let id = UUID(), cell = RCOCRCancellation(), held = RCHeldRecognition()
@@ -55,8 +55,8 @@ final class RCOCRFirstRunTests: XCTestCase {
             try await held.run(started: started)
         }
         await fulfillment(of: [started], timeout: 2)
-        now += 12
-        XCTAssertNotNil(coordinator.checkDeadline(id: id), "Cold initialization must survive the old 10 second limit")
+        now += 2
+        XCTAssertNotNil(coordinator.checkDeadline(id: id), "Recognition within the deadline must remain active")
         XCTAssertEqual(coordinator.operation, id)
         XCTAssertNoThrow(try cell.check())
         await held.succeed()
@@ -64,7 +64,7 @@ final class RCOCRFirstRunTests: XCTestCase {
         XCTAssertFalse(coordinator.workerBusy)
         XCTAssertTrue(coordinator.recognitionIsWarm)
         XCTAssertEqual(coordinator.recognitionTimeout, 10)
-        XCTAssertEqual(copied, ["Synthetic OCR"], "A slow first result reaches the existing clipboard commit exactly once")
+        XCTAssertEqual(copied, ["Synthetic OCR"], "A valid result reaches the existing clipboard commit exactly once")
         XCTAssertNil(coordinator.operation)
         XCTAssertTrue(coordinator.noticeIsVisible)
     }
@@ -83,7 +83,7 @@ final class RCOCRFirstRunTests: XCTestCase {
             try await held.run(started: started)
         }
         await fulfillment(of: [started], timeout: 2)
-        now += 61
+        now += 11
         XCTAssertNil(coordinator.checkDeadline(id: id))
         XCTAssertNil(coordinator.operation)
         XCTAssertThrowsError(try cell.check())

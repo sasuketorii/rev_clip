@@ -95,6 +95,15 @@ static RCKeyCombo RCCombo(UInt32 code, UInt32 modifiers) { return RCMakeKeyCombo
     XCTAssertEqual([self.service captureMenuPreferencesEvent:event type:kCGEventKeyDown], event);
     CFRelease(event);
 }
+- (void)testDeferredCleanupOfDeadOwnerDoesNotRemoveNewOwnersCapture {
+    NSObject *owner = [NSObject new];
+    [self.service beginMenuPreferencesShortcutForOwner:owner action:^{}];
+    NSUInteger stops = self.service.menuCaptureStops;
+    [self.service endMenuPreferencesShortcutForOwner:nil];
+    XCTAssertEqual(self.service.menuCaptureStops, stops);
+    [self.service endMenuPreferencesShortcutForOwner:owner];
+    XCTAssertEqual(self.service.menuCaptureStops, stops + 1);
+}
 - (void)testMenuPreferencesCaptureUsesResolvedLayoutAndPassesThroughOutsideTracking {
     NSObject *owner = [NSObject new]; self.service.menuPreferencesCode = 13;
     [self.service beginMenuPreferencesShortcutForOwner:owner action:^{ XCTFail(@"No keyUp delivered"); }];

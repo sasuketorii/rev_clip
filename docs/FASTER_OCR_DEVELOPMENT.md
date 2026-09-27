@@ -11,6 +11,7 @@
 |---|---|---|
 | 操作の状態・世代・取得・確定の前後 | `Revclip/Services/OCR/RCOCRCoordinator.swift` | `request(fromApplication:eventTime:origin:)`（ホットキーとメニューの単一の入口）、`commit(_:context:id:using:)`、`invalidate()`、`cancel()` |
 | 選択UIと十字 | `Revclip/Services/OCR/RCOCRSelectionController.swift` | `show()`、`close()`、`refreshPointer()`、`releasePointer()` |
+| 認識の分離・準備・上限付き通信 | `Revclip/Services/OCR/RCOCRWorkerService.swift`、`RCOCRWorkerClient.swift`、`RCOCRWorkerProtocol.swift`、`RevclipOCRWorker/main.swift` | `ensurePrepared`、`recognize`、プロセス終了と入力／出力上限 |
 | 認識と整形 | `Revclip/Services/OCR/RCVisionTextRecognizer.swift` | `recognizeCrop`、`format(_:imageSize:)`、`isListMarker(_:)` |
 | コピーの確定と履歴の受付 | `Revclip/Services/RCClipboardService.m` | `beginOCRFromApplication:saveToHistory:refusal:`、`commitRecognizedText:context:completion:`、`persistClipData:` |
 | メニューの追跡の終了待ち | `Revclip/Managers/RCMenuManager.m` | `performAfterMenuTrackingEnds:`、`menuDidClose:`、`menuWillOpen:` |
@@ -250,4 +251,8 @@ node "$REVH" command run --guard required --class heavy --root "$PWD" --task <�
 
 ## 2026-09-25: 初回権限と認識期限
 
-設定ページを開くだけでは権限を要求しない。画面収録の設定ボタンとOCR許可アラートの続行は、同じ `openScreenRecordingSettings` から未許可時にOSへ登録要求してから設定を開く。初回認識成功までの期限は60秒、以後10秒。Vision requestは対応言語照会より先に取消セルへ登録する。遅延ワーカー・取消・連打の回帰は `RCOCRFirstRunTests`。詳細な原因と観測の限界は [PROJECT_FINDINGS.md](../PROJECT_FINDINGS.md)。
+設定ページを開くだけでは権限を要求しない。画面収録の設定ボタンとOCR許可アラートの続行は、同じ `openScreenRecordingSettings` から未許可時にOSへ登録要求してから設定を開く。2026-09-27の候補ではモデル準備を最大90秒の独立段階に分け、通常認識の子プロセス期限は8秒、外側は10秒とする。取消セルは子プロセスの停止を呼び、子の終了確認前にはワーカー枠を開けない。子は親の終了と自身の期限も監視する。準備の成功記録はOS・ヘルパー・設定に結び付け、エンジン失敗時には無効化する。`RCOCRWorkerTests` は停止不能な依存の強制終了・直後の再実行・早期終了のSIGPIPE防止を、`RCOCRPreparationTests` は成功時だけの再利用・取消・同時要求の合流を確認する。既存の遅延ワーカー・取消・連打は `RCOCRFirstRunTests`。詳細な原因と観測の限界は [PROJECT_FINDINGS.md](../PROJECT_FINDINGS.md)。
+
+### 2026-09-27：バックグラウンドでのメニュー解放
+
+全体テストで `com.revclip.menu.clipdata-fallback` が `RCMenuManager` の最後の参照を解放し、`dealloc` からメインスレッド専用のショートカット解除を呼んでSIGABRTになることを確認した。メイン以外の解放ではselfを捕捉せず、弱参照の所有者が消えたキャプチャだけをメインで解除する。新しい所有者がいる時は解除しない。背景解放と新所有者の保持をそれぞれ回帰テストする。

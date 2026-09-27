@@ -449,3 +449,5 @@
 "Shortcut Conflict External" = "Este atalho já é usado por %@. Altere um dos atalhos.";
 
 "Shortcut Conflict Standard" = "Este atalho é um comando padrão do macOS ou de apps. Escolha outro atalho.";
+
+"OCR Preparing Models" = "Preparando o reconhecimento de texto neste Mac. Isso pode levar um minuto. Pressione o atalho OCR novamente para cancelar.";

@@ -21,7 +21,7 @@ def main():
     args = parser.parse_args()
     app = args.app
     sparkle = app / 'Contents/Frameworks/Sparkle.framework'
-    components = [app, app / 'Contents/Helpers/revclip', sparkle,
+    components = [app, app / 'Contents/Helpers/revclip', app / 'Contents/Helpers/revclip-ocr', sparkle,
                   sparkle / 'Versions/B/Autoupdate', sparkle / 'Versions/B/Updater.app',
                   sparkle / 'Versions/B/XPCServices/Downloader.xpc',
                   sparkle / 'Versions/B/XPCServices/Installer.xpc']

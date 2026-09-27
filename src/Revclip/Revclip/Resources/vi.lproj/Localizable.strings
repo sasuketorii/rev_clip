@@ -449,3 +449,5 @@
 "Shortcut Conflict External" = "Phím tắt này đang được %@ sử dụng. Hãy đổi một trong hai phím tắt.";
 
 "Shortcut Conflict Standard" = "Phím tắt này là lệnh tiêu chuẩn của macOS hoặc ứng dụng. Hãy chọn phím tắt khác.";
+
+"OCR Preparing Models" = "Đang chuẩn bị nhận dạng văn bản cho máy Mac này. Có thể mất một phút. Nhấn lại phím tắt OCR để hủy.";

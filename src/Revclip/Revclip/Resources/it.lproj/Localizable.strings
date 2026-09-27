@@ -449,3 +449,5 @@
 "Shortcut Conflict External" = "Questa scorciatoia è già usata da %@. Modifica una delle scorciatoie.";
 
 "Shortcut Conflict Standard" = "Questa scorciatoia è un comando standard di macOS o delle app. Scegli un’altra scorciatoia.";
+
+"OCR Preparing Models" = "Preparazione del riconoscimento del testo su questo Mac. Potrebbe richiedere un minuto. Premi di nuovo la scorciatoia OCR per annullare.";

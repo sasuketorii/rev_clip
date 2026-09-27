@@ -93,6 +93,17 @@ static void captureMediaPaste(id object, SEL selector, RCClipData *clip, NSRunni
 @interface RCMenuParityTests : XCTestCase
 @end
 @implementation RCMenuParityTests
+- (void)testLastFallbackReferenceMayReleaseManagerOffMain {
+    __block RCMenuManager *manager = [[RCMenuManager alloc] init];
+    __weak RCMenuManager *weakManager = manager;
+    XCTestExpectation *released = [self expectationWithDescription:@"Background release and main cleanup completed"];
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+        @autoreleasepool { manager = nil; }
+        dispatch_async(dispatch_get_main_queue(), ^{ [released fulfill]; });
+    });
+    [self waitForExpectations:@[released] timeout:2];
+    XCTAssertNil(weakManager);
+}
 - (void)testTrackingEndNotificationCleansUpEvenWithoutDelegateClose {
     RCTrackingTestManager *manager = [RCTrackingTestManager new];
     NSMenu *root = [NSMenu new], *child = [NSMenu new];

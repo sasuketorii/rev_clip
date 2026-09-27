@@ -243,7 +243,17 @@ static os_log_t RCMenuManagerLog(void) {
 }
 
 - (void)dealloc {
-    [[RCHotKeyService shared] endMenuPreferencesShortcutForOwner:self];
+    if (NSThread.isMainThread) {
+        [[RCHotKeyService shared] endMenuPreferencesShortcutForOwner:self];
+    } else {
+        // A fallback read can release the final reference on its worker queue.
+        // Never retain a deallocating self or touch the event tap off-main. The
+        // service's weak owner is gone by delivery; nil only cleans an unowned
+        // capture and cannot remove a newer menu's shortcut.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[RCHotKeyService shared] endMenuPreferencesShortcutForOwner:nil];
+        });
+    }
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 

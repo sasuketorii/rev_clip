@@ -448,3 +448,5 @@
 "Shortcut Conflict External" = "This shortcut is already used by %@. Change either shortcut.";
 
 "Shortcut Conflict Standard" = "This shortcut is a standard macOS or application command. Choose another shortcut.";
+
+"OCR Preparing Models" = "Preparing text recognition for this Mac. This may take a minute. Press the OCR shortcut again to cancel.";

@@ -449,3 +449,5 @@
 "Shortcut Conflict External" = "Dieses Tastenkürzel wird bereits von %@ verwendet. Ändere eines der Kürzel.";
 
 "Shortcut Conflict Standard" = "Dieses Tastenkürzel wird für einen Standardbefehl von macOS oder Apps verwendet. Wähle ein anderes Kürzel.";
+
+"OCR Preparing Models" = "Texterkennung für diesen Mac wird vorbereitet. Dies kann eine Minute dauern. Drücke das OCR-Tastenkürzel erneut, um abzubrechen.";

@@ -449,3 +449,5 @@
 "Shortcut Conflict External" = "此快捷键已被%@使用。请修改其中一个快捷键。";
 
 "Shortcut Conflict Standard" = "此快捷键用于macOS或应用的标准操作。请选择其他快捷键。";
+
+"OCR Preparing Models" = "正在为这台Mac准备文字识别，可能需要一分钟。再次按下OCR快捷键可取消。";

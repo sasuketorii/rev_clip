@@ -105,7 +105,7 @@ typedef NS_ENUM(NSInteger, RCHotKeyAssignmentStatus) {
 
 // Scoped Cmd+, routing while a Revclip menu is tracking. Never persisted.
 - (void)beginMenuPreferencesShortcutForOwner:(id)owner action:(dispatch_block_t)action;
-- (void)endMenuPreferencesShortcutForOwner:(id)owner;
+- (void)endMenuPreferencesShortcutForOwner:(nullable id)owner;
 
 // メインホットキー登録（メニュー表示）
 - (BOOL)registerMainHotKey:(RCKeyCombo)combo;

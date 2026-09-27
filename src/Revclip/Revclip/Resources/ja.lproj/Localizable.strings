@@ -448,3 +448,5 @@
 "Shortcut Conflict External" = "このショートカットは、%@で使用中です。どちらかを変更してください。";
 
 "Shortcut Conflict Standard" = "このショートカットは、macOSやアプリの標準操作に使われます。別のショートカットを選んでください。";
+
+"OCR Preparing Models" = "このMacの文字認識を準備しています。1分ほどかかる場合があります。同じショートカットをもう一度押すと中止できます。";

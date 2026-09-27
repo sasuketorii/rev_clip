@@ -1,19 +1,19 @@
 import AppKit
 import Vision
 
-struct RCOCRSettings: Sendable {
+struct RCOCRSettings: Sendable, Codable {
     let language: String
     let correction: Bool
     let preferredLanguages: [String]
 }
 
-struct RCOCRLine: Sendable {
+struct RCOCRLine: Sendable, Codable {
     let text: String
     let rect: CGRect
     let confidence: Float
 }
 
-struct RCOCRRecognition: Sendable {
+struct RCOCRRecognition: Sendable, Codable {
     let text: String
     let lines: [RCOCRLine]
     let languages: [String]
@@ -22,7 +22,7 @@ struct RCOCRRecognition: Sendable {
 }
 
 enum RCOCRError: Error {
-    case inputTooLarge, invalidSelection, displayUnavailable, unsupportedLanguage, noText, cancelled
+    case inputTooLarge, invalidSelection, displayUnavailable, unsupportedLanguage, noText, cancelled, workerFailed, timedOut
 }
 
 // Only this cancellation cell crosses executors. All mutable fields are locked;
@@ -31,6 +31,13 @@ final class RCOCRCancellation: @unchecked Sendable {
     private let lock = NSLock()
     private var cancelled = false
     private var request: VNRecognizeTextRequest?
+    private var stopWorker: (@Sendable () -> Void)?
+    func installWorker(_ stop: @escaping @Sendable () -> Void) throws {
+        lock.lock(); defer { lock.unlock() }
+        guard !cancelled else { throw RCOCRError.cancelled }
+        stopWorker = stop
+    }
+    func releaseWorker() { lock.lock(); stopWorker = nil; lock.unlock() }
     func install(_ value: VNRecognizeTextRequest) throws {
         lock.lock(); defer { lock.unlock() }
         guard !cancelled else { throw RCOCRError.cancelled }
@@ -41,7 +48,8 @@ final class RCOCRCancellation: @unchecked Sendable {
         if cancelled { throw RCOCRError.cancelled }
     }
     func cancel() {
-        lock.lock(); cancelled = true; let current = request; lock.unlock()
+        lock.lock(); cancelled = true; let current = request; let stop = stopWorker; lock.unlock()
+        stop?()
         current?.cancel()
     }
     func releaseRequest() { lock.lock(); request = nil; lock.unlock() }
@@ -198,7 +206,11 @@ enum RCVisionTextRecognizer {
         defer { cancellation.releaseRequest() }
         request.recognitionLevel = .accurate
         request.usesLanguageCorrection = settings.correction
-        request.automaticallyDetectsLanguage = settings.language == "auto"
+        // The bilingual preset supplies both candidates but must still select
+        // the appropriate model for each line. Forcing the first (Japanese)
+        // model misreads an English URL's "https" as "nttps" on macOS 27.
+        // A manually selected single language remains fixed.
+        request.automaticallyDetectsLanguage = settings.language == "auto" || settings.language == "ja-en"
         request.minimumTextHeight = 0
         request.recognitionLanguages = try languages(for: settings, supported: request.supportedRecognitionLanguages())
         try cancellation.check()

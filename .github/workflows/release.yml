@@ -212,6 +212,11 @@ jobs:
 
           SIGN_IDENTITY="Developer ID Application"
 
+          # Archive/build settings may omit secure timestamps on command-line tools.
+          for helper in revclip revclip-ocr; do
+            codesign --force --options runtime --timestamp --sign "${SIGN_IDENTITY}" "${APP_PATH}/Contents/Helpers/${helper}"
+          done
+
           # Sign from inside out: XPC services first, then apps, then framework
           # XPC Services
           for xpc in "${SPARKLE_FW}/Versions/B/XPCServices/"*.xpc; do

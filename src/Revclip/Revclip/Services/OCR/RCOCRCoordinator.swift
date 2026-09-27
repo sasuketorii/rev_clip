@@ -36,10 +36,10 @@ final class RCOCRCoordinator: NSObject {
     private var context: RCOCRCommitContext?
     private var cancellation: RCOCRCancellation?
     private(set) var workerBusy = false
-    // Vision initializes its models lazily. A cold run must not inherit the
-    // steady-state deadline; successful initialization lasts for this process.
+    // The subprocess has its own hard deadline. This outer deadline also bounds
+    // crop preparation; it no longer grants a minute to an uninterruptible worker.
     private(set) var recognitionIsWarm = false
-    var recognitionTimeout: Double { recognitionIsWarm ? 10 : 60 }
+    var recognitionTimeout: Double { RCOCRWorkerClient.timeout + 2 }
     private var historyPending = false
     private var selection: RCOCRSelectionController?
     private var frame: CGImage?
@@ -210,7 +210,11 @@ final class RCOCRCoordinator: NSObject {
         }
         if let menuTrackingGate { menuTrackingGate(start) } else { start() }
     }
-    @objc private func invalidate() { invalidationEpoch &+= 1; stopEpoch &+= 1; cancel() }
+    @objc private func invalidate() {
+        invalidationEpoch &+= 1; stopEpoch &+= 1
+        RCOCRWorkerService.shared.cancelPreparation()
+        cancel()
+    }
     /// Whether the result of an accepted commit is shown. Clear, Panic, quit, lock,
     /// sleep and switching the feature off silence it completely, whatever the outcome.
     /// The one exception to "the operation must still be current" is the press-again
@@ -372,14 +376,23 @@ final class RCOCRCoordinator: NSObject {
     }
     @discardableResult
     func recognizeCrop(_ crop: CGImage, id: UUID, settings: RCOCRSettings, cell: RCOCRCancellation,
-                       using recognize: @escaping @Sendable (CGImage, RCOCRSettings, RCOCRCancellation) async throws -> RCOCRRecognition = { crop, settings, cell in
-                           try await Task.detached(priority: .userInitiated) {
-                               try autoreleasepool { try RCVisionTextRecognizer.recognizeCrop(crop, settings: settings, cancellation: cell) }
-                           }.value
-                       }) -> Task<Void, Never> {
+                       using recognize: (@Sendable (CGImage, RCOCRSettings, RCOCRCancellation) async throws -> RCOCRRecognition)? = nil) -> Task<Void, Never> {
         return Task { @MainActor in
             do {
-                let result = try await recognize(crop, settings, cell)
+                let result: RCOCRRecognition
+                if let recognize { result = try await recognize(crop, settings, cell) }
+                else {
+                    result = try await RCOCRWorkerService.shared.recognize(crop, settings: settings, cancellation: cell) { preparing in
+                        guard self.operation == id else { return }
+                        if preparing {
+                            self.deadline(RCOCRWorkerClient.preparationTimeout + 2, id: id)
+                            self.showNoticeText(RCLocalizedString("OCR Preparing Models", comment: ""), style: .information, persistent: true)
+                        } else {
+                            self.dismissNotice()
+                            self.deadline(self.recognitionTimeout, id: id)
+                        }
+                    }
+                }
                 self.recognitionIsWarm = true
                 self.workerBusy = false
                 guard self.operation == id, let context = self.context else { return }
@@ -395,6 +408,7 @@ final class RCOCRCoordinator: NSObject {
                 case RCOCRError.unsupportedLanguage: self.showNotice("OCR Unsupported Language")
                 case RCOCRError.inputTooLarge: self.showNotice("OCR Input Too Large")
                 case RCOCRError.cancelled: break
+                case RCOCRError.timedOut: self.showNotice("OCR Timed Out")
                 default: self.showNotice("OCR Recognition Failed")
                 }
             }
@@ -448,13 +462,14 @@ final class RCOCRCoordinator: NSObject {
         else { style = .failure }
         showNoticeText(RCLocalizedString(key, comment: ""), style: style)
     }
-    private func showNoticeText(_ text: String, style: RCOCRNoticePanel.Style = .failure) {
+    private func showNoticeText(_ text: String, style: RCOCRNoticePanel.Style = .failure, persistent: Bool = false) {
         dismissNotice()
         let panel = RCOCRNoticePanel(text: text, style: style)
         if let screen = NSScreen.main {
             panel.setFrameOrigin(CGPoint(x: screen.visibleFrame.midX - panel.frame.width / 2, y: screen.visibleFrame.minY + 80))
         }
         notice = panel; panel.orderFrontRegardless()
+        if persistent { return }
         noticeTimer = Timer(timeInterval: 3, repeats: false) { [weak self] _ in MainActor.assumeIsolated { self?.dismissNotice() } }
         RunLoop.main.add(noticeTimer!, forMode: .common)
     }
