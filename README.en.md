@@ -21,7 +21,7 @@
 
 A clipboard for working with agents: ask an agent to create, edit, or delete reusable text, prompt, and image templates. Revclip CLI has no commands for reading clipboard history. This defines the CLI’s capabilities; it does not guarantee isolation from an agent with broader OS permissions.
 
-This README describes the **v0.2.5 implementation (build 63, September 25, 2026)**, including faster OCR, permission status, and 44 CLI settings. See [Releases](https://github.com/sasuketorii/rev_clip/releases) for distribution history.
+This README describes the **v0.2.6 implementation (build 65, September 27, 2026)**, including faster OCR, permission status, and 44 CLI settings. See [Releases](https://github.com/sasuketorii/rev_clip/releases) for distribution history.
 
 See the [quality verification report](docs/QUALITY_REPORT.md) for the 0.1.8 termination fix and maintenance release, measured results, and remaining acceptance checks.
 
@@ -226,4 +226,4 @@ See [faster OCR](docs/REV_OCR.md) for limits and verification status. "RevOCR" w
 
 Opening Revclip from Applications uses the same history and template menu as **⌘⇧V**. If a settings or editor window is already visible, it comes forward instead. Login and background launches are excluded. See [implementation and acceptance status](docs/REV_OCR.md) for verification limits.
 
-For a scripted background launch without the menu, use `open -g path/to/Revclip.app --args -suppressLaunchMenu YES`. On first launch, `open -g` alone cannot be distinguished from an ordinary open. The v0.2.5 release target `2ef3d12` passed Woodpecker #17 and macOS CI, including 443 XCTest cases in each of Debug and Release. This release fixes the setup permission-request path and gives the first OCR recognition a longer initialization deadline. Fresh-device permission registration and first-copy acceptance remain under investigation. Public delivery, signing, notarization, and verification limits are recorded in the [quality report](docs/QUALITY_REPORT.md).
+For a scripted background launch without the menu, use `open -g path/to/Revclip.app --args -suppressLaunchMenu YES`. On first launch, `open -g` alone cannot be distinguished from an ordinary open. The v0.2.6 release target `d9a6c59` passed Woodpecker #19 and macOS CI, including 455 XCTest cases in each of Debug and Release. OCR now runs in a separate process so a stuck recognition can be terminated without blocking subsequent requests. Initial model preparation is visible and cancellable; OS model compilation time and real screen-to-clipboard acceptance remain separate verification limits. Public delivery, signing, notarization, and verification limits are recorded in the [quality report](docs/QUALITY_REPORT.md).

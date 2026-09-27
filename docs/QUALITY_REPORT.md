@@ -1,3 +1,16 @@
+# v0.2.6（build 65）のOCR復帰修正・配信検証 — 2026-09-27
+
+- [公開版](https://github.com/sasuketorii/rev_clip/releases/tag/v0.2.6)、製品SHA `d9a6c59137cf521b8f05ef12e79408b3ce406b92`。Woodpecker **#19 success**、[macOS CI 36304193900](https://github.com/sasuketorii/rev_clip/actions/runs/36304193900)でDebug／Release各 **455件成功**、Universalビルド成功。
+- [Release 36304829591](https://github.com/sasuketorii/rev_clip/actions/runs/36304829591)で署名・Apple公証・DMG公開・更新フィード生成・公開配信照合が全て成功。
+- 公開DMGを匿名取得し、アプリ本体・同梱CLI・新OCRヘルパー・SparkleのDeveloper ID、Team、Hardened Runtime、timestamp、空のアプリentitlementsを検証。DMGの公証ticket、GatekeeperのNotarized Developer ID受理、アプリ公開鍵によるSparkle Ed25519署名も独立検証した。
+- latest Release・appcast・DMGの **0.2.6 / 65** と公開タグSHAを照合。DMG SHA-256: `00628c317136364b988a906b1f138e237e6b2ad678a60cee6ceade5168b3df27`。証拠は `.local/release-v0.2.6/` の `public-delivery.json`、`public-signature-verification.log`、各CIログ。
+- 認識をメモリパイプ経由の短命な子プロセスへ隔離し、キャンセル・通常認識8秒の上限・親終了時に子プロセスを停止する。モデル準備は別の90秒上限を持ち、初回操作時に状態表示と中止を提供する。アイドル中のVision起動は追加していない。
+- 日英モードのURL認識を改善。全体試験で見つかったメニューのバックグラウンド最終解放時のクラッシュも、main threadでの後処理へ修正した。
+- macOS 27の実ログでは旧プロセスがE5RT Code 13を繰り返し、再起動後にはモデルコンパイルが約30秒／モデルかかった。元のエンジン状態が無効になった発端と、OSのコンパイル自体を高速化する手段は未特定。初回準備時間が消えたとは扱わない。
+- このMacの通常版は先行ローカル候補 **0.2.5 / 64** を反映済み。公開版65と同一バイナリではない。Demoはこのリリース作業で更新していない。公開版への実Sparkle更新、Intel／macOS 14実機、画面選択からコピーまでの利用者による受入は未確認。
+
+---
+
 # v0.2.5（build 63）の修正・配信検証 — 2026-09-25
 
 - セットアップの画面収録ボタンにもOSの権限要求を追加し、OCR許可アラートと共通化。
@@ -106,7 +119,7 @@ standard user driver delegate を接続し、前面表示を控える場合は�
 - ログイン時起動、更新後再起動、macOS 14・Intel・外部画面の混在倍率・長時間負荷は実機未実施です。実施済みの起動・再オープンと区別します。
 
 
-以下は途中候補の履歴です。現行の公開版はv0.2.0ですが、公開・公証を全環境での実機受入完了とは扱いません。
+以下はv0.2.0公開時の途中候補の履歴です。公開・公証を全環境での実機受入完了とは扱いません。
 
 - build 55の全体XCTestは377件成功、失敗0件（232.873秒）。実行中のソース変更なし。記録は `.local/revocr/services-full.log`。
 - Demo 0.2.0 (55)を開発署名で導入し、バンドルの署名・実行ファイルの一致を確認。通常版0.1.9 (42)は置き換えていません。
