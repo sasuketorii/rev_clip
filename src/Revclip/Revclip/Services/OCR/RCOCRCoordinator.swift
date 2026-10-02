@@ -36,9 +36,8 @@ final class RCOCRCoordinator: NSObject {
     private var context: RCOCRCommitContext?
     private var cancellation: RCOCRCancellation?
     private(set) var workerBusy = false
-    // The subprocess has its own hard deadline. This outer deadline also bounds
-    // crop preparation; it no longer grants a minute to an uninterruptible worker.
-    private(set) var recognitionIsWarm = false
+    // Prior inference cannot certify the OS cache for a different crop.
+    // The child remains interruptible even during model compilation.
     var recognitionTimeout: Double { RCOCRWorkerClient.timeout + 2 }
     private var historyPending = false
     private var selection: RCOCRSelectionController?
@@ -212,7 +211,6 @@ final class RCOCRCoordinator: NSObject {
     }
     @objc private func invalidate() {
         invalidationEpoch &+= 1; stopEpoch &+= 1
-        RCOCRWorkerService.shared.cancelPreparation()
         cancel()
     }
     /// Whether the result of an accepted commit is shown. Clear, Panic, quit, lock,
@@ -373,6 +371,15 @@ final class RCOCRCoordinator: NSObject {
         cancellation = cell
         workerBusy = true
         deadline(recognitionTimeout, id: id)
+        dismissNotice()
+        noticeTimer = Timer(timeInterval: 2, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated { self?.showRecognitionProgress(id: id) }
+        }
+        RunLoop.main.add(noticeTimer!, forMode: .common)
+    }
+    func showRecognitionProgress(id: UUID) {
+        guard operation == id, workerBusy else { return }
+        showNoticeText(RCLocalizedString("OCR Recognizing Text", comment: ""), style: .information, persistent: true)
     }
     @discardableResult
     func recognizeCrop(_ crop: CGImage, id: UUID, settings: RCOCRSettings, cell: RCOCRCancellation,
@@ -382,18 +389,8 @@ final class RCOCRCoordinator: NSObject {
                 let result: RCOCRRecognition
                 if let recognize { result = try await recognize(crop, settings, cell) }
                 else {
-                    result = try await RCOCRWorkerService.shared.recognize(crop, settings: settings, cancellation: cell) { preparing in
-                        guard self.operation == id else { return }
-                        if preparing {
-                            self.deadline(RCOCRWorkerClient.preparationTimeout + 2, id: id)
-                            self.showNoticeText(RCLocalizedString("OCR Preparing Models", comment: ""), style: .information, persistent: true)
-                        } else {
-                            self.dismissNotice()
-                            self.deadline(self.recognitionTimeout, id: id)
-                        }
-                    }
+                    result = try await RCOCRWorkerService.shared.recognize(crop, settings: settings, cancellation: cell)
                 }
-                self.recognitionIsWarm = true
                 self.workerBusy = false
                 guard self.operation == id, let context = self.context else { return }
                 guard self.screenCaptureAccess() else { self.cancel(); self.showNotice("OCR Permission Required"); return }

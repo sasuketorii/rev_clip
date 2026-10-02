@@ -59,19 +59,18 @@ final class RCOCRWorkerTests: XCTestCase {
     func testWireRejectsOverflowAndOversizedImagesBeforeAllocation() {
         let invalid = [(Int.max, Int.max), (8, Int.max), (0, 8), (7, 8), (16_000_001, 8)]
         for (width, height) in invalid {
-            XCTAssertNil(RCOCRWorkerProtocol.Header(version: 1, width: width, height: height, settings: settings).byteCount)
+            XCTAssertNil(RCOCRWorkerProtocol.Header(version: 2, width: width, height: height, settings: settings).byteCount)
         }
-        XCTAssertNil(RCOCRWorkerProtocol.Header(version: 2, width: 8, height: 8, settings: settings).byteCount)
-        XCTAssertEqual(RCOCRWorkerProtocol.Header(version: 1, width: 4000, height: 4000, settings: settings).byteCount, 64_000_000)
+        XCTAssertNil(RCOCRWorkerProtocol.Header(version: 1, width: 8, height: 8, settings: settings).byteCount)
+        XCTAssertEqual(RCOCRWorkerProtocol.Header(version: 2, width: 4000, height: 4000, settings: settings).byteCount, 64_000_000)
     }
     func testWireImageRoundTripRetainsDimensionsAndSettings() throws {
         let pipe = Pipe()
         try RCOCRWorkerProtocol.writeRequest(image: image(), settings: settings, to: pipe.fileHandleForWriting)
         try pipe.fileHandleForWriting.close()
-        let (decoded, config, prepareOnly) = try RCOCRWorkerProtocol.readRequest(from: pipe.fileHandleForReading)
+        let (decoded, config) = try RCOCRWorkerProtocol.readRequest(from: pipe.fileHandleForReading)
         XCTAssertEqual(decoded.width, 8); XCTAssertEqual(decoded.height, 8)
         XCTAssertEqual(config.language, settings.language)
         XCTAssertEqual(config.correction, settings.correction)
-        XCTAssertFalse(prepareOnly)
     }
 }

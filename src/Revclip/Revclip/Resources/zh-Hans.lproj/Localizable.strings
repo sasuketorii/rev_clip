@@ -450,4 +450,4 @@
 
 "Shortcut Conflict Standard" = "此快捷键用于macOS或应用的标准操作。请选择其他快捷键。";
 
-"OCR Preparing Models" = "正在为这台Mac准备文字识别，可能需要一分钟。再次按下OCR快捷键可取消。";
+"OCR Recognizing Text" = "正在识别所选文字。如果此 Mac 需要准备文字识别，最多可能需要90秒。再次按下 OCR 快捷键可取消。";

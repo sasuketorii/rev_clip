@@ -450,4 +450,4 @@
 
 "Shortcut Conflict Standard" = "Phím tắt này là lệnh tiêu chuẩn của macOS hoặc ứng dụng. Hãy chọn phím tắt khác.";
 
-"OCR Preparing Models" = "Đang chuẩn bị nhận dạng văn bản cho máy Mac này. Có thể mất một phút. Nhấn lại phím tắt OCR để hủy.";
+"OCR Recognizing Text" = "Đang nhận dạng văn bản đã chọn. Nếu máy Mac cần chuẩn bị nhận dạng, quá trình có thể mất tối đa 90 giây. Nhấn lại phím tắt OCR để hủy.";

@@ -449,4 +449,4 @@
 
 "Shortcut Conflict Standard" = "This shortcut is a standard macOS or application command. Choose another shortcut.";
 
-"OCR Preparing Models" = "Preparing text recognition for this Mac. This may take a minute. Press the OCR shortcut again to cancel.";
+"OCR Recognizing Text" = "Recognizing the selected text. This can take up to 90 seconds while your Mac prepares text recognition. Press the OCR shortcut again to cancel.";

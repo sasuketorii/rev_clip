@@ -11,7 +11,7 @@
 |---|---|---|
 | 操作の状態・世代・取得・確定の前後 | `Revclip/Services/OCR/RCOCRCoordinator.swift` | `request(fromApplication:eventTime:origin:)`（ホットキーとメニューの単一の入口）、`commit(_:context:id:using:)`、`invalidate()`、`cancel()` |
 | 選択UIと十字 | `Revclip/Services/OCR/RCOCRSelectionController.swift` | `show()`、`close()`、`refreshPointer()`、`releasePointer()` |
-| 認識の分離・準備・上限付き通信 | `Revclip/Services/OCR/RCOCRWorkerService.swift`、`RCOCRWorkerClient.swift`、`RCOCRWorkerProtocol.swift`、`RevclipOCRWorker/main.swift` | `ensurePrepared`、`recognize`、プロセス終了と入力／出力上限 |
+| 認識の分離・終了監視・上限付き通信 | `Revclip/Services/OCR/RCOCRWorkerService.swift`、`RCOCRWorkerClient.swift`、`RCOCRWorkerProtocol.swift`、`RevclipOCRWorker/main.swift` | `recognize`、`RCOCRWorkerLifetime`、プロセス終了と入力／出力上限 |
 | 認識と整形 | `Revclip/Services/OCR/RCVisionTextRecognizer.swift` | `recognizeCrop`、`format(_:imageSize:)`、`isListMarker(_:)` |
 | コピーの確定と履歴の受付 | `Revclip/Services/RCClipboardService.m` | `beginOCRFromApplication:saveToHistory:refusal:`、`commitRecognizedText:context:completion:`、`persistClipData:` |
 | メニューの追跡の終了待ち | `Revclip/Managers/RCMenuManager.m` | `performAfterMenuTrackingEnds:`、`menuDidClose:`、`menuWillOpen:` |
@@ -256,3 +256,7 @@ node "$REVH" command run --guard required --class heavy --root "$PWD" --task <�
 ### 2026-09-27：バックグラウンドでのメニュー解放
 
 全体テストで `com.revclip.menu.clipdata-fallback` が `RCMenuManager` の最後の参照を解放し、`dealloc` からメインスレッド専用のショートカット解除を呼んでSIGABRTになることを確認した。メイン以外の解放ではselfを捕捉せず、弱参照の所有者が消えたキャプチャだけをメインで解除する。新しい所有者がいる時は解除しない。背景解放と新所有者の保持をそれぞれ回帰テストする。
+
+## 2026-10-02：実画像の認識とSwift 6の終了監視
+
+現在の認識経路はサンプル準備／準備済みstampを使用しない。選択した画像を1つのヘルパーで直接認識し、OSモデル構築を含め最大90秒、外側92秒で終了する。2秒を超えた認識には取消可能な通知を表示する。期限と親終了のGCDコールバックは明示 `@Sendable` とする。Swift 6のトップレベルで無注釈のコールバックを作ると、MainActorを継承してglobalキューでSIGTRAPを起こし得る。`test_ocr_worker_lifecycle.py` が本番の終了監視実装を別プロセスで検証する。`RCOCRWorkerServiceTests` と `RCOCRFirstRunTests` は直接認識・遅い初回結果・取消・期限超過・通知の世代を確認する。現在の状態は [REV_OCR.md](REV_OCR.md) を参照する。

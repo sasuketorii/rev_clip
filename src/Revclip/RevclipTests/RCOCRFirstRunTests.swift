@@ -55,15 +55,14 @@ final class RCOCRFirstRunTests: XCTestCase {
             try await held.run(started: started)
         }
         await fulfillment(of: [started], timeout: 2)
-        now += 2
-        XCTAssertNotNil(coordinator.checkDeadline(id: id), "Recognition within the deadline must remain active")
+        now += 35
+        XCTAssertNotNil(coordinator.checkDeadline(id: id), "Model compilation of the actual crop must not be killed by the old ten-second deadline")
         XCTAssertEqual(coordinator.operation, id)
         XCTAssertNoThrow(try cell.check())
         await held.succeed()
         await task.value
         XCTAssertFalse(coordinator.workerBusy)
-        XCTAssertTrue(coordinator.recognitionIsWarm)
-        XCTAssertEqual(coordinator.recognitionTimeout, 10)
+        XCTAssertEqual(coordinator.recognitionTimeout, 92)
         XCTAssertEqual(copied, ["Synthetic OCR"], "A valid result reaches the existing clipboard commit exactly once")
         XCTAssertNil(coordinator.operation)
         XCTAssertTrue(coordinator.noticeIsVisible)
@@ -83,10 +82,11 @@ final class RCOCRFirstRunTests: XCTestCase {
             try await held.run(started: started)
         }
         await fulfillment(of: [started], timeout: 2)
-        now += 11
+        now += 93
         XCTAssertNil(coordinator.checkDeadline(id: id))
         XCTAssertNil(coordinator.operation)
         XCTAssertThrowsError(try cell.check())
+        coordinator.showRecognitionProgress(id: id)
         for _ in 0..<5 { coordinator.invokeFromApplication(nil) }
         XCTAssertTrue(coordinator.workerBusy, "An unreturned system call must still own the single worker slot")
         XCTAssertNil(coordinator.operation)
@@ -114,6 +114,8 @@ final class RCOCRFirstRunTests: XCTestCase {
         coordinator.invokeFromApplication(nil)
         XCTAssertNil(coordinator.operation)
         XCTAssertThrowsError(try cell.check())
+        coordinator.showRecognitionProgress(id: id)
+        XCTAssertFalse(coordinator.noticeIsVisible, "A delayed progress callback must not reopen a cancelled operation")
         await held.succeed()
         await task.value
         XCTAssertFalse(coordinator.workerBusy)

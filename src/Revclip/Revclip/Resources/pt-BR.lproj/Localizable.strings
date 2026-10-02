@@ -450,4 +450,4 @@
 
 "Shortcut Conflict Standard" = "Este atalho é um comando padrão do macOS ou de apps. Escolha outro atalho.";
 
-"OCR Preparing Models" = "Preparando o reconhecimento de texto neste Mac. Isso pode levar um minuto. Pressione o atalho OCR novamente para cancelar.";
+"OCR Recognizing Text" = "Reconhecendo o texto selecionado. A preparação neste Mac pode levar até 90 segundos. Pressione o atalho de OCR novamente para cancelar.";

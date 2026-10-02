@@ -450,4 +450,4 @@
 
 "Shortcut Conflict Standard" = "Questa scorciatoia è un comando standard di macOS o delle app. Scegli un’altra scorciatoia.";
 
-"OCR Preparing Models" = "Preparazione del riconoscimento del testo su questo Mac. Potrebbe richiedere un minuto. Premi di nuovo la scorciatoia OCR per annullare.";
+"OCR Recognizing Text" = "Riconoscimento del testo selezionato. La preparazione su questo Mac può richiedere fino a 90 secondi. Premi di nuovo la scorciatoia OCR per annullare.";

@@ -7,17 +7,17 @@ enum RCOCRWorkerProtocol {
     static let maximumPixels = 16_000_000
     static let maximumHeaderBytes = 16_384
     static let maximumResponseBytes = 8 * 1024 * 1024
-    static let recognitionTimeout: Double = 8
-    static let preparationTimeout: Double = 90
+    // A sample warmup cannot certify the OS model cache for the actual crop.
+    // Bound compilation together with inference in the same stoppable child.
+    static let recognitionTimeout: Double = 90
     struct Header: Codable {
         let version: Int
         let width: Int
         let height: Int
         let settings: RCOCRSettings
-        var prepareOnly = false
 
         var byteCount: Int? {
-            guard version == 1, width >= 8, height >= 8,
+            guard version == 2, width >= 8, height >= 8,
                   width <= RCOCRWorkerProtocol.maximumPixels / height else { return nil }
             return width * height * 4
         }
@@ -37,7 +37,7 @@ enum RCOCRWorkerProtocol {
         }
         return data
     }
-    static func readRequest(from handle: FileHandle) throws -> (CGImage, RCOCRSettings, Bool) {
+    static func readRequest(from handle: FileHandle) throws -> (CGImage, RCOCRSettings) {
         let prefix = try readExactly(4, from: handle)
         let length = prefix.reduce(0) { ($0 << 8) | Int($1) }
         guard length > 0, length <= maximumHeaderBytes else { throw RCOCRError.inputTooLarge }
@@ -52,10 +52,10 @@ enum RCOCRWorkerProtocol {
                   provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent) else {
             throw RCOCRError.invalidSelection
         }
-        return (image, header.settings, header.prepareOnly)
+        return (image, header.settings)
     }
-    static func writeRequest(image: CGImage, settings: RCOCRSettings, prepareOnly: Bool = false, to handle: FileHandle) throws {
-        let header = Header(version: 1, width: image.width, height: image.height, settings: settings, prepareOnly: prepareOnly)
+    static func writeRequest(image: CGImage, settings: RCOCRSettings, to handle: FileHandle) throws {
+        let header = Header(version: 2, width: image.width, height: image.height, settings: settings)
         guard let count = header.byteCount,
               let space = CGColorSpace(name: CGColorSpace.sRGB),
               let context = CGContext(data: nil, width: image.width, height: image.height,

@@ -450,4 +450,4 @@
 
 "Shortcut Conflict Standard" = "Ce raccourci est une commande standard de macOS ou des apps. Choisissez un autre raccourci.";
 
-"OCR Preparing Models" = "Préparation de la reconnaissance de texte sur ce Mac. Cela peut prendre une minute. Appuyez à nouveau sur le raccourci OCR pour annuler.";
+"OCR Recognizing Text" = "Reconnaissance du texte sélectionné. La préparation sur ce Mac peut prendre jusqu’à 90 secondes. Appuyez à nouveau sur le raccourci OCR pour annuler.";

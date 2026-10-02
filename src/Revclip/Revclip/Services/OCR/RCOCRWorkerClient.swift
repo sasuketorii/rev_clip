@@ -7,14 +7,12 @@ import Darwin
 /// VNRequest.cancel alone cannot interrupt a stuck model compiler in this process.
 enum RCOCRWorkerClient {
     static let timeout = RCOCRWorkerProtocol.recognitionTimeout
-    static let preparationTimeout = RCOCRWorkerProtocol.preparationTimeout
     private static let log = Logger(subsystem: "com.revclip", category: "OCRWorker")
     static var executableURL: URL {
         Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/revclip-ocr")
     }
     static func recognize(_ image: CGImage, settings: RCOCRSettings, cancellation: RCOCRCancellation,
-                          executable: URL = executableURL, timeout: Double = timeout,
-                          prepareOnly: Bool = false) throws -> RCOCRRecognition {
+                          executable: URL = executableURL, timeout: Double = timeout) throws -> RCOCRRecognition {
         try cancellation.check()
         let child = RCOCRChildProcess(executable: executable)
         try cancellation.installWorker { child.stop() }
@@ -27,7 +25,7 @@ enum RCOCRWorkerClient {
         try child.start()
         let began = ProcessInfo.processInfo.systemUptime
         do {
-            try RCOCRWorkerProtocol.writeRequest(image: image, settings: settings, prepareOnly: prepareOnly, to: child.input.fileHandleForWriting)
+            try RCOCRWorkerProtocol.writeRequest(image: image, settings: settings, to: child.input.fileHandleForWriting)
             try child.input.fileHandleForWriting.close()
             let result = try RCOCRWorkerProtocol.readResponse(from: child.output.fileHandleForReading)
             child.process.waitUntilExit()

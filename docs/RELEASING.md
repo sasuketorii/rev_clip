@@ -98,7 +98,7 @@ v0.2.0（build 58）の公開ジョブは、署名・公証・公開まで成功
 
 1. `src/Revclip/project.yml` の `CFBundleShortVersionString` と `CFBundleVersion` を更新します。ビルド番号は独立した正整数の連番です。タグとのバージョン一致と、配布済みappcastより大きいビルド番号であることを検査します。
 2. `make -C src/Revclip setup` と `make -C src/Revclip test` を実行し、実アプリの基本操作を確認します。
-3. バージョン変更をコミットしてmainへ反映し、一致する `v0.0.N` タグをpushします。
+3. バージョン変更をコミットしてmainへ反映し、`wp-check` → `wp-verify --push` で検証後にpushします。同一SHAのmain向けmacOS CIが成功したことを確認してから、一致する新規 `v0.0.N` タグをpushします。
 4. Releaseワークフローが署名、DMG作成、公証、Sparkle署名、appcast生成、GitHub Releaseへの添付まで成功したことを確認します。
 5. ログインしていない状態でDMGとFeedを取得でき、Feedの版・URL・署名が配布物と一致することを確認します。実際の更新と新規インストールも検証してください。
 
@@ -111,8 +111,12 @@ v0.2.0（build 58）の公開ジョブは、署名・公証・公開まで成功
 ```sh
 git add src/Revclip/project.yml src/Revclip/Revclip/Info.plist
 git commit -m "Prepare release 0.0.N"
-git push origin main
-git tag v0.0.N
+wp-check
+wp-verify --push
+gh run list --workflow ci.yml --branch main
+# 対象SHAのmain CIを確認し、そのrun IDの成功を待つ
+gh run watch CI_RUN_ID --exit-status
+git tag -a v0.0.N -m "Release v0.0.N"
 git push origin v0.0.N
 gh run list --workflow release.yml
 # 表示されたReleaseのIDを指定
