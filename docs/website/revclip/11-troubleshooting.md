@@ -32,6 +32,16 @@ verifiedAt: '2026-09-16'
 
 **確認できる状態：** メニューバーのアイコン、または現在設定されているショートカットからRevclipのメニューが開きます。macOSが起動を止めた場合は、画面に表示された案内と公式配布元の手順を確認してください。
 
+## 再起動後にRevclipが複数起動する（メニューバーにアイコンが複数ある）
+
+古い設定や別の署名のRevclipが、ログイン項目に重複して残っている可能性があります。次の手順で整理できます。
+
+1. 「システム設定 → 一般 → ログイン項目と機能拡張」（macOS 14では「ログイン項目」）を開き、「ログイン時に開く」の一覧にあるRevclipの項目を、すべて選んで **−** で削除します。
+2. メニューバーのRevclipのアイコンから、起動中のRevclipをすべて終了します。
+3. 「アプリケーション」フォルダのRevclipを一度開きます。Revclipの設定で「ログイン時に起動」がオンなら、ログイン項目が1件だけ登録し直されます。オフの場合は登録されません。
+
+**確認できる状態：** 設定の「ログイン時に起動」がオンなら、「ログイン時に開く」にRevclipが1件だけ表示され、次の再起動後もメニューバーのアイコンは1つです。オフなら項目は表示されず、再起動後にRevclipは自動起動しません。「アプリケーション」以外の場所にあるRevclipを開いたままにしていないかも確認してください。
+
 ## コピーが遅れて表示される、履歴に見つからない
 
 1. 「設定 → 除外アプリ」を開き、コピーに使ったアプリが記録対象から除外されていないか確認します。除外設定は、コピーが観測された時点の前面アプリを基準に判定します。記録したいアプリだけを必要に応じて変更してください。
@@ -173,4 +183,7 @@ Revclipのアップデートだけでは、導入済みスキルは自動更新�
 - src/Revclip/Revclip/UI/Preferences/RCUpdatesPreferencesViewController.m: updateVersionInfo
 - src/Revclip/Revclip/UI/Preferences/RCAgentPreferencesViewController.m: checkInstalledSkills:
 - src/Revclip/RevclipCLI/main.m: RCRequest, main
+- src/Revclip/Revclip/App/RCAppDelegate.m: applicationDidFinishLaunching: 手順9（ログイン項目の登録）
+- src/Revclip/Revclip/App/RCSingleInstanceLock.m: RCSingleInstanceLockAcquireForProcess
+- src/Revclip/Revclip/main.m: main（単一インスタンスロック）
 -->

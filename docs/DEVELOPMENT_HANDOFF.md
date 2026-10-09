@@ -84,6 +84,19 @@ Demoの署名にはローカルApple Development identityが必要です。`demo
 - 記録の確定はevent tapで消費したキーのrelease後だけです。AppKitへ入力が漏れた場合は保存せず停止します。捕捉開始前のkeyUpは通し、重ねて押されたキーは全releaseを待ちます。OS全体の他アプリの非排他登録を確実に検出できるとは表示しません。
 - 回帰は `RCSetupPreferencesTests` / `RCHotKeyRecordingTests` / `RCHotKeyContractTests` にあります。実機ではメニュー側でOCRキーを入力して拒否された後、OCRへ切替→同じOCRキーの再設定→別ページ往復を確認します。成功時は警告なし、拒否時は保存済み値を維持します。
 
+### 多重起動とログイン項目
+
+- 2026-10-09: 開発機で、ad-hoc署名のDebugビルドが `build/Debug` から起動されMove to Applicationsで署名済みリリースを置き換え（ファイルのctimeと `open -n` のlaunchd labelからの推定で、ログによる確認ではありません）、ログイン項目が署名identityごとに2件残り、デモ版の項目と合わせて再起動時に3プロセス起動した。
+- macOSのBackground Task Managementはログイン項目を署名identityで区別します。Team署名のリリース（`com.revclip.Revclip`）とad-hoc署名のDebug（署名identifier `Revclip`）は、同じ `/Applications/Revclip.app` を指していても別の項目（`2.com.revclip.Revclip` と `2.Revclip`）になり、再起動で両方が起動します。
+- `RCSingleInstanceLock` が `main.m` の `NSApplicationMain` より前に `<Application Support>/instance.lock`（Demoは別ディレクトリ）へ `flock` を取り、取れなければ静かに終了します。keychain、status item、ログイン項目登録、Move to Applicationsはすべて起動前に止まります。lockファイルを開けないときは起動不能を避けるためfail openで続行します。fdは `O_CLOEXEC` で、子プロセスへ継承しません。
+- XCTestホスト（`XCTestConfigurationFilePath` / `XCTestBundlePath` / `XCTestSessionIdentifier` の環境変数）はlockを取らず終了もしません。実機のRevclipが動いたままでもテストを実行できます。
+- 自己再起動（`RCMoveToApplicationsService` の `open -n`）はlockを手放してから起動します。引き継ぎを始めた旧プロセスは `applicationDidFinishLaunching:` で即座に戻り、サービスを初期化せず、終了時のcleanup（`applicationShouldTerminate:` / `applicationWillTerminate:`、`launchHandedOff`で判定）も実行しません。`open` の起動失敗または非0終了では、self-relaunch stampを消し、既存の失敗アラートを出してアプリを終了します（移動元は既に削除済みのため）。移動前のコピー・置換・ダウングレード失敗は従来どおりアラート後に通常起動します。Sparkleは旧プロセスの終了を待つため変更不要です。
+- 次のビルド成果物は、Move to Applicationsを提案せず、起動時のログイン項目登録もしません（`+isBuildProductBundlePath:`、すべて大文字小文字を区別しません）。(a) `DerivedData` という名前の要素を含む、(b) `Library/Developer/Xcode` を連続して含む（Xcode管理のDerivedData/Archives）、(c) bundleの親が `Debug` / `Release` / `Demo` で、その親が `build` または `build-demo`（`make` の `SYMROOT=$(CURDIR)/build`、`make demo` の `build-demo/Demo/revclip-demo.app`、orca worktreeの配置）、(d) bundleの親が `Debug` / `Release` / `Demo` で、その親が `Products`、さらにその親が `Build`（`xcodebuild -derivedDataPath X` の標準配置）。`/Applications/Build/Revclip.app` や `/Users/build/...` のような通常の導入先は対象外です。Debug/ad-hocビルドを `/Applications` へコピーしないでください。署名済みリリースを使います。設定画面とCLIの `login_at_startup` による明示操作は変わりません。
+- このlockを含むRevclipが動いている間は、同じデータストアを使うDebugビルドをXcodeや `make run` から起動すると、何も表示せず終了します。先にインストール済みのRevclipを終了してください。
+- 診断: `pgrep -x Revclip`、`osascript -e 'tell application "System Events" to get {name, path} of every login item'`、`sfltool dumpbtm`（管理者認証を求めます）、`codesign -dvv /Applications/Revclip.app`（Identifier と TeamIdentifier を確認します）。
+- 復旧: Revclipのログイン項目をすべて削除し、Revclipをすべて終了してから、署名済みの `/Applications/Revclip.app` を一度起動します。設定の「ログイン時に起動」がオンなら、再登録されるのは1件だけです。オフなら登録されません。
+- 回帰は `RCSingleInstanceTests`（lockの排他・解放・エラー、XCTest環境判定と実ホスト環境、ビルド成果物パス判定）にあります。二重起動そのものの確認は実機で、lockを持つ起動中のアプリに対し別プロセスが静かに終了することを見ます。
+
 ## 自動更新のリマインダー
 
 `RCUpdateService` が Sparkle の updater delegate と standard user driver delegate を兼ねます。`LSUIElement` の常駐アプリでは、通常の定期更新ダイアログは他アプリの背後に表示されるため、`userDriverDelegate:nil` に戻さないでください。起動直後など `immediateFocus` が真なら Sparkle の表示を使い、それ以外は gentle reminder を表示します。

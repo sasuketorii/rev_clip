@@ -40,6 +40,9 @@ static UTType *RCSnippetImportExportContentType(void) {
 
 @interface RCAppDelegate ()
 @property(nonatomic) BOOL clipboardTerminationPending;
+// Set once the Move to Applications hand-off started: nothing was initialised, so
+// termination must not create or tear down any service either.
+@property(nonatomic) BOOL launchHandedOff;
 @property(nonatomic) BOOL userOpenReady;
 @property(nonatomic) NSTimeInterval userOpenWaitingSince;
 @property(nonatomic) NSUInteger userOpenWaitingGeneration;
@@ -157,7 +160,12 @@ static const NSTimeInterval kRCUserOpenActivationWait = 1.0;
     BOOL launchedAsService = [RCAppDelegate launchEventIndicatesService:launchEvent];
     BOOL launchedByUser = [RCAppDelegate launchEventIsUserOpen:launchEvent];
     // 0. Move to Applications check (before any setup).
-    [[RCMoveToApplicationsService shared] checkAndMoveIfNeeded];
+    // Once the hand-off to the Applications copy has started this process must not
+    // initialise anything (store, CLI socket, login item): it is about to quit.
+    if ([[RCMoveToApplicationsService shared] checkAndMoveIfNeeded]) {
+        self.launchHandedOff = YES;
+        return;
+    }
 
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(languageDidChange:) name:RCLanguageDidChangeNotification object:nil];
     [RCLocalization localizeMenu:NSApp.mainMenu table:@"MainMenu"];
@@ -236,7 +244,9 @@ static const NSTimeInterval kRCUserOpenActivationWait = 1.0;
 
     // 9. Login item registration
     BOOL loginItemEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:kRCLoginItem];
-    if (loginItemEnabled) {
+    // Build products (Debug / ad-hoc) would register a second login item next to the
+    // signed release, so they never register automatically.
+    if (loginItemEnabled && ![RCMoveToApplicationsService isBuildProductBundlePath:NSBundle.mainBundle.bundlePath]) {
         [[RCLoginItemService shared] setLoginItemEnabled:YES];
     }
 
@@ -262,6 +272,7 @@ static const NSTimeInterval kRCUserOpenActivationWait = 1.0;
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
     if (NSClassFromString(@"XCTestCase") != nil) return NSTerminateNow;
+    if (self.launchHandedOff) return NSTerminateNow;
     if (self.clipboardTerminationPending) return NSTerminateLater;
     if ([RCPanicEraseService shared].isPanicInProgress) {
         return [RCPanicEraseService shared].isEraseAttemptActive ? NSTerminateCancel : NSTerminateNow;
@@ -322,6 +333,7 @@ static const NSTimeInterval kRCUserOpenActivationWait = 1.0;
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
     if (NSClassFromString(@"XCTestCase") != nil) return;
+    if (self.launchHandedOff) return;
     [[RCSnippetCLIService shared] stop];
     (void)notification;
     [[RCScreenshotMonitorService shared] stopMonitoring];
